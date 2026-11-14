@@ -20,7 +20,7 @@ extension ScriptRuntimeRuntimeInput on ScriptRuntime {
     _requiredHandle = w.handle;
     if (_windowOk()) return true;
     log('Окно "${w.title}" не спереди — вывожу вперёд', 'action');
-    backend.focusWindow(w.handle);
+    await _focus(w.handle);
     await this.sleep(150, jitter: false);
     return _windowOk();
   }
@@ -93,6 +93,13 @@ extension ScriptRuntimeRuntimeInput on ScriptRuntime {
     }
   }
 
+  /// A mouse button down: keys sent just before may still be unread by the
+  /// window, and a click elsewhere takes the focus away — they would be lost.
+  Future<void> _buttonDown(String b) async {
+    await _settleKeys();
+    _button(b, true);
+  }
+
   void _button(String b, bool down) {
     backend.mouseButton(b, down);
     down ? _heldButtons.add(b) : _heldButtons.remove(b);
@@ -101,10 +108,39 @@ extension ScriptRuntimeRuntimeInput on ScriptRuntime {
   void _key(String k, bool down) {
     backend.keyEvent(k, down);
     down ? _heldKeys.add(k) : _heldKeys.remove(k);
+    _keysSent();
+  }
+
+  void _keysSent() {
+    _keysUnsettled++;
+    _sinceKeys
+      ..reset()
+      ..start();
+  }
+
+  /// Before the focus may move to another window (a click, focus_window):
+  /// gives the window time after the last key to read what was sent.
+  /// Programs take keys with a lag that grows with every key, and a window
+  /// that loses the focus drops what it has not read yet (the Windows 11
+  /// Notepad lost the last 1–4 of 40 keys with 100 ms, none with 400 ms):
+  /// 100 ms + 8 ms per key since the last such pause, at most 0.5 s.
+  Future<void> _settleKeys() async {
+    if (!_sinceKeys.isRunning) return;
+    final need = math.min(500, 100 + 8 * _keysUnsettled);
+    final left = need - _sinceKeys.elapsedMilliseconds;
+    _sinceKeys.stop();
+    _keysUnsettled = 0;
+    if (left > 0) await this.sleep(left, jitter: false);
+  }
+
+  /// Brings window [handle] to the front (after the keys sent are read).
+  Future<bool> _focus(int handle) async {
+    await _settleKeys();
+    return backend.focusWindow(handle);
   }
 
   Future<void> _press(String button, num holdMs) async {
-    _button(button, true);
+    await _buttonDown(button);
     try {
       await this.sleep(holdMs, jitter: false);
     } finally {

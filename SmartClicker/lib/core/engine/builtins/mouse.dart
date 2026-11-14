@@ -21,7 +21,7 @@ extension ScriptRuntimeBuiltinsMouse on ScriptRuntime {
       if (c.args.isNotEmpty) p = _point(c, 0, 'mouse_down');
       if (!await _guardInput('зажать кнопку мыши ($btn)')) return null;
       if (p != null) await _goto(c, p);
-      _button(btn, true);
+      await _buttonDown(btn);
       return null;
     });
 
@@ -54,7 +54,7 @@ extension ScriptRuntimeBuiltinsMouse on ScriptRuntime {
       final s1 = _scatter(c, p1), s2 = _scatter(c, p2);
       backend.moveTo(s1.x, s1.y);
       await this.sleep(30, jitter: false);
-      _button(btn, true);
+      await _buttonDown(btn);
       try {
         await this.sleep(40, jitter: false);
         await _moveSmooth(s2, math.max(dur, 16), curved: humanMode);
@@ -73,7 +73,7 @@ extension ScriptRuntimeBuiltinsMouse on ScriptRuntime {
         return null;
       }
       await _goto(c, p);
-      _button(btn, true);
+      await _buttonDown(btn);
       try {
         if (humanMode) {
           // Finger/hand tremor: tiny drifts while holding.

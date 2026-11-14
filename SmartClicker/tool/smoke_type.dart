@@ -5,13 +5,15 @@
 // would), then copies the tab text and compares. It types and erases only
 // in a tab named "Без имени" (new) or by the test text itself; the clipboard
 // is restored.
-// Run: dart run tool/smoke_type.dart [rounds] [delay] [wait after type] [stay]
+// Run: dart run tool/smoke_type.dart [rounds] [delay] [wait after type] [stay|switch] [keys]
+// keys: digits pressed one by one with key("1") instead of type().
 import 'dart:io';
 
 import 'package:smart_clicker/core/engine/runtime.dart';
 import 'package:smart_clicker/platform/backend.dart';
 
-const text = 'Zx7 Привет, мир! Hello 1234567890 ёЁ';
+const typed = 'Zx7 Привет, мир! Hello 1234567890 ёЁ';
+const digits = '1234567890123456789012345678901234567890';
 
 Future<void> main(List<String> args) async {
   final rounds = args.isEmpty ? 5 : int.parse(args[0]);
@@ -19,6 +21,11 @@ Future<void> main(List<String> args) async {
   final after = args.length > 2 ? 'wait(${args[2]})' : '';
   // "stay": the script does not switch to another window after typing.
   final stay = args.length > 3 && args[3] == 'stay';
+  final keys = args.length > 4 && args[4] == 'keys';
+  final text = keys ? digits : typed;
+  final input = keys
+      ? [for (final ch in digits.split('')) 'key("$ch")'].join('\n    ')
+      : 'type("$text"$delay)';
   final b = createBackend();
   final clip = b.getClipboard();
   final cover = b.activeWindow();
@@ -35,7 +42,7 @@ Future<void> main(List<String> args) async {
   // Only our own tab: a new empty one, or one that already holds the test text.
   bool ours() {
     final t = b.activeWindow()?.title ?? '';
-    return t.startsWith('Без имени') || t.startsWith('*Z');
+    return t.startsWith('Без имени') || t.startsWith('*Z') || t.startsWith('*1');
   }
 
   await Process.start('notepad.exe', [], mode: ProcessStartMode.detached); // new tab
@@ -56,7 +63,7 @@ with_window("notepad") {
     key("ctrl+a")
     key("delete")
     click(50%, 50%)
-    type("$text"$delay)
+    $input
     $after
 }
 ${stay ? 'wait(1000)' : 'focus_window("${cover?.process ?? 'explorer'}")'}

@@ -24,7 +24,7 @@ extension ScriptRuntimeBuiltinsWindows on ScriptRuntime {
         return true;
       }
       log('активировать окно "${w.title}"', 'action');
-      final ok = backend.focusWindow(w.handle);
+      final ok = await _focus(w.handle);
       await this.sleep(150, jitter: false);
       return ok;
     });
@@ -113,7 +113,7 @@ extension ScriptRuntimeBuiltinsWindows on ScriptRuntime {
           return;
         }
         log('Возвращаю вперёд окно "${back.title}"', 'action');
-        backend.focusWindow(back.handle);
+        await _focus(back.handle);
         await this.sleep(100, jitter: false);
       });
     });

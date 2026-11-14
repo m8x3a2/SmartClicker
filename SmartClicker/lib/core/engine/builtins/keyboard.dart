@@ -55,15 +55,14 @@ extension ScriptRuntimeBuiltinsKeyboard on ScriptRuntime {
       if (!await _guardInput('ввод текста "$shown"')) return null;
       if (delay <= 0) {
         backend.typeText(text);
+        _keysSent();
       } else {
         for (final ch in text.split('')) {
           backend.typeText(ch);
+          _keysSent();
           await this.sleep(humanMode ? delay * (0.5 + rng.nextDouble()) : delay, jitter: false);
         }
       }
-      // Let the program take the last letters before the script clicks
-      // elsewhere (a window that loses focus drops what it has not read).
-      await this.sleep(50, jitter: false);
       return null;
     }, ['type_text', 'write']);
 

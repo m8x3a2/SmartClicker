@@ -82,6 +82,8 @@ class ScriptRuntime implements Host {
   bool _requireFocus = true; // require_window(focus:): bring it to front
   int? _requiredHandle; // the window require_window() last resolved to
   int? _originWindow; // handle set by use_window()
+  final Stopwatch _sinceKeys = Stopwatch(); // since the last keyboard input
+  int _keysUnsettled = 0; // keys sent since the last _settleKeys()
   Map<String, Object?>? _data;
 
   ScriptRuntime(this.backend, this.cfg, this.emit, {math.Random? random})
