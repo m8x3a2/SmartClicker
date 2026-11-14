@@ -478,6 +478,23 @@ click(10, 10)
       expect(b.calls.where((c) => c.startsWith('move')), ['move 500,400']);
     });
 
+    test('require_window: окно закрыли и открыли заново — находит новое', () async {
+      final b = StubBackend()
+        ..windowList = [game, other]
+        ..active = other;
+      const again = WindowInfo(5, 'Game', 'game.exe', 9, 100, 100, 200, 100);
+      final r = await run('require_window("game")\nclick(1, 1)\nwait(300)\nclick(2, 2)', backend: b,
+          setup: (rt) {
+        Future<void>.delayed(const Duration(milliseconds: 150), () {
+          b.windowList = [again, other];
+          b.active = other;
+        });
+      });
+      expect(r.result['error'], isNull, reason: '${r.result}');
+      expect(b.calls.where((c) => c.startsWith('focus')), ['focus 1', 'focus 5']);
+      expect(b.calls.where((c) => c == 'down left').length, 2);
+    });
+
     test('with_window: окна нет — понятная ошибка', () async {
       var r = await run('with_window("нет такого", timeout: 0) { click(1, 1) }');
       expect('${r.result['error']}', contains('with_window: окно "нет такого" не найдено'));

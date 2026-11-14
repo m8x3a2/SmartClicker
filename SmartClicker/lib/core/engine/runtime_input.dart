@@ -17,8 +17,16 @@ extension ScriptRuntimeRuntimeInput on ScriptRuntime {
   /// True when it is in front now.
   Future<bool> _bringRequired() async {
     final handle = _requiredHandle;
-    final w = handle == null ? _findWindow(_requiredWindow!) :
-        backend.windows().where((w) => w.handle == handle).firstOrNull;
+    var w = handle == null
+        ? null
+        : backend.windows().where((w) => w.handle == handle).firstOrNull;
+    // The bound window is gone (the program was restarted): find it again
+    // by its name — with_window binds to a window anew on every run of the
+    // block, a lasting require_window must not wait for a closed one.
+    if (w == null) {
+      _requiredHandle = null;
+      w = _findWindow(_requiredWindow!);
+    }
     if (w == null) return false;
     _requiredHandle = w.handle;
     if (_windowOk()) return true;

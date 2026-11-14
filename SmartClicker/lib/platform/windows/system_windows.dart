@@ -144,8 +144,12 @@ mixin _SystemWindows implements PlatformBackend {
     if (_GetForegroundWindow() == handle) return true;
     // Last resort: an input event of our own lifts the lock; F24 does nothing
     // in programs (unlike Alt).
-    _vkEvent(0x87, true);
-    _vkEvent(0x87, false);
+    try {
+      _vkEvent(0x87, true);
+      _vkEvent(0x87, false);
+    } on StateError {
+      return false; // input refused: the lock stays, nothing more to try
+    }
     _SetForegroundWindow(handle);
     return _GetForegroundWindow() == handle;
   }

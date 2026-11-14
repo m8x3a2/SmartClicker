@@ -378,8 +378,14 @@ class WindowsBackend with _SystemWindows, _ProgramWindow, _KeyHook, _StartupEntr
       if (isVkDown(b.value.vk)) mouseButton(b.key, false);
     }
     // Keys eaten by the key hook never reached anybody: nothing to release.
+    // One refused key must not keep the others held.
     for (var vk = 8; vk < 0xFF; vk++) {
-      if (_physicallyDown(vk)) _vkEvent(vk, false);
+      if (!_physicallyDown(vk)) continue;
+      try {
+        _vkEvent(vk, false);
+      } on StateError {
+        // SendInput refused (e.g. the secure desktop is shown); go on.
+      }
     }
   }
 }
