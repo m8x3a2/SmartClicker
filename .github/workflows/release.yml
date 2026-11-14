@@ -1,0 +1,69 @@
+# Builds the portable Windows ZIP (unpack and run, no installer).
+# Tag "v1.2.0" -> tests, build and a GitHub Release with the ZIP attached.
+# Manual run (Actions -> Release -> Run workflow) -> only a downloadable artifact.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: SmartClicker
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.7
+          cache: true
+
+      - name: Version
+        run: |
+          $ref = '${{ github.ref_name }}'
+          if ('${{ github.ref_type }}' -eq 'tag') { $v = $ref.TrimStart('v') }
+          else { $v = '0.0.0-dev.${{ github.run_number }}' }
+          "APP_VERSION=$v" >> $env:GITHUB_ENV
+          "ZIP_NAME=SmartClicker-$v-windows-x64.zip" >> $env:GITHUB_ENV
+
+      - name: Dependencies
+        run: flutter pub get
+
+      - name: Tests
+        run: flutter test
+
+      - name: Build
+        run: >
+          flutter build windows --release
+          --build-number=${{ github.run_number }}
+          --dart-define=APP_VERSION=${{ env.APP_VERSION }}
+
+      - name: Pack
+        run: |
+          Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath "../$env:ZIP_NAME"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ZIP_NAME }}
+          path: ${{ env.ZIP_NAME }}
+          retention-days: 14
+
+      - name: GitHub Release
+        if: github.ref_type == 'tag'
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >
+          gh release create '${{ github.ref_name }}' "$env:ZIP_NAME"
+          --title "SmartClicker ${{ env.APP_VERSION }}"
+          --generate-notes

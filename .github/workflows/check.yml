@@ -1,0 +1,40 @@
+# Every push to main and every pull request: code analysis and all tests.
+# Runs on Windows because the app and some checks are Windows-first.
+name: Check
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['**.md', 'автокликер.txt']
+  pull_request:
+    paths-ignore: ['**.md', 'автокликер.txt']
+  workflow_dispatch:
+
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: SmartClicker
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.7
+          cache: true
+
+      - name: Dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Tests
+        run: flutter test

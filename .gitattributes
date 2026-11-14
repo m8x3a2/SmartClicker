@@ -1,0 +1,3 @@
+# Keep LF everywhere: Dart multi-line strings and the OCR dictionary must not get CR.
+* text=auto eol=lf
+SmartClicker/windows/ocr/** -text

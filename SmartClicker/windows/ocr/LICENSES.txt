@@ -1,0 +1,8 @@
+Files in this folder are shipped with SmartClicker for offline text recognition.
+
+onnxruntime.dll - ONNX Runtime 1.24.4, Copyright (c) Microsoft Corporation, MIT License.
+  https://github.com/microsoft/onnxruntime
+ch_PP-OCRv5_mobile_det.onnx, eslav_PP-OCRv5_rec_mobile_infer.onnx, ppocrv5_eslav_dict.txt -
+  PP-OCRv5 models by PaddlePaddle (PaddleOCR), Apache License 2.0, ONNX conversion from
+  https://huggingface.co/ogkalu/ppocr-v5-onnx
+  https://github.com/PaddlePaddle/PaddleOCR
