@@ -37,9 +37,9 @@ class DelayedFocusBackend extends StubBackend {
 class InterruptedTypingBackend extends StubBackend {
   final recipients = <int?>[];
   @override
-  void typeText(String text, {bool layoutKeys = true}) {
+  void typeText(String text, {TypeMethod method = TypeMethod.auto}) {
     recipients.add(active?.handle);
-    super.typeText(text, layoutKeys: layoutKeys);
+    super.typeText(text, method: method);
     if (recipients.length == 1) active = windowList.last;
   }
 }
@@ -537,7 +537,7 @@ click(10, 10)
 
     test('текст, смена раскладки и сочетания', () async {
       final b = StubBackend()..chars.addAll({0x47: 'п', 0x48: 'р', 0x4B: 'k'});
-      final rec = Recorder(b, () => false, {});
+      final rec = Recorder(b, () => false, const []);
       rec.start();
       await tick();
       await tap(b, [0x47]); // г-клавиша в русской раскладке -> "п"
@@ -551,9 +551,27 @@ click(10, 10)
       expect(lines, ['type("пр")', 'key("alt+shift")', 'type("k")', 'key("ctrl+a")', 'key("enter")']);
     });
 
+    test('служебная клавиша Ctrl+Q не записывается, а Ctrl и Q по отдельности — да', () async {
+      final b = StubBackend();
+      final rec = Recorder(b, () => false, const [
+        [0x11, 0x51], // Ctrl+Q — e.g. the stop key
+        [0x7B], // F12
+      ]);
+      rec.start();
+      await tick();
+      await tap(b, [0x11, 0x51]); // the hotkey: nothing, not even key("ctrl")
+      await tap(b, [0x7B]);
+      await tap(b, [0x11, 0x43]); // Ctrl+C
+      await tap(b, [0x51]); // a plain Q
+      await tap(b, [0x10, 0x51]); // Shift+Q
+      final code = rec.stop(const RecordOptions(text: false));
+      final lines = code.split('\n').where((l) => l.isNotEmpty && !l.startsWith('wait')).toList();
+      expect(lines, ['key("ctrl+c")', 'key("q")', 'key("shift+q")']);
+    });
+
     test('без режима текста записываются клавиши', () async {
       final b = StubBackend()..chars[0x47] = 'п';
-      final rec = Recorder(b, () => false, {});
+      final rec = Recorder(b, () => false, const []);
       rec.start();
       await tick();
       await tap(b, [0x47]);
@@ -578,7 +596,7 @@ click(10, 10)
 
     test('режим остановок записывает наведение', () async {
       final b = StubBackend();
-      final rec = Recorder(b, () => false, {});
+      final rec = Recorder(b, () => false, const []);
       rec.start();
       await ms(30);
       b.cx = 100;
@@ -594,7 +612,7 @@ click(10, 10)
 
     test('обычный режим не записывает движение', () async {
       final b = StubBackend();
-      final rec = Recorder(b, () => false, {});
+      final rec = Recorder(b, () => false, const []);
       rec.start();
       await ms(30);
       b.cx = 100;
@@ -606,7 +624,7 @@ click(10, 10)
 
     test('полная траектория записывается и воспроизводится', () async {
       final b = StubBackend();
-      final rec = Recorder(b, () => false, {});
+      final rec = Recorder(b, () => false, const []);
       rec.start();
       for (var i = 1; i <= 15; i++) {
         b.cx = i * 20;
@@ -633,7 +651,7 @@ click(10, 10)
       const doc = WindowInfo(2, '*Doc — Блокнот', 'Notepad.exe', 5, 100, 100, 800, 600);
       const other = WindowInfo(3, 'Без имени — Блокнот', 'Notepad.exe', 5, 2000, 0, 10, 10);
       final b = StubBackend()..windowList = [taskbar, doc, other];
-      final rec = Recorder(b, () => false, {});
+      final rec = Recorder(b, () => false, const []);
       rec.start();
       await click(b, 500, 1040); // taskbar icon
       await click(b, 300, 350); // inside the document window
@@ -657,7 +675,7 @@ click(10, 10)
     test('без привязки к окнам клики остаются экранными', () async {
       const taskbar = WindowInfo(1, '', 'explorer.exe', 9, 0, 1000, 1920, 80);
       final b = StubBackend()..windowList = [taskbar];
-      final rec = Recorder(b, () => false, {});
+      final rec = Recorder(b, () => false, const []);
       rec.start();
       await click(b, 500, 1040);
       expect(code(rec.stop(const RecordOptions(percent: false))),
@@ -672,7 +690,7 @@ click(10, 10)
 
     test('дрожание мыши не дробит остановку, остановки у клика пропускаются', () async {
       final b = StubBackend();
-      final rec = Recorder(b, () => false, {});
+      final rec = Recorder(b, () => false, const []);
       rec.start();
       await ms(30);
       // Rest around (100,100) with tremor for ~400 ms.
@@ -705,7 +723,7 @@ click(10, 10)
     const ownPid = 77;
     const own = WindowInfo(1, 'SmartClicker', 'smart_clicker.exe', ownPid, 0, 0, 800, 600);
     final b = StubBackend()..windowList = [own];
-    final rec = Recorder(b, () => false, {},
+    final rec = Recorder(b, () => false, const [],
         overOwnWindow: (x, y) => b.pidAt(x, y) == ownPid);
     rec.start();
     expect(rec.wheelWatched, isTrue);
@@ -740,7 +758,7 @@ click(10, 10)
     const taskbar = WindowInfo(2, '', 'explorer.exe', 9, 0, 1000, 1920, 80);
     final b = StubBackend()..windowList = [own, taskbar];
     // Our window stays the active one for the whole recording.
-    final rec = Recorder(b, () => true, {},
+    final rec = Recorder(b, () => true, const [],
         overOwnWindow: (x, y) => b.pidAt(x, y) == ownPid);
     Future<void> click(int x, int y) async {
       b.cx = x;
@@ -890,7 +908,7 @@ click(10, 10)
 
     final b = StubBackend();
     // Our own window is active all the time.
-    final rec = Recorder(b, () => true, {});
+    final rec = Recorder(b, () => true, const []);
     rec.start();
     await ms(30);
     await tap(b, [0x5B, 0x10, 0x53]); // Win+Shift+S

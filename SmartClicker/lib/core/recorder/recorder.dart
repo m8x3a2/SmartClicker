@@ -150,7 +150,11 @@ class Recorder {
   /// "Record" our window is still active while the user already works
   /// elsewhere, e.g. on the taskbar.
   final bool Function(int x, int y)? overOwnWindow;
-  final Set<int> ignoreVks;
+  /// Hotkeys working during the recording (VK codes of each combo). Only
+  /// their main key, pressed together with the combo's modifiers, is left
+  /// out: with Ctrl+Q as a hotkey, Ctrl+C and a plain Q are still recorded.
+  final List<List<int>> ignoreCombos;
+  final Set<int> _skipped = {}; // main keys of hotkeys held right now
   final List<_Ev> _events = [];
   final List<_Move> _moves = [];
   final Map<int, bool> _state = {};
@@ -168,7 +172,7 @@ class Recorder {
       (mods.contains('alt') && (key == 'tab' || key == 'esc')) ||
       (mods.contains('ctrl') && key == 'esc');
 
-  Recorder(this.backend, this.ownWindowActive, this.ignoreVks,
+  Recorder(this.backend, this.ownWindowActive, this.ignoreCombos,
       {this.overOwnWindow});
 
   bool get recording => _timer != null;
@@ -180,6 +184,7 @@ class Recorder {
     _moves.clear();
     _state.clear();
     _lastPos = null;
+    _skipped.clear();
     // Whatever is held right now is not part of the recording.
     for (final vk in [..._buttons.values, ...recordableVks]) {
       _state[vk] = backend.isVkDown(vk);
@@ -243,10 +248,36 @@ class Recorder {
 
     _buttons.forEach((name, vk) => edge(vk, 'm', name));
     for (final vk in recordableVks) {
-      if (ignoreVks.contains(vk)) continue;
+      if (_isHotkeyEdge(vk, t)) continue;
       edge(vk, 'k', nameByVk[vk]!);
     }
   }
+
+  /// The main key of a hotkey goes down or up: it is not recorded, only
+  /// noted (so that Ctrl held for Ctrl+Q does not become a key("ctrl")).
+  bool _isHotkeyEdge(int vk, int t) {
+    final down = backend.isVkDown(vk);
+    if (!down) {
+      if (!_skipped.remove(vk)) return false;
+      _state[vk] = false;
+      return true;
+    }
+    if (_skipped.contains(vk)) return true;
+    if (_state[vk] == true) return false; // already down: held before
+    for (final combo in ignoreCombos) {
+      final main = combo.where((v) => !_modifierVks.contains(v)).toList();
+      if (main.length != 1 || main.single != vk) continue;
+      if (combo.where(_modifierVks.contains).every(backend.isVkDown)) {
+        _skipped.add(vk);
+        _state[vk] = true;
+        _events.add(_Ev(t, 'kx', nameByVk[vk]!, 0, 0, false));
+        return true;
+      }
+    }
+    return false;
+  }
+
+  static final Set<int> _modifierVks = {for (final m in modifierKeys) vkByName[m]!};
 
   /// Stops recording and returns the generated script.
   String stop(RecordOptions o) {
@@ -328,6 +359,8 @@ class Recorder {
                 win: d.win,
                 client: d.client));
           }
+        case 'kx': // a hotkey: not recorded, but its modifiers are "used"
+          if (mods.isNotEmpty) chordUsed = true;
         case 'kd':
           if (modifierKeys.contains(e.name)) {
             mods.add(e.name);

@@ -35,10 +35,10 @@ extension AppControllerRecord on AppController {
   Recorder _newRecorder() => Recorder(
         backend,
         _ownWindowActive,
-        {
+        [
           for (final k in AppControllerHotkeys.recordingHotkeys(settings))
-            ...AppController.comboVks(k)
-        },
+            AppController.comboVks(k)
+        ],
         overOwnWindow: (x, y) => backend.pidAt(x, y) == pid,
       );
 
