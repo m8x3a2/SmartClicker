@@ -111,8 +111,8 @@ extension ScriptRuntimeRuntimeInput on ScriptRuntime {
     _keysSent();
   }
 
-  void _keysSent() {
-    _keysUnsettled++;
+  void _keysSent([int count = 1]) {
+    _keysUnsettled += count;
     _sinceKeys
       ..reset()
       ..start();

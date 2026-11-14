@@ -10,6 +10,9 @@ final _gdi32 = DynamicLibrary.open('gdi32.dll');
 
 final _kernel32 = DynamicLibrary.open('kernel32.dll');
 
+final _GetLastError = _kernel32.lookupFunction<Uint32 Function(),
+    int Function()>('GetLastError');
+
 final _GetSystemMetrics = _user32
     .lookupFunction<Int32 Function(Int32), int Function(int)>('GetSystemMetrics');
 

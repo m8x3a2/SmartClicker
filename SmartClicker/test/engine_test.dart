@@ -34,6 +34,16 @@ class DelayedFocusBackend extends StubBackend {
   }
 }
 
+class InterruptedTypingBackend extends StubBackend {
+  final recipients = <int?>[];
+  @override
+  void typeText(String text, {bool layoutKeys = true}) {
+    recipients.add(active?.handle);
+    super.typeText(text, layoutKeys: layoutKeys);
+    if (recipients.length == 1) active = windowList.last;
+  }
+}
+
 class Run {
   final StubBackend backend;
   final List<Map<String, Object?>> events;
@@ -302,6 +312,22 @@ log(p.x, p.y)
 
     const game = WindowInfo(1, 'Game', 'game.exe', 1, 100, 100, 200, 100);
     const other = WindowInfo(2, 'Chat', 'chat.exe', 2, 0, 0, 50, 50);
+
+    test('type восстанавливает окно между символами', () async {
+      final b = InterruptedTypingBackend()
+        ..windowList = [game, other]
+        ..active = game;
+      final r = await run('with_window("game") { type("abc", delay: 1) }', backend: b);
+      expect(r.result['error'], isNull);
+      expect(b.recipients, [1, 1, 1]);
+    });
+
+    test('type не разделяет emoji паузой между суррогатами', () async {
+      final b = StubBackend();
+      final r = await run('type("A😀Б", delay: 1)', backend: b);
+      expect(r.result['error'], isNull);
+      expect(b.calls.where((c) => c.startsWith('type ')), ['type A', 'type 😀', 'type Б']);
+    });
 
     test('focus_window ждёт отложенную активацию', () async {
       final b = DelayedFocusBackend(delayed: true)

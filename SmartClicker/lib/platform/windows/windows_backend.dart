@@ -71,16 +71,41 @@ class WindowsBackend with _SystemWindows, _ProgramWindow, _KeyHook, _StartupEntr
     }
   }
 
-  void _keyInput(int vk, int scan, int flags) {
-    final buf = calloc<Uint8>(_inputSize);
+  void _keyInput(int vk, int scan, int flags) => _keyInputs([(vk, scan, flags)]);
+
+  void _keyInputs(List<(int, int, int)> events) {
+    final buf = calloc<Uint8>(_inputSize * events.length);
     try {
-      final d = ByteData.sublistView(buf.asTypedList(_inputSize));
-      d.setUint32(0, 1, Endian.little); // INPUT_KEYBOARD
-      d.setUint16(8, vk, Endian.little);
-      d.setUint16(10, scan, Endian.little);
-      d.setUint32(12, flags, Endian.little);
-      d.setUint64(24, _ownInputTag, Endian.little); // dwExtraInfo: see key_hook
-      _SendInput(1, buf, _inputSize);
+      for (var i = 0; i < events.length; i++) {
+        final (vk, scan, flags) = events[i];
+        final d = ByteData.sublistView((buf + i * _inputSize).asTypedList(_inputSize));
+        d.setUint32(0, 1, Endian.little); // INPUT_KEYBOARD
+        d.setUint16(8, vk, Endian.little);
+        d.setUint16(10, scan, Endian.little);
+        d.setUint32(12, flags, Endian.little);
+        d.setUint64(24, _ownInputTag, Endian.little); // dwExtraInfo: see key_hook
+      }
+      final sent = _SendInput(events.length, buf, _inputSize);
+      if (sent != events.length) {
+        final error = _GetLastError();
+        final held = <(int, int, int)>[];
+        for (final e in events.take(sent)) {
+          if ((e.$3 & 2) == 0) {
+            held.add(e);
+          } else {
+            held.removeWhere((down) => down.$1 == e.$1 && down.$2 == e.$2);
+          }
+        }
+        // Best-effort release of accepted downs, without replaying text.
+        for (final e in held.reversed) {
+          final d = ByteData.sublistView(buf.asTypedList(_inputSize));
+          d.setUint16(8, e.$1, Endian.little);
+          d.setUint16(10, e.$2, Endian.little);
+          d.setUint32(12, e.$3 | 2, Endian.little);
+          _SendInput(1, buf, _inputSize);
+        }
+        throw StateError('Не удалось отправить клавиши: $sent из ${events.length}, код Windows $error');
+      }
     } finally {
       calloc.free(buf);
     }
@@ -143,8 +168,7 @@ class WindowsBackend with _SystemWindows, _ProgramWindow, _KeyHook, _StartupEntr
       }
       if (unit == 0x0D) continue;
       if (layoutKeys && _typeLayoutKey(unit)) continue;
-      _keyInput(0, unit, 0x0004); // KEYEVENTF_UNICODE
-      _keyInput(0, unit, 0x0004 | 0x0002);
+      _keyInputs([(0, unit, 0x0004), (0, unit, 0x0006)]);
     }
   }
 
@@ -172,13 +196,14 @@ class WindowsBackend with _SystemWindows, _ProgramWindow, _KeyHook, _StartupEntr
         final n = _ToUnicodeEx(vk, _MapVirtualKeyW(vk, 0),
             state, buf, 8, 4, layout); // Do not change dead-key state.
         if (n != 1 || buf[0] != unit) continue;
-        if (shift) _vkEvent(0x10, true);
-        try {
-          _vkEvent(vk, true);
-          _vkEvent(vk, false);
-        } finally {
-          if (shift) _vkEvent(0x10, false);
-        }
+        final scan = _MapVirtualKeyW(vk, 0);
+        final shiftScan = _MapVirtualKeyW(0x10, 0);
+        _keyInputs([
+          if (shift) (0x10, shiftScan, 0),
+          (vk, scan, 0),
+          (vk, scan, 2),
+          if (shift) (0x10, shiftScan, 2),
+        ]);
         return true;
       }
       return false;

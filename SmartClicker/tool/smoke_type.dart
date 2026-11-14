@@ -1,16 +1,53 @@
 // ignore_for_file: avoid_print
-// Live check of type() into the Windows 11 Notepad: opens a new tab (in the
-// user's Notepad window, if it is open), types a text inside with_window,
-// at once switches to another window (as a script that clicks elsewhere
-// would), then copies the tab text and compares. It types and erases only
-// in a tab named "Без имени" (new) or by the test text itself; the clipboard
-// is restored.
-// Run: dart run tool/smoke_type.dart [rounds] [delay] [wait after type] [stay|switch] [keys]
+// Live check in a uniquely named temporary document. Every input checks its
+// window handle, process and document title. Never closes Notepad or tabs.
+// The clipboard text is restored; the temporary document is left open.
+// Run: dart run tool/smoke_type.dart [rounds] [delay] [wait after type] [stay|switch] [keys|text] [text]
 // keys: digits pressed one by one with key("1") instead of type().
 import 'dart:io';
+import 'dart:convert';
 
 import 'package:smart_clicker/core/engine/runtime.dart';
 import 'package:smart_clicker/platform/backend.dart';
+import 'package:smart_clicker/platform/windows/windows_backend.dart';
+
+// Fail closed before every input action, including actions inside a script.
+class SmokeBackend extends WindowsBackend {
+  SmokeBackend(this.document);
+  final String document;
+  int? target;
+
+  bool owns(WindowInfo? w) => w != null &&
+      w.process.toLowerCase() == 'notepad.exe' &&
+      (target == null || w.handle == target) &&
+      w.title.replaceFirst(RegExp(r'^\*'), '').startsWith(document);
+
+  void check() {
+    if (!owns(activeWindow())) throw StateError('Тестовая вкладка не активна — ввод остановлен');
+  }
+
+  @override
+  List<WindowInfo> windows() => super.windows().where((w) =>
+      w.process.toLowerCase() != 'notepad.exe' || owns(w)).toList();
+
+  @override
+  void keyEvent(String key, bool down) {
+    if (down) check();
+    super.keyEvent(key, down);
+  }
+
+  @override
+  void mouseButton(String button, bool down) {
+    if (down) check();
+    super.mouseButton(button, down);
+  }
+
+  @override
+  void typeText(String text, {bool layoutKeys = true}) {
+    check();
+    super.typeText(text, layoutKeys: layoutKeys);
+  }
+}
 
 const typed = 'Zx7 Привет, мир! Hello 1234567890 ёЁ';
 const digits = '1234567890123456789012345678901234567890';
@@ -22,11 +59,15 @@ Future<void> main(List<String> args) async {
   // "stay": the script does not switch to another window after typing.
   final stay = args.length > 3 && args[3] == 'stay';
   final keys = args.length > 4 && args[4] == 'keys';
-  final text = keys ? digits : typed;
+  final text = keys ? digits : (args.length > 5 ? args[5] : typed);
   final input = keys
       ? [for (final ch in digits.split('')) 'key("$ch")'].join('\n    ')
-      : 'type("$text"$delay)';
-  final b = createBackend();
+      : 'type(${jsonEncode(text)}$delay)';
+  final directory = await Directory.systemTemp.createTemp('smartclicker-smoke-');
+  final name = 'smartclicker-${DateTime.now().microsecondsSinceEpoch}.txt';
+  final file = File('${directory.path}${Platform.pathSeparator}$name');
+  await file.writeAsString('');
+  final b = SmokeBackend(name);
   final clip = b.getClipboard();
   final cover = b.activeWindow();
   Future<String> run(String source) async {
@@ -39,15 +80,22 @@ Future<void> main(List<String> args) async {
     return logs.isEmpty ? '' : logs.last;
   }
 
-  // Only our own tab: a new empty one, or one that already holds the test text.
+  // Only the uniquely named document in the captured window.
   bool ours() {
-    final t = b.activeWindow()?.title ?? '';
-    return t.startsWith('Без имени') || t.startsWith('*Z') || t.startsWith('*1');
+    return b.owns(b.activeWindow());
   }
 
-  await Process.start('notepad.exe', [], mode: ProcessStartMode.detached); // new tab
-  await Future<void>.delayed(const Duration(seconds: 2));
-  final note = b.windows().where((w) => w.process.toLowerCase() == 'notepad.exe' && w.w > 100).first;
+  await Process.start('notepad.exe', [file.path], mode: ProcessStartMode.detached);
+  WindowInfo? note;
+  for (var i = 0; i < 100 && note == null; i++) {
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+    note = b.windows().where(b.owns).firstOrNull;
+  }
+  if (note == null) throw StateError('Тестовый документ не открылся: ${file.path}');
+  b.target = note.handle;
+  if (!stay && (cover == null || cover.handle == note.handle)) {
+    throw StateError('Для проверки переключения нужно другое исходное окно');
+  }
   b.focusWindow(note.handle);
   await Future<void>.delayed(const Duration(milliseconds: 300));
   if (!ours()) {
@@ -68,6 +116,9 @@ with_window("notepad") {
 }
 ${stay ? 'wait(1000)' : 'focus_window("${cover?.process ?? 'explorer'}")'}
 ''');
+      if (!stay && b.activeWindow()?.handle == note.handle) {
+        throw StateError('Переключение с тестового окна не произошло');
+      }
       await Future<void>.delayed(const Duration(milliseconds: 700));
       b.setClipboard('');
       final got = await run('''
@@ -89,5 +140,6 @@ log(get_clipboard())
     b.setClipboard(clip);
     if (cover != null) b.focusWindow(cover.handle);
   }
-  exit(0);
+  print('Тестовый документ оставлен открытым: ${file.path}');
+  exitCode = ok == rounds ? 0 : 1;
 }

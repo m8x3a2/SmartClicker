@@ -56,9 +56,13 @@ extension ScriptRuntimeBuiltinsKeyboard on ScriptRuntime {
         // wrong (Shift not yet applied: "мир1" for "мир!", checked in the
         // Windows 11 Notepad), Unicode letters are at worst lost.
         backend.typeText(text, layoutKeys: false);
-        _keysSent();
+        _keysSent(text.length);
       } else {
-        for (final ch in text.split('')) {
+        for (final rune in text.runes) {
+          if (!_windowOk()) {
+            await _guardInput('восстановить окно для продолжения ввода');
+          }
+          final ch = String.fromCharCode(rune);
           backend.typeText(ch);
           _keysSent();
           await this.sleep(humanMode ? delay * (0.5 + rng.nextDouble()) : delay, jitter: false);
