@@ -9,13 +9,16 @@ extension ScriptRuntimeRuntimeInput on ScriptRuntime {
     final a = backend.activeWindow();
     if (a == null) return false;
     // The handle counts too: a title such as "file - Notepad" may change.
-    return a.matches(q) || (_requiredHandle != null && a.handle == _requiredHandle);
+    final handle = _requiredHandle;
+    return handle != null ? a.handle == handle : a.matches(q);
   }
 
   /// require_window(focus: true): brings the required window to the front.
   /// True when it is in front now.
   Future<bool> _bringRequired() async {
-    final w = _findWindow(_requiredWindow!);
+    final handle = _requiredHandle;
+    final w = handle == null ? _findWindow(_requiredWindow!) :
+        backend.windows().where((w) => w.handle == handle).firstOrNull;
     if (w == null) return false;
     _requiredHandle = w.handle;
     if (_windowOk()) return true;

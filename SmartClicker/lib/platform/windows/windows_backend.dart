@@ -186,25 +186,35 @@ class WindowsBackend with _SystemWindows, _ProgramWindow, _KeyHook, _StartupEntr
     final mapped = _VkKeyScanExW(unit, layout);
     if (mapped == -1 || (mapped >> 8) > 1) return false;
     final vk = mapped & 0xFF;
+    final count = _GetKeyboardLayoutList(0, nullptr);
+    if (count <= 0) return false;
+    final layouts = calloc<IntPtr>(count);
     final state = calloc<Uint8>(256);
     final buf = calloc<Uint16>(8);
     try {
+      final read = _GetKeyboardLayoutList(count, layouts);
+      if (read != count || _GetKeyboardLayoutList(0, nullptr) != count) return false;
+      final candidates = {layout, for (var i = 0; i < read; i++) layouts[i]};
       // GetKeyState belongs to our queue, not the recipient's. Even a fresh
       // snapshot can race a Caps Lock toggle before this key is processed.
-      // Use layout keys only when BOTH Caps states produce the exact text.
+      // Layout changes can also overtake queued input. Require identical
+      // output in all currently loaded layouts and BOTH Caps states.
       // Case-sensitive letters fall back to Unicode; digits and boundaries
       // still use ordinary keys for compatibility with text services.
       for (final shift in [mapped >> 8 == 1, mapped >> 8 != 1]) {
         state[0x10] = shift ? 0x80 : 0;
         var exact = true;
-        for (final caps in [0, 1]) {
-          state[0x14] = caps;
-          final n = _ToUnicodeEx(vk, _MapVirtualKeyW(vk, 0),
-              state, buf, 8, 4, layout); // Do not change dead-key state.
-          if (n != 1 || buf[0] != unit) {
-            exact = false;
-            break;
+        for (final candidate in candidates) {
+          for (final caps in [0, 1]) {
+            state[0x14] = caps;
+            final n = _ToUnicodeEx(vk, _MapVirtualKeyW(vk, 0),
+                state, buf, 8, 4, candidate); // Preserve dead-key state.
+            if (n != 1 || buf[0] != unit) {
+              exact = false;
+              break;
+            }
           }
+          if (!exact) break;
         }
         if (!exact) continue;
         final scan = _MapVirtualKeyW(vk, 0);
@@ -219,6 +229,7 @@ class WindowsBackend with _SystemWindows, _ProgramWindow, _KeyHook, _StartupEntr
       }
       return false;
     } finally {
+      calloc.free(layouts);
       calloc.free(state);
       calloc.free(buf);
     }

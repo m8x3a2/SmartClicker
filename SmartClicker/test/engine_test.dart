@@ -44,6 +44,22 @@ class InterruptedTypingBackend extends StubBackend {
   }
 }
 
+class InterruptedKeysBackend extends StubBackend {
+  final recipients = <int?>[];
+  bool interruptPaste = false;
+  @override
+  void keyEvent(String key, bool down) {
+    if (down) recipients.add(active?.handle);
+    super.keyEvent(key, down);
+    if (!down && key == 'a') active = windowList.last;
+  }
+  @override
+  void setClipboard(String text) {
+    super.setClipboard(text);
+    if (interruptPaste) active = windowList.last;
+  }
+}
+
 class Run {
   final StubBackend backend;
   final List<Map<String, Object?>> events;
@@ -312,6 +328,34 @@ log(p.x, p.y)
 
     const game = WindowInfo(1, 'Game', 'game.exe', 1, 100, 100, 200, 100);
     const other = WindowInfo(2, 'Chat', 'chat.exe', 2, 0, 0, 50, 50);
+
+    test('with_window не перенаправляет текст в другое окно того же процесса', () async {
+      final b = InterruptedTypingBackend()
+        ..windowList = [game, const WindowInfo(3, 'Game 2', 'game.exe', 1, 0, 0, 200, 100)]
+        ..active = game;
+      final r = await run('with_window("game") { type("abc", delay: 1) }', backend: b);
+      expect(r.result['error'], isNull);
+      expect(b.recipients, [1, 1, 1]);
+    });
+
+    test('key count восстанавливает фокус перед повтором', () async {
+      final b = InterruptedKeysBackend()
+        ..windowList = [game, other]
+        ..active = game;
+      final r = await run('with_window("game") { key("a", count: 3) }', backend: b);
+      expect(r.result['error'], isNull);
+      expect(b.recipients, [1, 1, 1]);
+    });
+
+    test('paste перепроверяет фокус после подготовки буфера', () async {
+      final b = InterruptedKeysBackend()
+        ..interruptPaste = true
+        ..windowList = [game, other]
+        ..active = game;
+      final r = await run('with_window("game") { paste("hello") }', backend: b);
+      expect(r.result['error'], isNull);
+      expect(b.recipients, [1, 1]);
+    });
 
     test('type восстанавливает окно между символами', () async {
       final b = InterruptedTypingBackend()

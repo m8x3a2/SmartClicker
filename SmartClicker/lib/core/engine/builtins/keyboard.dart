@@ -11,6 +11,7 @@ extension ScriptRuntimeBuiltinsKeyboard on ScriptRuntime {
       if (!await _guardInput('клавиша $spec${count > 1 ? ' ×$count' : ''}')) return null;
       for (var i = 0; i < count; i++) {
         if (i > 0) await this.sleep(humanMode ? 60 + rng.nextInt(60) : 40, jitter: false);
+        if (!_windowOk()) await _guardInput('восстановить окно для нажатия');
         try {
           for (final k in keys) {
             _key(k, true);
@@ -46,7 +47,7 @@ extension ScriptRuntimeBuiltinsKeyboard on ScriptRuntime {
     _def('type', (c) async {
       final text = stringify(c.arg(0, 'text'));
       // Programs read typed letters with a lag: sent at once, some are lost
-      // (Windows 11 Notepad). Letters of the layout go as real keys, one per
+      // (Windows 11 Notepad). Safe layout characters go as real keys, one per
       // `delay` (setting, 50 ms); delay: 0 — all at once, as Unicode.
       final delay = _nOr(c, c.opt('delay'), humanMode ? math.max(70, typeDelay) : typeDelay, 'delay');
       final shown = text.length > 40 ? '${text.substring(0, 40)}…' : text;
@@ -66,6 +67,9 @@ extension ScriptRuntimeBuiltinsKeyboard on ScriptRuntime {
           backend.typeText(ch);
           _keysSent();
           await this.sleep(humanMode ? delay * (0.5 + rng.nextDouble()) : delay, jitter: false);
+          // Text services may finish a word asynchronously at whitespace.
+          // Keep the configured character pace, but let that boundary settle.
+          if (ch.trim().isEmpty) await this.sleep(100, jitter: false);
         }
       }
       return null;
@@ -77,6 +81,7 @@ extension ScriptRuntimeBuiltinsKeyboard on ScriptRuntime {
       if (!await _guardInput('вставка из буфера "$shown"')) return null;
       backend.setClipboard(text);
       await this.sleep(50, jitter: false);
+      if (!_windowOk()) await _guardInput('восстановить окно для вставки');
       try {
         _key('ctrl', true);
         _key('v', true);

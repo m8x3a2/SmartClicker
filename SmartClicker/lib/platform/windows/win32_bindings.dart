@@ -107,6 +107,10 @@ final _GetAncestor = _user32.lookupFunction<IntPtr Function(IntPtr, Uint32),
 final _GetKeyboardLayout =_user32.lookupFunction<IntPtr Function(Uint32),
     int Function(int)>('GetKeyboardLayout');
 
+final _GetKeyboardLayoutList = _user32.lookupFunction<
+    Int32 Function(Int32, Pointer<IntPtr>),
+    int Function(int, Pointer<IntPtr>)>('GetKeyboardLayoutList');
+
 final _VkKeyScanExW = _user32.lookupFunction<Int16 Function(Uint16, IntPtr),
     int Function(int, int)>('VkKeyScanExW');
 
