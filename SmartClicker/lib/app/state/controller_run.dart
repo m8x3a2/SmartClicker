@@ -3,11 +3,13 @@
 part of 'app_controller.dart';
 
 extension AppControllerRun on AppController {
-  /// Starts the open script. With [step] it pauses before every line.
-  Future<void> run({bool step = false}) async {
+  /// Starts the open script. With [step] it pauses before every line,
+  /// with [slow] it waits [Settings.slowRunMs] before every line.
+  Future<void> run({bool step = false, bool slow = false}) async {
     if (busy || current == null) return;
     final name = current!, source = editor.text;
     _stepStart = step;
+    _slowStart = slow;
     logs.clear();
     errorLine.value = 0;
     currentLine.value = 0;
@@ -37,6 +39,7 @@ extension AppControllerRun on AppController {
   Future<bool> runByName(String name, {String reason = ''}) async {
     if (busy || !store.exists(name)) return false;
     _stepStart = false;
+    _slowStart = false;
     logs.clear();
     errorLine.value = 0;
     currentLine.value = 0;
@@ -65,6 +68,12 @@ extension AppControllerRun on AppController {
           '  ·  стоп: ${settings.stopKeysLabel}, пауза: ${settings.pauseKey.toUpperCase()}',
     );
     if (answers.isNotEmpty) _log('system', '❓ Ответы: ${describeAnswers(answers)}');
+    if (_slowStart) {
+      _log('system', '🐢 Замедленно: ${formatPause(settings.slowRunMs)} перед каждой строкой');
+    }
+    if (settings.actionDelayMs > 0) {
+      _log('system', 'Пауза после каждого действия: ${formatPause(settings.actionDelayMs)}');
+    }
     try {
       await _runner.start(_engineConfig(name, source, answers));
     } catch (e) {
@@ -79,6 +88,7 @@ extension AppControllerRun on AppController {
     'main': name,
     'source': source,
     'step': _stepStart,
+    'slowMs': _slowStart ? settings.slowRunMs : 0,
     'answers': answers,
     'breaks': name == current ? breaks.value.toList() : const <int>[],
     'watch': settings.bottomTab == 'vars',
@@ -90,6 +100,7 @@ extension AppControllerRun on AppController {
     'human': settings.human,
     'clickOffset': settings.clickOffset,
     'typeDelay': settings.typeDelayMs,
+    'actionDelay': settings.actionDelayMs,
     'timeJitter': settings.timeJitterPct / 100,
     'maxRuntimeMs': settings.maxRuntimeMin * 60000,
     'maxLoops': settings.maxLoops,
@@ -234,6 +245,7 @@ extension AppControllerRun on AppController {
       state = RunState.idle;
       errorLine.value = 0;
       _stepStart = false;
+      _slowStart = false;
       await _start(name, source, _runAnswers);
     });
   }

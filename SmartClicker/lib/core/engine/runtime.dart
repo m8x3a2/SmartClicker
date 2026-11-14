@@ -64,6 +64,12 @@ class ScriptRuntime implements Host {
   late bool humanMode = cfg['human'] == true;
   late num clickOffset = (cfg['clickOffset'] as num?) ?? 0;
   late num typeDelay = (cfg['typeDelay'] as num?) ?? 50; // ms between letters of type()
+  late num actionDelay = (cfg['actionDelay'] as num?) ?? 0; // ms after every input action
+  bool _actionDone = false; // an input action ran since the last statement
+
+  /// «Запустить замедленно»: pause before every line of the main script.
+  late final int slowMs = (cfg['slowMs'] as num?)?.toInt() ?? 0;
+  int _slowLine = -1;
   late double timeJitter = ((cfg['timeJitter'] as num?) ?? 0).toDouble();
   late final int maxRuntimeMs = (cfg['maxRuntimeMs'] as num?)?.toInt() ?? 0;
   late final int maxLoops = (cfg['maxLoops'] as num?)?.toInt() ?? 0;
@@ -272,6 +278,17 @@ class ScriptRuntime implements Host {
       _emitLine();
       await _waitWhilePaused();
     }
+    if (_actionDone) {
+      // set_option("action_delay"): slow programs and sites get time to
+      // react before the next statement (a check of the screen, a click).
+      _actionDone = false;
+      if (actionDelay > 0) await sleep(actionDelay, jitter: false);
+    }
+    if (slowMs > 0 && _nested == 0 && line != _slowLine) {
+      _slowLine = line;
+      _emitLine();
+      await sleep(slowMs, jitter: false);
+    }
     if (_lineSw.elapsedMilliseconds >= 40) _emitLine();
   }
 
@@ -279,6 +296,7 @@ class ScriptRuntime implements Host {
   void loopTick(int line) {
     _loops++;
     _stepLine = -1; // a loop body on one line still stops on every pass
+    _slowLine = -1;
     if (maxLoops > 0 && _loops > maxLoops) {
       throw LimitSignal('Сработал лимит циклов: $maxLoops повторений');
     }

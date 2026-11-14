@@ -161,6 +161,11 @@ String formatDuration(int ms) {
   return '${s ~/ 3600} ч ${(s % 3600 ~/ 60).toString().padLeft(2, '0')} мин';
 }
 
+/// A short pause for hints: "200 мс", "0,5 с", "2 с".
+String formatPause(int ms) => ms < 1000
+    ? '$ms мс'
+    : '${(ms / 1000).toStringAsFixed(ms % 1000 == 0 ? 0 : 1).replaceAll('.', ',')} с';
+
 const statusLabels = {
   'ok': 'завершён',
   'stopped': 'остановлен',
@@ -344,6 +349,7 @@ class AppController extends ChangeNotifier {
   int settingsEpoch = 0;
 
   bool _stepStart = false;
+  bool _slowStart = false; // «Запустить замедленно»
   Timer? _markerTimer;
 
   /// Windows started the program at logon (`--autostart`): it goes to the

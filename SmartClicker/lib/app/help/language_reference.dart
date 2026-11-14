@@ -199,6 +199,7 @@ set_option("human", true)        плавные движения по криво
 set_option("click_offset", 5)    разброс всех кликов ±5 px
 set_option("time_jitter", 15%)   разброс всех wait ±15%
 set_option("type_delay", 30)     пауза между буквами type, мс (по умолчанию из настроек, 50)
+set_option("action_delay", 200)  пауза после каждого действия (клик, клавиша, type…), мс; 0 — нет
 
 Строки: s.length  s.toUpperCase()  s.toLowerCase()  s.trim()  s.includes("a")
         s.startsWith  s.endsWith  s.indexOf  s.split(",")  s.replace("a","b")  s.substring(0, 3)

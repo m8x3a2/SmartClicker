@@ -216,6 +216,8 @@ class ScriptToolbar extends StatelessWidget {
               switch (v) {
                 case 'step':
                   app.run(step: true);
+                case 'slow':
+                  app.run(slow: true);
                 case 'check':
                   app.checkNow();
                 case 'unbreak':
@@ -247,6 +249,10 @@ class ScriptToolbar extends StatelessWidget {
                   value: 'step',
                   enabled: idle,
                   child: const Text('Запустить пошагово (кнопка «Шаг» — следующая строка)')),
+              PopupMenuItem(
+                  value: 'slow',
+                  enabled: idle,
+                  child: Text('Запустить замедленно (${formatPause(app.settings.slowRunMs)} на строку)')),
               PopupMenuItem(
                   value: 'check',
                   enabled: idle,

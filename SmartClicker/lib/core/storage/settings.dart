@@ -15,7 +15,7 @@ const settingsGroups = <String, List<String>>{
   'hotkeys': ['stopKey', 'stopKey2', 'cornerStop', 'pauseKey', 'recordKey', 'pickKey', 'runKey', 'holdBackHotkeys'],
   'run': [
     'runDelaySec', 'maxRuntimeMin', 'maxLoops', 'checkBeforeRun', //
-    'restartOnError', 'restartDelaySec', 'allowPower',
+    'restartOnError', 'restartDelaySec', 'allowPower', 'actionDelayMs', 'slowRunMs',
   ],
   'record': [
     'recordDelaySec', 'recMode', 'recDwellMs', 'recWindow', 'recText', //
@@ -67,6 +67,12 @@ class Settings {
   /// row (0 — off), after a pause of [restartDelaySec].
   int restartOnError = 0;
   int restartDelaySec = 10;
+
+  /// Pause after every input action (click, key, type…), ms; 0 — none.
+  int actionDelayMs = 0;
+
+  /// «Запустить замедленно»: pause before every line of the script, ms.
+  int slowRunMs = 500;
   bool recPercent = true;
   bool recSmart = true;
   bool human = false;
@@ -182,6 +188,8 @@ class Settings {
     s.checkBeforeRun = get('checkBeforeRun', s.checkBeforeRun);
     s.restartOnError = get('restartOnError', s.restartOnError);
     s.restartDelaySec = get('restartDelaySec', s.restartDelaySec);
+    s.actionDelayMs = get('actionDelayMs', s.actionDelayMs);
+    s.slowRunMs = get('slowRunMs', s.slowRunMs);
     s.recPercent = get('recPercent', s.recPercent);
     s.recSmart = get('recSmart', s.recSmart);
     s.human = get('human', s.human);
@@ -250,6 +258,8 @@ class Settings {
         'checkBeforeRun': checkBeforeRun,
         'restartOnError': restartOnError,
         'restartDelaySec': restartDelaySec,
+        'actionDelayMs': actionDelayMs,
+        'slowRunMs': slowRunMs,
         'recPercent': recPercent,
         'recSmart': recSmart,
         'human': human,

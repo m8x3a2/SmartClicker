@@ -70,9 +70,11 @@ extension ScriptRuntimeBuiltinsUtil on ScriptRuntime {
           dryRun = truthy(v);
         case 'type_delay':
           typeDelay = _n(c, v, name);
+        case 'action_delay':
+          actionDelay = math.max(0, _n(c, v, name));
         default:
           c.fail('set_option: неизвестная настройка "$name" '
-              '(human, click_offset, time_jitter, type_delay, dry_run)');
+              '(human, click_offset, time_jitter, type_delay, action_delay, dry_run)');
       }
       return null;
     });

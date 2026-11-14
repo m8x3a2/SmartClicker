@@ -65,6 +65,7 @@ extension ScriptRuntimeRuntimeInput on ScriptRuntime {
       emit({'t': 'mark', 'x': at.x, 'y': at.y});
       await this.sleep(400, jitter: false);
     }
+    _actionDone = true;
     if (dryRun) {
       log('[тест] $description', 'action');
       return false;
