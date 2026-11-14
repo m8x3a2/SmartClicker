@@ -472,6 +472,23 @@ mixin _SystemWindows implements PlatformBackend {
     }
   }
 
+  static const _beepTypes = {'info': 0x40, 'ok': 0, 'warn': 0x30, 'error': 0x10};
+
+  @override
+  void beep(String kind) => _MessageBeep(_beepTypes[kind] ?? 0x40);
+
+  @override
+  bool playSound(String path) {
+    if (path.isEmpty) return _PlaySoundW(nullptr, 0, 0) != 0;
+    final p = path.toNativeUtf16();
+    try {
+      // SND_FILENAME | SND_ASYNC | SND_NODEFAULT: no system sound instead.
+      return _PlaySoundW(p, 0, 0x20000 | 0x1 | 0x2) != 0;
+    } finally {
+      calloc.free(p);
+    }
+  }
+
   @override
   void setClipboard(String text) {
     final units = text.codeUnits;

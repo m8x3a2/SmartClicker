@@ -10,6 +10,14 @@ final _gdi32 = DynamicLibrary.open('gdi32.dll');
 
 final _kernel32 = DynamicLibrary.open('kernel32.dll');
 
+final _winmm = DynamicLibrary.open('winmm.dll');
+
+final _MessageBeep =
+    _user32.lookupFunction<Int32 Function(Uint32), int Function(int)>('MessageBeep');
+
+final _PlaySoundW = _winmm.lookupFunction<Int32 Function(Pointer<Utf16>, IntPtr, Uint32),
+    int Function(Pointer<Utf16>, int, int)>('PlaySoundW');
+
 final _GetLastError = _kernel32.lookupFunction<Uint32 Function(),
     int Function()>('GetLastError');
 

@@ -91,7 +91,33 @@ extension ScriptRuntimeBuiltinsSystem on ScriptRuntime {
       return ok;
     });
     _def('get_clipboard', (c) => backend.getClipboard());
+
+    _def('beep', (c) {
+      final kind = c.args.isEmpty ? 'info' : _s(c, c.arg(0), 'beep').toLowerCase();
+      if (!const {'info', 'ok', 'warn', 'error'}.contains(kind)) {
+        c.fail('beep: звук может быть "info", "ok", "warn" или "error", а не "$kind"');
+      }
+      backend.beep(kind);
+      return null;
+    });
+
+    _def('sound', (c) {
+      final v = c.args.isEmpty ? null : c.arg(0);
+      if (v == null) {
+        backend.playSound(''); // sound() — stop
+        return null;
+      }
+      var name = _s(c, v, 'sound');
+      if (!name.toLowerCase().endsWith('.wav')) name = '$name.wav';
+      final path = _path(name);
+      if (!File(path).existsSync()) {
+        c.fail('sound: нет файла "$name" (звуки .wav кладите в папку files, как картинки)');
+      }
+      if (!backend.playSound(path)) log('Не удалось проиграть "$name" (нужен обычный .wav)', 'warn');
+      return null;
+    });
     _def('set_clipboard', (c) {
+      _cancelClipboardRestore(); // the script manages the clipboard itself
       backend.setClipboard(stringify(c.arg(0)));
       return null;
     });

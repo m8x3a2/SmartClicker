@@ -167,6 +167,15 @@ final namedParams = <String, PSpec>{
   'duration':
       PSpec('duration', paramHints['duration']!, kind: PK.ms, def: '300', label: 'плавно за'),
   'delay': PSpec('delay', paramHints['delay']!, kind: PK.ms, def: '50', label: 'пауза между буквами'),
+  'method': PSpec('method', paramHints['method']!,
+      kind: PK.choice,
+      def: '"keys"',
+      label: 'как печатать',
+      options: const {
+        '"auto"': 'само (надёжно)',
+        '"keys"': 'настоящими клавишами',
+        '"unicode"': 'символами Юникода',
+      }),
   'unit': PSpec('unit', paramHints['unit']!,
       kind: PK.choice, def: '"%"', label: 'единицы', options: const {'"%"': 'проценты'}),
   'speed': PSpec('speed', paramHints['speed']!, kind: PK.number, def: '2', label: 'скорость'),
@@ -242,7 +251,7 @@ const functionSpecs = <FSpec>[
       [PSpec('key', _hKey, kind: PK.key, def: '"shift"')], 'key_up("shift")'),
   FSpec('type', 'keys', 'напечатать {text}',
       [PSpec('text', 'что напечатать (любой язык)', kind: PK.text, def: '"Привет"')],
-      'type("Привет")', named: ['delay']),
+      'type("Привет")', named: ['delay', 'method']),
   FSpec('paste', 'keys', 'вставить текст {text}',
       [PSpec('text', 'текст вставляется через буфер обмена (Ctrl+V) — быстро и без раскладки',
           kind: PK.text, def: '"Привет"')],
@@ -366,6 +375,17 @@ const functionSpecs = <FSpec>[
     PSpec('title', 'заголовок плашки', kind: PK.text, def: '"SmartClicker"'),
     PSpec('text', 'текст плашки', kind: PK.text, def: '"Готово"', optional: true),
   ], 'notify("SmartClicker", "Готово")'),
+  FSpec('beep', 'vars', 'звук Windows {kind}', [
+    PSpec('kind', 'какой звук', kind: PK.choice, def: '"info"', optional: true, options: {
+      '"info"': 'сообщение',
+      '"ok"': 'обычный',
+      '"warn"': 'предупреждение',
+      '"error"': 'ошибка',
+    }),
+  ], 'beep()'),
+  FSpec('sound', 'vars', 'проиграть звук {name}', [
+    PSpec('name', 'файл .wav из папки files (как картинки), без «.wav»', kind: PK.text, def: '"сигнал"'),
+  ], 'sound("сигнал")'),
   FSpec('ask', 'vars', 'спросить при запуске {text} {default}', [
     PSpec('text', 'вопрос, который покажется при нажатии «Запуск» (пишите как есть, без вычислений)',
         kind: PK.text, def: '"Сколько раз?"'),
@@ -393,6 +413,9 @@ const functionSpecs = <FSpec>[
       '"human"': 'человеческие движения (true/false)',
       '"click_offset"': 'разброс клика, px',
       '"time_jitter"': 'разброс пауз, например 10%',
+      '"type_delay"': 'пауза между буквами type, мс',
+      '"type_method"': 'как печатает type: "auto", "unicode", "keys"',
+      '"action_delay"': 'пауза после каждого действия, мс',
     }),
     PSpec('value', 'новое значение', def: 'true'),
   ], 'set_option("human", true)'),

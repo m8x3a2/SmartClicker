@@ -43,9 +43,9 @@ class SmokeBackend extends WindowsBackend {
   }
 
   @override
-  void typeText(String text, {bool layoutKeys = true}) {
+  void typeText(String text, {TypeMethod method = TypeMethod.auto}) {
     check();
-    super.typeText(text, layoutKeys: layoutKeys);
+    super.typeText(text, method: method);
   }
 }
 

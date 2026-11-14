@@ -9,6 +9,7 @@ import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
 import 'package:smart_clicker/core/engine/runtime.dart';
+import 'package:smart_clicker/platform/backend.dart';
 
 import 'smoke_type.dart' show SmokeBackend;
 
@@ -46,14 +47,14 @@ class MatrixBackend extends SmokeBackend {
   }
 
   @override
-  void typeText(String text, {bool layoutKeys = true}) {
+  void typeText(String text, {TypeMethod method = TypeMethod.auto}) {
     onCharacter?.call(chars);
     if (toggleDuringType && (chars == 8 || chars == 24)) {
       keyEvent('capslock', true);
       keyEvent('capslock', false);
     }
     chars++;
-    super.typeText(text, layoutKeys: layoutKeys);
+    super.typeText(text, method: method);
   }
 }
 

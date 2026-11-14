@@ -38,7 +38,8 @@ class StubBackend implements PlatformBackend {
   void keyEvent(String key, bool down) =>
       calls.add('${down ? 'keydown' : 'keyup'} $key');
   @override
-  void typeText(String text, {bool layoutKeys = true}) => calls.add('type $text');
+  void typeText(String text, {TypeMethod method = TypeMethod.auto}) =>
+      calls.add(method == TypeMethod.auto ? 'type $text' : 'type:${method.name} $text');
   @override
   int pixel(int x, int y) => pixelColor;
   /// What [readText] returns (tests).
@@ -245,6 +246,13 @@ class StubBackend implements PlatformBackend {
   @override
   bool systemPower(String action) {
     calls.add('power $action');
+    return true;
+  }
+  @override
+  void beep(String kind) => calls.add('beep $kind');
+  @override
+  bool playSound(String path) {
+    calls.add('sound $path');
     return true;
   }
   @override

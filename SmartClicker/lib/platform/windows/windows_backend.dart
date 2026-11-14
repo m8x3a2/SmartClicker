@@ -159,7 +159,7 @@ class WindowsBackend with _SystemWindows, _ProgramWindow, _KeyHook, _StartupEntr
   }
 
   @override
-  void typeText(String text, {bool layoutKeys = true}) {
+  void typeText(String text, {TypeMethod method = TypeMethod.auto}) {
     for (final unit in text.codeUnits) {
       if (unit == 0x0A) {
         _vkEvent(0x0D, true);
@@ -167,8 +167,59 @@ class WindowsBackend with _SystemWindows, _ProgramWindow, _KeyHook, _StartupEntr
         continue;
       }
       if (unit == 0x0D) continue;
-      if (layoutKeys && _typeLayoutKey(unit)) continue;
+      final sent = switch (method) {
+        TypeMethod.auto => _typeLayoutKey(unit),
+        TypeMethod.keys => _typeRealKey(unit),
+        TypeMethod.unicode => false,
+      };
+      if (sent) continue;
       _keyInputs([(0, unit, 0x0004), (0, unit, 0x0006)]);
+    }
+  }
+
+  /// The person holds Shift, Ctrl, Alt or Win: a real key would combine with
+  /// it into a shortcut, so characters go as Unicode then.
+  bool _userModifiersDown() =>
+      _physicallyDown(0x10) || _physicallyDown(0x11) || _physicallyDown(0x12) ||
+      _physicallyDown(0x5B) || _physicallyDown(0x5C);
+
+  /// Presses [vk] for one character, with Shift when [shift].
+  void _sendCharKey(int vk, bool shift) {
+    final scan = _MapVirtualKeyW(vk, 0);
+    final shiftScan = _MapVirtualKeyW(0x10, 0);
+    _keyInputs([
+      if (shift) (0x10, shiftScan, 0),
+      (vk, scan, 0),
+      (vk, scan, 2),
+      if (shift) (0x10, shiftScan, 2),
+    ]);
+  }
+
+  /// type(method: "keys"): the real key of the focused window's layout for
+  /// every character it has (Shift chosen for the current Caps Lock state);
+  /// false — not in the layout, send it as Unicode.
+  bool _typeRealKey(int unit) {
+    if (unit < 0x20 || unit == 0x7F || _userModifiersDown()) return false;
+    final layout = _GetKeyboardLayout(inputThreads().focus);
+    final mapped = _VkKeyScanExW(unit, layout);
+    if (mapped == -1 || (mapped >> 8) > 1) return false; // needs Ctrl/AltGr
+    final vk = mapped & 0xFF;
+    final state = calloc<Uint8>(256);
+    final buf = calloc<Uint16>(8);
+    try {
+      state[0x14] = _GetKeyState(0x14) & 1;
+      for (final shift in [mapped >> 8 == 1, mapped >> 8 != 1]) {
+        state[0x10] = shift ? 0x80 : 0;
+        final n = _ToUnicodeEx(vk, _MapVirtualKeyW(vk, 0), state, buf, 8, 4, layout);
+        if (n == 1 && buf[0] == unit) {
+          _sendCharKey(vk, shift);
+          return true;
+        }
+      }
+      return false;
+    } finally {
+      calloc.free(state);
+      calloc.free(buf);
     }
   }
 
@@ -176,12 +227,7 @@ class WindowsBackend with _SystemWindows, _ProgramWindow, _KeyHook, _StartupEntr
   /// in the recipient's layout with Unicode packets. Never synthesize AltGr
   /// or Ctrl combinations: those can invoke application shortcuts.
   bool _typeLayoutKey(int unit) {
-    if (unit < 0x20 || unit == 0x7F) return false;
-    if (_physicallyDown(0x10) || _physicallyDown(0x11) ||
-        _physicallyDown(0x12) || _physicallyDown(0x5B) ||
-        _physicallyDown(0x5C)) {
-      return false;
-    }
+    if (unit < 0x20 || unit == 0x7F || _userModifiersDown()) return false;
     final layout = _GetKeyboardLayout(inputThreads().focus);
     final mapped = _VkKeyScanExW(unit, layout);
     if (mapped == -1 || (mapped >> 8) > 1) return false;
@@ -217,14 +263,7 @@ class WindowsBackend with _SystemWindows, _ProgramWindow, _KeyHook, _StartupEntr
           if (!exact) break;
         }
         if (!exact) continue;
-        final scan = _MapVirtualKeyW(vk, 0);
-        final shiftScan = _MapVirtualKeyW(0x10, 0);
-        _keyInputs([
-          if (shift) (0x10, shiftScan, 0),
-          (vk, scan, 0),
-          (vk, scan, 2),
-          if (shift) (0x10, shiftScan, 2),
-        ]);
+        _sendCharKey(vk, shift);
         return true;
       }
       return false;

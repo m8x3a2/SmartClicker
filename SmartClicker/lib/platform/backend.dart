@@ -70,9 +70,8 @@ abstract class PlatformBackend {
 
   /// [key] is a name from `keys.dart`. Throws [ArgumentError] if unknown.
   void keyEvent(String key, bool down);
-  /// Types [text]. [layoutKeys]: letters of the keyboard layout as real
-  /// keys (with Shift), the rest as Unicode; false — everything as Unicode.
-  void typeText(String text, {bool layoutKeys = true});
+  /// Types [text] the way [method] says (see [TypeMethod]).
+  void typeText(String text, {TypeMethod method = TypeMethod.auto});
 
   /// Colour at a screen point as 0xRRGGBB.
   int pixel(int x, int y);
@@ -148,6 +147,13 @@ abstract class PlatformBackend {
 
   String getClipboard();
   void setClipboard(String text);
+
+  /// A system sound: "info", "ok", "warn" or "error".
+  void beep(String kind);
+
+  /// Plays a .wav file without waiting ('' — stop the sound playing now).
+  /// False if it cannot be played.
+  bool playSound(String path);
 
   /// Native "open" / "save as" dialog for a file with extension [ext]; null if cancelled
   /// or not supported.
@@ -260,3 +266,20 @@ abstract class PlatformBackend {
 
 PlatformBackend createBackend() =>
     Platform.isWindows ? WindowsBackend() : StubBackend();
+
+/// How type() sends characters.
+enum TypeMethod {
+  /// Real keys only for characters that come out the same in every loaded
+  /// layout and with either Caps Lock state (digits, space…), the rest as
+  /// Unicode: never a wrong letter.
+  auto,
+
+  /// Everything as Unicode characters: the layout does not matter, but some
+  /// programs and most games do not see them.
+  unicode,
+
+  /// Real keys of the focused window's layout (with Shift) for every
+  /// character it has, the rest as Unicode: for programs that react only to
+  /// real keys. A layout switch while typing gives other letters.
+  keys,
+}

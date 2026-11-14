@@ -65,6 +65,7 @@ class ScriptRuntime implements Host {
   late num clickOffset = (cfg['clickOffset'] as num?) ?? 0;
   late num typeDelay = (cfg['typeDelay'] as num?) ?? 50; // ms between letters of type()
   late num actionDelay = (cfg['actionDelay'] as num?) ?? 0; // ms after every input action
+  TypeMethod typeMethod = TypeMethod.auto; // set_option("type_method")
   bool _actionDone = false; // an input action ran since the last statement
 
   /// «Запустить замедленно»: pause before every line of the main script.
@@ -91,6 +92,11 @@ class ScriptRuntime implements Host {
   final Stopwatch _sinceKeys = Stopwatch(); // since the last keyboard input
   int _keysUnsettled = 0; // keys sent since the last _settleKeys()
   Map<String, Object?>? _data;
+
+  /// paste(): what was in the clipboard before, put back a moment later.
+  Timer? _clipRestore;
+  String _clipBefore = '';
+  final Stopwatch _clipSw = Stopwatch();
 
   ScriptRuntime(this.backend, this.cfg, this.emit, {math.Random? random})
       : rng = random ?? math.Random() {
@@ -188,6 +194,7 @@ class ScriptRuntime implements Host {
       line = _line;
     } finally {
       releaseAll();
+      await _restoreClipboardNow();
     }
     // Values at the end (or at the moment of an error) for the variables
     // view and the error report.
