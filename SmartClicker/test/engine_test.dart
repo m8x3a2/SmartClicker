@@ -13,6 +13,27 @@ import 'package:smart_clicker/core/engine/runtime.dart';
 import 'package:smart_clicker/platform/backend.dart';
 import 'package:smart_clicker/platform/stub_backend.dart';
 
+class DelayedFocusBackend extends StubBackend {
+  DelayedFocusBackend({this.succeedOn = 1, this.delayed = false});
+  final int succeedOn;
+  final bool delayed;
+  int attempts = 0;
+
+  @override
+  bool focusWindow(int handle) {
+    attempts++;
+    if (attempts == succeedOn) {
+      if (delayed) {
+        Timer(const Duration(milliseconds: 80), () => super.focusWindow(handle));
+      } else {
+        super.focusWindow(handle);
+      }
+    }
+    // A successful API result does not guarantee foreground activation.
+    return true;
+  }
+}
+
 class Run {
   final StubBackend backend;
   final List<Map<String, Object?>> events;
@@ -281,6 +302,35 @@ log(p.x, p.y)
 
     const game = WindowInfo(1, 'Game', 'game.exe', 1, 100, 100, 200, 100);
     const other = WindowInfo(2, 'Chat', 'chat.exe', 2, 0, 0, 50, 50);
+
+    test('focus_window ждёт отложенную активацию', () async {
+      final b = DelayedFocusBackend(delayed: true)
+        ..windowList = [game, other]
+        ..active = other;
+      final r = await run('log(focus_window("game"))', backend: b);
+      expect(r.logs, ['true']);
+      expect(b.active?.handle, game.handle);
+      expect(b.attempts, 1);
+    });
+
+    test('focus_window повторяет неудачную активацию', () async {
+      final b = DelayedFocusBackend(succeedOn: 2)
+        ..windowList = [game, other]
+        ..active = other;
+      final r = await run('log(focus_window("game"))', backend: b);
+      expect(r.logs, ['true']);
+      expect(b.attempts, 2);
+    });
+
+    test('focus_window не сообщает успех без активного окна', () async {
+      final b = DelayedFocusBackend(succeedOn: 99)
+        ..windowList = [game, other]
+        ..active = other;
+      final r = await run('log(focus_window("game"))', backend: b);
+      expect(r.logs, ['false']);
+      expect(b.attempts, 3);
+      expect(b.active?.handle, other.handle);
+    });
 
     test('require_window выводит перекрытое окно вперёд (focus: true по умолчанию)', () async {
       final b = StubBackend()

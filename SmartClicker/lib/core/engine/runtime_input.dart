@@ -136,7 +136,16 @@ extension ScriptRuntimeRuntimeInput on ScriptRuntime {
   /// Brings window [handle] to the front (after the keys sent are read).
   Future<bool> _focus(int handle) async {
     await _settleKeys();
-    return backend.focusWindow(handle);
+    // Cross-thread foreground activation may complete after the API returns.
+    // Yield between checks so the recipient can process activation messages.
+    for (var attempt = 0; attempt < 3; attempt++) {
+      backend.focusWindow(handle);
+      for (var poll = 0; poll < 5; poll++) {
+        await this.sleep(50, jitter: false);
+        if (backend.activeWindow()?.handle == handle) return true;
+      }
+    }
+    return false;
   }
 
   Future<void> _press(String button, num holdMs) async {

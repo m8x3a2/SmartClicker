@@ -142,8 +142,49 @@ class WindowsBackend with _SystemWindows, _ProgramWindow, _KeyHook, _StartupEntr
         continue;
       }
       if (unit == 0x0D) continue;
+      if (_typeLayoutKey(unit)) continue;
       _keyInput(0, unit, 0x0004); // KEYEVENTF_UNICODE
       _keyInput(0, unit, 0x0004 | 0x0002);
+    }
+  }
+
+  /// Prefer ordinary keys in text services; preserve characters unavailable
+  /// in the recipient's layout with Unicode packets. Never synthesize AltGr
+  /// or Ctrl combinations: those can invoke application shortcuts.
+  bool _typeLayoutKey(int unit) {
+    if (unit < 0x20 || unit == 0x7F) return false;
+    if (_physicallyDown(0x10) || _physicallyDown(0x11) ||
+        _physicallyDown(0x12) || _physicallyDown(0x5B) ||
+        _physicallyDown(0x5C)) {
+      return false;
+    }
+    final layout = _GetKeyboardLayout(inputThreads().focus);
+    final mapped = _VkKeyScanExW(unit, layout);
+    if (mapped == -1 || (mapped >> 8) > 1) return false;
+    final vk = mapped & 0xFF;
+    final state = calloc<Uint8>(256);
+    final buf = calloc<Uint16>(8);
+    try {
+      state[0x14] = _GetKeyState(0x14) & 1; // Caps Lock
+      // Verify both Shift states, including Caps Lock and dead-key layouts.
+      for (final shift in [mapped >> 8 == 1, mapped >> 8 != 1]) {
+        state[0x10] = shift ? 0x80 : 0;
+        final n = _ToUnicodeEx(vk, _MapVirtualKeyW(vk, 0),
+            state, buf, 8, 4, layout); // Do not change dead-key state.
+        if (n != 1 || buf[0] != unit) continue;
+        if (shift) _vkEvent(0x10, true);
+        try {
+          _vkEvent(vk, true);
+          _vkEvent(vk, false);
+        } finally {
+          if (shift) _vkEvent(0x10, false);
+        }
+        return true;
+      }
+      return false;
+    } finally {
+      calloc.free(state);
+      calloc.free(buf);
     }
   }
 

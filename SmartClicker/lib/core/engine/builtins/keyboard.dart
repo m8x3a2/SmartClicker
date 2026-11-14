@@ -45,11 +45,8 @@ extension ScriptRuntimeBuiltinsKeyboard on ScriptRuntime {
 
     _def('type', (c) async {
       final text = stringify(c.arg(0, 'text'));
-      // Programs take typed letters with a lag: sent all at once, some of
-      // them are lost (the Windows 11 Notepad loses most, and at 10 ms per
-      // letter still one now and then; 20 ms is reliable there — checked by
-      // tool/smoke_type.dart). The setting is 50 ms for a margin; delay: 0 —
-      // all at once.
+      // Pace text services even when the backend uses ordinary layout keys.
+      // Keep the configurable 50 ms default; delay: 0 sends without pauses.
       final delay = _nOr(c, c.opt('delay'), humanMode ? math.max(70, typeDelay) : typeDelay, 'delay');
       final shown = text.length > 40 ? '${text.substring(0, 40)}…' : text;
       if (!await _guardInput('ввод текста "$shown"')) return null;

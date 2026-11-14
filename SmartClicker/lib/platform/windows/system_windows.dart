@@ -146,7 +146,8 @@ mixin _SystemWindows implements PlatformBackend {
     // in programs (unlike Alt).
     _vkEvent(0x87, true);
     _vkEvent(0x87, false);
-    return _SetForegroundWindow(handle) != 0;
+    _SetForegroundWindow(handle);
+    return _GetForegroundWindow() == handle;
   }
 
   @override
