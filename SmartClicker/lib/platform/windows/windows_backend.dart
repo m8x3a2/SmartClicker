@@ -189,13 +189,24 @@ class WindowsBackend with _SystemWindows, _ProgramWindow, _KeyHook, _StartupEntr
     final state = calloc<Uint8>(256);
     final buf = calloc<Uint16>(8);
     try {
-      state[0x14] = _GetKeyState(0x14) & 1; // Caps Lock
-      // Verify both Shift states, including Caps Lock and dead-key layouts.
+      // GetKeyState belongs to our queue, not the recipient's. Even a fresh
+      // snapshot can race a Caps Lock toggle before this key is processed.
+      // Use layout keys only when BOTH Caps states produce the exact text.
+      // Case-sensitive letters fall back to Unicode; digits and boundaries
+      // still use ordinary keys for compatibility with text services.
       for (final shift in [mapped >> 8 == 1, mapped >> 8 != 1]) {
         state[0x10] = shift ? 0x80 : 0;
-        final n = _ToUnicodeEx(vk, _MapVirtualKeyW(vk, 0),
-            state, buf, 8, 4, layout); // Do not change dead-key state.
-        if (n != 1 || buf[0] != unit) continue;
+        var exact = true;
+        for (final caps in [0, 1]) {
+          state[0x14] = caps;
+          final n = _ToUnicodeEx(vk, _MapVirtualKeyW(vk, 0),
+              state, buf, 8, 4, layout); // Do not change dead-key state.
+          if (n != 1 || buf[0] != unit) {
+            exact = false;
+            break;
+          }
+        }
+        if (!exact) continue;
         final scan = _MapVirtualKeyW(vk, 0);
         final shiftScan = _MapVirtualKeyW(0x10, 0);
         _keyInputs([
