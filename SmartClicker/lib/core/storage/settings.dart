@@ -12,7 +12,7 @@ const settingsGroups = <String, List<String>>{
   'tray': ['trayOnMinimize', 'trayOnClose'],
   'startup': ['autostartTray'],
   'data': ['resetWord'],
-  'hotkeys': ['stopKey', 'stopKey2', 'cornerStop', 'pauseKey', 'recordKey', 'pickKey', 'runKey', 'holdBackHotkeys'],
+  'hotkeys': ['stopKey', 'stopKey2', 'cornerStop', 'pauseKey', 'recordKey', 'pickKey', 'ghostKey', 'runKey', 'holdBackHotkeys'],
   'run': [
     'runDelaySec', 'maxRuntimeMin', 'maxLoops', 'checkBeforeRun', //
     'restartOnError', 'restartDelaySec', 'allowPower', 'actionDelayMs', 'slowRunMs',
@@ -48,6 +48,10 @@ class Settings {
   String pauseKey = 'f8';
   String recordKey = 'f9';
   String pickKey = 'f6';
+
+  /// During a recording: the "ghost" mode on/off — clicks and keys are
+  /// recorded but reach no program.
+  String ghostKey = 'f3';
   String runKey = '';
 
   /// Hotkeys do not reach the active program (keyboard hook).
@@ -175,6 +179,7 @@ class Settings {
     s.pauseKey = get('pauseKey', s.pauseKey);
     s.recordKey = get('recordKey', s.recordKey);
     s.pickKey = get('pickKey', s.pickKey);
+    s.ghostKey = get('ghostKey', s.ghostKey);
     s.runKey = get('runKey', s.runKey);
     s.holdBackHotkeys = get('holdBackHotkeys', s.holdBackHotkeys);
     final sk = json['scriptKeys'];
@@ -248,6 +253,7 @@ class Settings {
         'pauseKey': pauseKey,
         'recordKey': recordKey,
         'pickKey': pickKey,
+        'ghostKey': ghostKey,
         'runKey': runKey,
         'holdBackHotkeys': holdBackHotkeys,
         'scriptKeys': scriptKeys,

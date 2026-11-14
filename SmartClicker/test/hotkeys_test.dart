@@ -41,7 +41,7 @@ void main() {
     expect(held(RunState.running), unorderedEquals(['f12', 'esc', 'f8', 'f6', 'f7']));
     expect(held(RunState.paused), unorderedEquals(['f12', 'esc', 'f8', 'f6', 'f7']));
     expect(held(RunState.countdown), unorderedEquals(['f12', 'esc', 'f6', 'f7']));
-    expect(held(RunState.recording), unorderedEquals(['f12', 'f9', 'f6', 'f7']));
+    expect(held(RunState.recording), unorderedEquals(['f12', 'f9', 'f6', 'f7', 'f3']));
 
     s.stopKey2 = '';
     expect(held(RunState.running), unorderedEquals(['f12', 'f8', 'f6', 'f7']));
@@ -69,7 +69,10 @@ void main() {
       ..runKey = 'ctrl+f5'
       ..scriptKeys = {'Ферма': 'f4'};
     final rec = AppControllerHotkeys.recordingHotkeys(s);
-    expect(rec, unorderedEquals(['f12', 'f9', 'f6', 'f7']));
+    // F3 — the ghost mode: works only while recording, never recorded.
+    expect(rec, unorderedEquals(['f12', 'f9', 'f6', 'f7', 'f3']));
+    expect(AppControllerHotkeys.heldBackHotkeys(s, RunState.idle, hasScript: true),
+        isNot(contains('f3')));
     // Pause, Esc and keys of scripts do nothing while recording: recorded.
     expect(rec, isNot(contains('f8')));
     expect(rec, isNot(contains('esc')));

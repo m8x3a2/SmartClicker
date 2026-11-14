@@ -90,6 +90,12 @@ class StubBackend implements PlatformBackend {
   ({int x, int y, int ageMs})? userMouse;
   @override
   bool watchUserMouse(bool on) => userMouseWatched = on;
+  bool ghost = false;
+  @override
+  bool setGhost(bool on) {
+    ghost = on;
+    return true;
+  }
   @override
   ({int x, int y, int ageMs})? lastUserMouse() => userMouseWatched ? userMouse : null;
 

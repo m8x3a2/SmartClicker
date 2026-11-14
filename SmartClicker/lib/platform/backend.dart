@@ -240,6 +240,11 @@ abstract class PlatformBackend {
   /// move of the user was seen since [watchUserMouse] was turned on.
   ({int x, int y, int ageMs})? lastUserMouse();
 
+  /// The "ghost" mode of a recording: the user's clicks and keys reach no
+  /// program, but [isVkDown] still sees them (so they are recorded). Clicks
+  /// on the program's own windows pass. False if it cannot be done.
+  bool setGhost(bool on);
+
   /// Removes the keyboard hook of [holdBackKeys] (on exit).
   void stopKeyHook();
 

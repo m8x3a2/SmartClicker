@@ -8,6 +8,7 @@ extension AppControllerRecord on AppController {
         settings.pauseKey,
         settings.recordKey,
         settings.pickKey,
+        settings.ghostKey,
         settings.runKey,
         settings.miniKey,
         ...settings.scriptKeys.values,
@@ -58,7 +59,8 @@ extension AppControllerRecord on AppController {
     state = RunState.recCountdown;
     final taken = AppControllerHotkeys.recordingHotkeys(settings).map((k) => k.toUpperCase());
     notify('Запись', '${taken.join(', ')} работают в SmartClicker и в запись не попадут. '
-        'Остальные клавиши, в том числе Esc и ${settings.pauseKey.toUpperCase()}, записываются');
+        'Остальные клавиши, в том числе Esc и ${settings.pauseKey.toUpperCase()}, записываются. '
+        '${settings.ghostKey.toUpperCase()} — призрак: клики записываются, но не нажимаются');
     for (countdown = settings.recordDelaySec; countdown > 0; countdown--) {
       _changed();
       await Future<void>.delayed(const Duration(seconds: 1));
@@ -71,8 +73,39 @@ extension AppControllerRecord on AppController {
     _changed();
   }
 
+  /// The "ghost" mode of a recording: the user's clicks and keys are
+  /// recorded, but reach no program (record pressing "Send" without
+  /// sending). A red frame around the screen shows it is on.
+  void setGhost(bool on) {
+    if (on == ghost) return;
+    if (on && state != RunState.recording) return;
+    if (on && !backend.setGhost(true)) {
+      notify('Призрак недоступен', 'Не удалось перехватить мышь и клавиатуру', level: 'warn');
+      return;
+    }
+    if (!on) backend.setGhost(false);
+    ghost = on;
+    try {
+      backend.beep(on ? 'warn' : 'info');
+    } catch (_) {}
+    final s = backend.screenSize();
+    if (on) {
+      backend.showFrame(3, 3, s.w - 6, s.h - 6); // drawn outside: along the edges
+      notify(
+          '👻 Призрак включён',
+          'Клики и клавиши записываются, но НЕ доходят до программ. '
+              'Выключить — ${settings.ghostKey.toUpperCase()}, колесо мыши не перехватывается',
+          level: 'warn');
+    } else {
+      backend.hideFrame();
+      notify('Призрак выключен', 'Клики и клавиши снова доходят до программ', level: 'ok');
+    }
+    _changed();
+  }
+
   void stopRecording() {
     if (state != RunState.recording) return;
+    setGhost(false);
     final code = _recorder.stop(RecordOptions(
       percent: settings.recPercent,
       smart: settings.recSmart,

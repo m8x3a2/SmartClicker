@@ -2,7 +2,8 @@
 // hook in its own isolate that eats presses completing one of our combos and
 // tells keys held by the user from keys pressed by our scripts. On request
 // the same isolate also watches where the USER moved the mouse (WH_MOUSE_LL)
-// for the "mouse into a corner" stop.
+// for the "mouse into a corner" stop, and in the "ghost" mode of a recording
+// eats the user's clicks and keys (they are recorded, but reach no program).
 part of 'windows_backend.dart';
 
 // The hook lives in a separate isolate that does nothing but run its
@@ -24,6 +25,8 @@ const _khMouseSeen = 421; // byte: 1 = a move of the user was seen
 const _khMouseX = 424; // Int32: where the user last moved the mouse
 const _khMouseY = 428; // Int32
 const _khMouseTick = 432; // Uint32: GetTickCount of that move
+const _khGhost = 436; // byte: 1 = ghost mode — the user's clicks and keys are eaten
+const _khPid = 440; // Uint32: our process (clicks on our own windows pass)
 
 /// Thread message to the hook isolate: re-read [_khMouseWanted].
 const _khMouseMsg = 0x8007; // WM_APP + 7
@@ -77,9 +80,10 @@ void _keyHookMain(int address) {
 int _mouseHookHandle = 0;
 NativeCallable<_HookProc>? _mouseHookProc;
 
-/// Puts the mouse hook on or off as [_khMouseWanted] says (hook isolate).
+/// Puts the mouse hook on or off as [_khMouseWanted] and the ghost mode
+/// say (hook isolate).
 void _syncMouseHook() {
-  final want = _kh[_khMouseWanted] != 0;
+  final want = _kh[_khMouseWanted] != 0 || _kh[_khGhost] != 0;
   if (want && _mouseHookHandle == 0) {
     final proc = NativeCallable<_HookProc>.isolateLocal(_userMouseHook, exceptionalReturn: 0);
     _mouseHookHandle = _SetWindowsHookExW(14, proc.nativeFunction, _GetModuleHandleW(nullptr), 0);
@@ -97,11 +101,35 @@ void _syncMouseHook() {
   }
 }
 
-/// Remembers where the user (not a script) last moved the mouse.
+/// Mouse button messages of WH_MOUSE_LL -> (VK of the button, down).
+const _ghostButtons = {
+  0x0201: (0x01, true), 0x0202: (0x01, false), // left
+  0x0204: (0x02, true), 0x0205: (0x02, false), // right
+  0x0207: (0x04, true), 0x0208: (0x04, false), // middle
+};
+
+/// Remembers where the user (not a script) last moved the mouse; in the
+/// ghost mode eats the user's mouse buttons.
 int _userMouseHook(int code, int wParam, int lParam) {
-  if (code == 0 && wParam == 0x0200) {
-    // MSLLHOOKSTRUCT: pt.x, pt.y, mouseData, flags, time, dwExtraInfo at 24.
-    final extra = Pointer<IntPtr>.fromAddress(lParam + 24).value;
+  if (code != 0) return _CallNextHookEx(0, code, wParam, lParam);
+  // MSLLHOOKSTRUCT: pt.x, pt.y, mouseData, flags, time, dwExtraInfo at 24.
+  final extra = Pointer<IntPtr>.fromAddress(lParam + 24).value;
+  final button = _ghostButtons[wParam];
+  if (button != null && extra != _ownInputTag) {
+    final (vk, down) = button;
+    if (!down) {
+      // The release of an eaten press is eaten too (even after the ghost
+      // mode was turned off), so no program gets half a click.
+      if (_kh[_khDown + vk] != 0) {
+        _kh[_khDown + vk] = 0;
+        return 1;
+      }
+    } else if (_kh[_khGhost] != 0 && !_overOwnWindow(lParam)) {
+      _kh[_khDown + vk] = 1; // the recording sees it as held (isVkDown)
+      return 1;
+    }
+  }
+  if (wParam == 0x0200) {
     if (extra != _ownInputTag) {
       final p = Pointer<Int32>.fromAddress(lParam);
       final base = _kh.address;
@@ -114,9 +142,31 @@ int _userMouseHook(int code, int wParam, int lParam) {
   return _CallNextHookEx(0, code, wParam, lParam);
 }
 
+/// Is the click at the point of MSLLHOOKSTRUCT [lParam] on a window of
+/// our own program (the mini panel's Stop must keep working in the ghost
+/// mode)?
+bool _overOwnWindow(int lParam) {
+  final p = Pointer<Int32>.fromAddress(lParam);
+  final hwnd = _WindowFromPoint((p[1] << 32) | (p[0] & 0xFFFFFFFF));
+  if (hwnd == 0) return false;
+  _GetWindowThreadProcessId(hwnd, _khPidBuf);
+  return _khPidBuf.value == Pointer<Uint32>.fromAddress(_kh.address + _khPid).value;
+}
+
+final Pointer<Uint32> _khPidBuf = calloc<Uint32>(); // hook isolate only
+
+/// Generic Shift / Ctrl / Alt also mean their left and right keys (the
+/// hook only sees the sided ones).
+List<int> _vkSides(int vk) => switch (vk) {
+  0x10 => const [0x10, 0xA0, 0xA1],
+  0x11 => const [0x11, 0xA2, 0xA3],
+  0x12 => const [0x12, 0xA4, 0xA5],
+  _ => [vk],
+};
+
 bool _khIsDown(int vk) =>
     (_GetAsyncKeyState(vk) & 0x8000) != 0 ||
-    (vk < 256 && _kh[_khDown + vk] != 0);
+    (vk < 256 && _vkSides(vk).any((v) => _kh[_khDown + v] != 0));
 
 bool _khCompletes(int vk) {
   final n = _kh[_khCount];
@@ -147,8 +197,10 @@ int _keyHook(int code, int wParam, int lParam) {
           _kh[_khDown + vk] = 0;
           return 1;
         }
-      } else if (_kh[_khDown + vk] != 0 || _khCompletes(vk)) {
-        _kh[_khDown + vk] = 1; // auto-repeat of a held hotkey is eaten as well
+      } else if (_kh[_khDown + vk] != 0 || _khCompletes(vk) || _kh[_khGhost] != 0) {
+        // Auto-repeat of a held hotkey is eaten as well. In the ghost mode
+        // every key of the user is: the recording still sees it (isVkDown).
+        _kh[_khDown + vk] = 1;
         return 1;
       }
     }
@@ -161,21 +213,13 @@ mixin _KeyHook implements PlatformBackend {
   String _khLast = '';
 
   bool _physicallyDown(int vk);
-
-  /// Generic Shift / Ctrl / Alt also mean their left and right keys (the
-  /// hook only sees the sided ones).
-  static List<int> _sides(int vk) => switch (vk) {
-    0x10 => const [0x10, 0xA0, 0xA1],
-    0x11 => const [0x11, 0xA2, 0xA3],
-    0x12 => const [0x12, 0xA4, 0xA5],
-    _ => [vk],
-  };
+  int get ownPid;
 
   @override
   bool isUserKeyDown(int vk) {
     final b = _khBuf;
     if (b == nullptr || vk < 0 || vk > 255) return isVkDown(vk);
-    final sides = _sides(vk);
+    final sides = _vkSides(vk);
     if (sides.any((v) => b[_khUser + v] != 0 || b[_khDown + v] != 0)) {
       return true;
     }
@@ -188,7 +232,10 @@ mixin _KeyHook implements PlatformBackend {
   /// The key is held down, but the hook ate it (GetAsyncKeyState does not
   /// see eaten keys).
   bool _heldBack(int vk) =>
-      _khBuf != nullptr && vk >= 0 && vk < 256 && _khBuf[_khDown + vk] != 0;
+      _khBuf != nullptr &&
+      vk >= 0 &&
+      vk < 256 &&
+      _vkSides(vk).any((v) => _khBuf[_khDown + v] != 0);
 
   @override
   bool holdBackKeys(List<List<int>> combos) {
@@ -240,6 +287,17 @@ mixin _KeyHook implements PlatformBackend {
       // Not started yet: the isolate reads the flag itself once it is up.
       if (thread != 0) _PostThreadMessageW(thread, _khMouseMsg, 0, 0);
     }
+    return Pointer<Int32>.fromAddress(b.address + _khStatus).value != -1;
+  }
+
+  @override
+  bool setGhost(bool on) {
+    if (_khBuf == nullptr) holdBackKeys(const []); // starts the hook isolate
+    final b = _khBuf;
+    Pointer<Uint32>.fromAddress(b.address + _khPid).value = ownPid;
+    b[_khGhost] = on ? 1 : 0;
+    final thread = Pointer<Uint32>.fromAddress(b.address + _khThread).value;
+    if (thread != 0) _PostThreadMessageW(thread, _khMouseMsg, 0, 0); // mouse hook on/off
     return Pointer<Int32>.fromAddress(b.address + _khStatus).value != -1;
   }
 

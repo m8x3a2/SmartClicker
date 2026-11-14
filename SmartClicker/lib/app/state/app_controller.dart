@@ -436,6 +436,9 @@ class AppController extends ChangeNotifier {
 
   /// The main window is shrunk into a small always-on-top panel.
   bool compact = false;
+
+  /// The "ghost" mode of a recording is on (see [AppControllerRecord.setGhost]).
+  bool ghost = false;
   bool _autoCompact = false;
 
   /// VK codes of a hotkey such as "f12" or "ctrl+alt+s" (empty if invalid).
