@@ -134,7 +134,7 @@ class WindowsBackend with _SystemWindows, _ProgramWindow, _KeyHook, _StartupEntr
   }
 
   @override
-  void typeText(String text) {
+  void typeText(String text, {bool layoutKeys = true}) {
     for (final unit in text.codeUnits) {
       if (unit == 0x0A) {
         _vkEvent(0x0D, true);
@@ -142,7 +142,7 @@ class WindowsBackend with _SystemWindows, _ProgramWindow, _KeyHook, _StartupEntr
         continue;
       }
       if (unit == 0x0D) continue;
-      if (_typeLayoutKey(unit)) continue;
+      if (layoutKeys && _typeLayoutKey(unit)) continue;
       _keyInput(0, unit, 0x0004); // KEYEVENTF_UNICODE
       _keyInput(0, unit, 0x0004 | 0x0002);
     }

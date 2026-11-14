@@ -45,13 +45,17 @@ extension ScriptRuntimeBuiltinsKeyboard on ScriptRuntime {
 
     _def('type', (c) async {
       final text = stringify(c.arg(0, 'text'));
-      // Pace text services even when the backend uses ordinary layout keys.
-      // Keep the configurable 50 ms default; delay: 0 sends without pauses.
+      // Programs read typed letters with a lag: sent at once, some are lost
+      // (Windows 11 Notepad). Letters of the layout go as real keys, one per
+      // `delay` (setting, 50 ms); delay: 0 — all at once, as Unicode.
       final delay = _nOr(c, c.opt('delay'), humanMode ? math.max(70, typeDelay) : typeDelay, 'delay');
       final shown = text.length > 40 ? '${text.substring(0, 40)}…' : text;
       if (!await _guardInput('ввод текста "$shown"')) return null;
       if (delay <= 0) {
-        backend.typeText(text);
+        // All at once only as Unicode: real keys sent in a burst come out
+        // wrong (Shift not yet applied: "мир1" for "мир!", checked in the
+        // Windows 11 Notepad), Unicode letters are at worst lost.
+        backend.typeText(text, layoutKeys: false);
         _keysSent();
       } else {
         for (final ch in text.split('')) {

@@ -70,7 +70,9 @@ abstract class PlatformBackend {
 
   /// [key] is a name from `keys.dart`. Throws [ArgumentError] if unknown.
   void keyEvent(String key, bool down);
-  void typeText(String text);
+  /// Types [text]. [layoutKeys]: letters of the keyboard layout as real
+  /// keys (with Shift), the rest as Unicode; false — everything as Unicode.
+  void typeText(String text, {bool layoutKeys = true});
 
   /// Colour at a screen point as 0xRRGGBB.
   int pixel(int x, int y);
