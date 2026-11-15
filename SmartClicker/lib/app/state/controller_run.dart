@@ -97,6 +97,9 @@ extension AppControllerRun on AppController {
     'watch': settings.bottomTab == 'vars',
     'showClicks': settings.showClicks,
     'allowPower': settings.allowPower,
+    'selfProtect': settings.selfProtect,
+    'safetyFile': paths.safetyFile,
+    'dataDir': paths.base,
     // Unsaved edits take part in the run: what you see is what runs.
     'scripts': {...store.all(), ...buffers, ?current: editor.text},
     'dryRun': settings.dryRun,
@@ -221,6 +224,12 @@ extension AppControllerRun on AppController {
   void _maybeRestart(String name, String source) {
     final max = settings.restartOnError;
     if (max <= 0) return;
+    if (!automationOn) {
+      _log('warn', safeMode
+          ? '↻ Безопасный режим: перезапуск после ошибки не делается'
+          : '↻ Автоматика ещё не включена — перезапуска после ошибки не будет');
+      return;
+    }
     if (_restarts >= max) {
       _log('warn', '↻ Перезапусков было $max — больше не перезапускаю');
       notify(

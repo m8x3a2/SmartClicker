@@ -26,6 +26,7 @@ lib/
                  line_diff (построчные различия)
     engine/      runtime.dart — среда работающего скрипта (пауза, стоп, лимиты);
                  runtime_args / runtime_input — разбор аргументов, ввод;
+                 runtime_safety — защита от самоуничтожения внутри движка;
                  builtins/ — встроенные функции по темам (mouse, keyboard, time,
                  screen, windows, system, util); runner — изолят; human — «как человек»
     vision/      bitmap, png (свой кодек), image_search (поиск картинки),
@@ -39,7 +40,9 @@ lib/
     automation/  автозапуск по программе
     reports/     отчёты об ошибках, журнал сбоев программы
     system/      «Доступы»: что работает на этом компьютере и что мешает;
-                 startup — запуск вместе с Windows (команда, разбор записи)
+                 startup — запуск вместе с Windows (команда, разбор записи);
+                 safety — безопасный режим (safe.txt, reset.txt, петля падений) и
+                 правила защиты от самоуничтожения (выключение, процессы, запись)
   platform/
     backend.dart          интерфейс к ОС (ввод, экран, окна, процессы, система)
     stub_backend.dart     заглушка для тестов и неподдержанных ОС
@@ -58,14 +61,14 @@ lib/
     state/        AppController: app_controller.dart (поля, создание) +
                   controller_*.dart — действия по темам (scripts, settings, debug,
                   notify, run, autorun, window, files, reports, record, hotkeys, ask, batch,
-                  backup…); edit_history.dart — Ctrl+Z / Ctrl+Y своего скрипта;
+                  backup, safety — безопасный режим и задержка автоматики…); edit_history.dart — Ctrl+Z / Ctrl+Y своего скрипта;
                   script_stats.dart — статистика скриптов по истории запусков
     services/     ocr_install (загрузка моделей по кнопке)
     help/         тексты справки, по файлу на раздел (help_texts.dart — общий экспорт)
     (ui/vision/picture_actions.dart — окна «где используется», переименование, удаление картинки)
     templates/    шаблоны окна «Новый скрипт»
     ui/           экраны, по папке на экран:
-                  home/ scripts/ editor/ blocks/ (+ render/) help/ settings/
+                  home/ (+ safety_banner — полоса безопасного режима) scripts/ editor/ blocks/ (+ render/) help/ settings/
                   autorun/ history/ tools/ vision/ notes/ new_script/ mini_panel/
                   widgets/ — общие части (заголовок страницы, диалоги, SplitView…)
 test/   тесты (flutter test)

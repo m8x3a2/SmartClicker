@@ -196,6 +196,9 @@ final _PeekMessageW = _user32.lookupFunction<
     Int32 Function(Pointer<Uint8>, IntPtr, Uint32, Uint32, Uint32),
     int Function(Pointer<Uint8>, int, int, int, int)>('PeekMessageW');
 
+final _GetTickCount64 =
+    _kernel32.lookupFunction<Uint64 Function(), int Function()>('GetTickCount64');
+
 final _GetTickCount =
     _kernel32.lookupFunction<Uint32 Function(), int Function()>('GetTickCount');
 

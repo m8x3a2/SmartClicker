@@ -80,6 +80,7 @@ extension ScriptRuntimeBuiltinsSystem on ScriptRuntime {
         c.fail('system_power("$action"): скриптам запрещено $what. '
             'Разрешить: Настройки → Запуск → «Разрешить скриптам выключать компьютер»');
       }
+      if (powerOffActions.contains(action)) _guardPower(c, 'system_power("$action")', what);
       if (dryRun) {
         log('[тест] $what', 'action');
         return true;
@@ -127,12 +128,15 @@ extension ScriptRuntimeBuiltinsSystem on ScriptRuntime {
       return f.existsSync() ? f.readAsStringSync() : null;
     });
     _def('write_file', (c) {
-      File(_path(_s(c, c.arg(0), 'write_file'))).writeAsStringSync(stringify(c.arg(1)));
+      final path = _path(_s(c, c.arg(0), 'write_file'));
+      _guardWrite(c, 'write_file', path);
+      File(path).writeAsStringSync(stringify(c.arg(1)));
       return null;
     });
     _def('append_file', (c) {
-      File(_path(_s(c, c.arg(0), 'append_file')))
-          .writeAsStringSync(stringify(c.arg(1)), mode: FileMode.append);
+      final path = _path(_s(c, c.arg(0), 'append_file'));
+      _guardWrite(c, 'append_file', path);
+      File(path).writeAsStringSync(stringify(c.arg(1)), mode: FileMode.append);
       return null;
     });
     _def('file_exists', (c) => File(_path(_s(c, c.arg(0), 'file_exists'))).existsSync());

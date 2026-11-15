@@ -17,9 +17,11 @@ import 'human.dart';
 import '../vision/image.dart';
 import '../vision/paddle_ocr.dart';
 import '../vision/ocr.dart';
+import '../system/safety.dart';
 
 part 'runtime_args.dart';
 part 'runtime_input.dart';
+part 'runtime_safety.dart';
 part 'builtins/mouse.dart';
 part 'builtins/keyboard.dart';
 part 'builtins/time.dart';

@@ -256,6 +256,12 @@ class StubBackend implements PlatformBackend {
     return n == 'game' || n == 'game.exe' ? 300 << 20 : null;
   }
 
+  /// Windows has been running for a day (set lower to test the guard
+  /// against restart loops).
+  int uptime = 86400000;
+  @override
+  int uptimeMs() => uptime;
+
   @override
   bool systemPower(String action) {
     calls.add('power $action');

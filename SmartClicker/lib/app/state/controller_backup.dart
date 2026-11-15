@@ -68,6 +68,7 @@ extension AppControllerBackup on AppController {
   /// settings, no unsaved scripts), so the program ends right away and a new
   /// copy starts.
   void _restartNow() {
+    markCleanExit();
     backend.restartSelf();
     backend.hideTray();
     backend.stopKeyHook();

@@ -160,6 +160,7 @@ run_command("ipconfig") → {code, out, err};  run_command("...", wait: false)
 battery_level() → 0..100 или null     is_charging()     is_network_connected()
 get_clipboard()   set_clipboard("текст")
 read_file("a.txt")  write_file("a.txt", "текст")  append_file(...)  file_exists(...)
+   (имя без пути — папка files; в папку программы и данных, кроме files, писать нельзя)
 save_data("gold", 1500)   load_data("gold", 0)    память между запусками
 cpu_usage() → загрузка процессора, % (замер за 0,5 с; interval: 1000 — дольше)
 cpu_usage("game.exe") → сколько процессора берёт программа, % от всех ядер; null — не запущена
@@ -168,6 +169,9 @@ ram_info() → {total, free, used} в МБ
 system_power("lock") — заблокировать экран; "sleep" — сон, "hibernate" — гибернация,
    "shutdown" — выключить, "restart" — перезагрузить, "logoff" — выйти из учётной записи.
    Всё, кроме "lock", нужно сначала разрешить: Настройки → Запуск.
+   Защита от самоуничтожения не даст выключить компьютер в первые 5 минут
+   после включения Windows и чаще раза в 30 минут (то же для run_command
+   с shutdown); kill_process не закрывает SmartClicker и части Windows.
    Пример — дождаться конца загрузки и усыпить компьютер:
        wait_text(820, 400, 300, 60, "Готово", timeout: 3h)
        system_power("sleep")

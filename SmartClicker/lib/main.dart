@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'app/state/app_controller.dart';
 import 'core/reports/report.dart';
 import 'core/storage/storage.dart';
+import 'core/system/safety.dart';
 import 'core/system/startup.dart';
 import 'platform/windows/single_instance.dart';
 import 'app/ui/editor/code_editor.dart';
@@ -29,7 +30,16 @@ void main(List<String> args) {
   WidgetsFlutterBinding.ensureInitialized();
   // Bugs of the program itself are written to logs/app_errors.log instead
   // of disappearing silently in the release build.
-  ErrorJournal.path = AppPaths.detect().appErrorsFile;
+  final paths = AppPaths.detect();
+  ErrorJournal.path = paths.appErrorsFile;
+  // Rescue files (safe.txt, reset.txt) work even when the program does not
+  // open: they are read before the settings.
+  final rescue = takeRescueFiles([exeDir(), paths.base]);
+  final moved = rescue.reset
+      ? moveAside([paths.settingsFile, paths.scheduleFile, paths.autorunFile],
+          '${paths.base}${Platform.pathSeparator}rescue${Platform.pathSeparator}'
+          '${DateTime.now().toIso8601String().substring(0, 19).replaceAll(':', '-')}')
+      : const <String>[];
   FlutterError.onError = (d) {
     FlutterError.presentError(d);
     ErrorJournal.record(d.exception, d.stack, where: d.library ?? 'flutter');
@@ -38,13 +48,28 @@ void main(List<String> args) {
     ErrorJournal.record(e, s);
     return true;
   };
-  runApp(SmartClickerApp(startedWithWindows: args.contains(autostartArg)));
+  runApp(SmartClickerApp(
+    startedWithWindows: args.contains(autostartArg),
+    safe: args.contains(safeArg),
+    rescue: rescue,
+    resetMoved: moved,
+  ));
 }
 
 class SmartClickerApp extends StatefulWidget {
   /// Windows started the program at logon (see core/system/startup.dart).
   final bool startedWithWindows;
-  const SmartClickerApp({super.key, this.startedWithWindows = false});
+
+  /// `--safe`, the rescue files and what reset.txt moved aside.
+  final bool safe;
+  final RescueRequest? rescue;
+  final List<String> resetMoved;
+  const SmartClickerApp(
+      {super.key,
+      this.startedWithWindows = false,
+      this.safe = false,
+      this.rescue,
+      this.resetMoved = const []});
 
   @override
   State<SmartClickerApp> createState() => _SmartClickerAppState();
@@ -52,7 +77,8 @@ class SmartClickerApp extends StatefulWidget {
 
 class _SmartClickerAppState extends State<SmartClickerApp> {
   late final AppController app = AppController(CodeController())
-    ..startedWithWindows = widget.startedWithWindows;
+    ..startedWithWindows = widget.startedWithWindows
+    ..beginStart(safeArg: widget.safe, rescue: widget.rescue, resetMoved: widget.resetMoved);
   final _nav = GlobalKey<NavigatorState>();
   late final AppLifecycleListener _lifecycle =
       AppLifecycleListener(onExitRequested: _onExitRequested);
@@ -75,6 +101,7 @@ class _SmartClickerAppState extends State<SmartClickerApp> {
     final r = await _askExit();
     // The tray icon would otherwise stay next to the clock until hovered.
     if (r == AppExitResponse.exit) {
+      app.markCleanExit();
       app.backend.hideTray();
       app.backend.stopKeyHook();
       app.backend.releaseAll(); // keys a running script holds

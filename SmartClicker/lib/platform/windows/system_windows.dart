@@ -203,6 +203,9 @@ mixin _SystemWindows implements PlatformBackend {
   }
 
   @override
+  int uptimeMs() => _GetTickCount64();
+
+  @override
   ({int idle, int total})? cpuTimes() {
     final t = calloc<Uint64>(3);
     try {

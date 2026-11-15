@@ -55,7 +55,7 @@ void main() {
     final s = Settings()..autostartTray = false;
     expect(Settings.fromJson(s.toJson()).autostartTray, isFalse);
     expect(Settings.fromJson({}).autostartTray, isTrue);
-    expect(settingsGroups['startup'], ['autostartTray']);
+    expect(settingsGroups['startup'], ['autostartTray', 'autostartDelaySec']);
 
     List<AccessItem> items(bool on) => accessItems(AccessFacts(
         elevated: false, paddle: true, allowPower: false, dataDir: 'x', startsWithWindows: on));

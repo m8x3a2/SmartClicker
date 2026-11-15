@@ -128,6 +128,7 @@ extension ScriptRuntimeBuiltinsWindows on ScriptRuntime {
 
     _def('kill_process', (c) {
       final q = _s(c, c.arg(0), 'kill_process');
+      _guardKill(c, q);
       if (dryRun) {
         log('[тест] завершить процесс $q', 'action');
         return 0;
@@ -138,6 +139,7 @@ extension ScriptRuntimeBuiltinsWindows on ScriptRuntime {
 
     _def('run_command', (c) async {
       final cmd = _s(c, c.arg(0), 'run_command');
+      if (isPowerCommand(cmd)) _guardPower(c, 'run_command', 'выключить или перезагрузить компьютер');
       if (dryRun) {
         log('[тест] команда: $cmd', 'action');
         return null;

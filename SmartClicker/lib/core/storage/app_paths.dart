@@ -44,6 +44,10 @@ class AppPaths {
   String get autorunFile => _p('autorun.json');
   String get notificationsFile => _p('notifications.json');
   String get dataFile => _p('data.json');
+  /// Journal of the guard against self-destruction (starts of the program,
+  /// when scripts switched the computer off). Not in dataEntries on purpose:
+  /// it only matters on this computer, for minutes.
+  String get safetyFile => _p('safety.json');
   /// Last answers to the questions of scripts (ask).
   String get answersFile => _p('answers.json');
   String get reports => _p('reports');

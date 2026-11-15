@@ -126,6 +126,9 @@ abstract class PlatformBackend {
   /// none runs.
   int? processMemory(String name);
 
+  /// How long Windows has been running since it was switched on, ms.
+  int uptimeMs();
+
   /// "lock", "sleep", "hibernate", "shutdown", "restart" or "logoff".
   /// False when the system refused.
   bool systemPower(String action);

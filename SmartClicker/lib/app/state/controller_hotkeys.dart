@@ -321,6 +321,8 @@ extension AppControllerHotkeys on AppController {
     if (_tick % 200 == 0) _checkSchedule(); // every 5 seconds
     if (_tick % 40 == 20) _checkAutorun(); // every second
     if (_tick % 40 == 0) _syncTray();
+    // Countdown of the delayed automation in the banner (and turning it on).
+    if (_tick % 40 == 10 && automationHeldUntil != null && !automationOn) _changed();
     _hideAfterAutostart();
     // Another copy of the program showed our window (see SingleInstance):
     // it is no longer in the tray.

@@ -49,6 +49,7 @@ extension AppControllerAutorun on AppController {
 
   void _checkAutorun() {
     if (autoRules.isEmpty || autoRules.every((r) => !r.enabled)) return;
+    if (!automationOn) return;
     if (!isRunning) _autoOwner = null;
     final List<(AutoRule, AutoAction)> actions;
     try {
@@ -96,7 +97,7 @@ extension AppControllerAutorun on AppController {
   }
 
   void _checkSchedule() {
-    if (schedule.isEmpty || state != RunState.idle) return;
+    if (schedule.isEmpty || state != RunState.idle || !automationOn) return;
     final now = DateTime.now();
     for (final t in schedule) {
       if (!t.isDue(now, _started)) continue;

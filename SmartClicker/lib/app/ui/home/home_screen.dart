@@ -16,6 +16,7 @@ import '../scripts/ask_dialog.dart';
 import '../scripts/batch_summary.dart';
 import '../scripts/run_script_fix_dialog.dart';
 import '../scripts/scripts_screen.dart';
+import 'safety_banner.dart';
 
 class HomePage extends StatefulWidget {
   final AppController app;
@@ -156,16 +157,23 @@ class _HomePageState extends State<HomePage> {
               ),
               const VerticalDivider(width: 1),
               Expanded(
-                child: IndexedStack(
-                  index: _page,
+                child: Column(
                   children: [
-                    ScriptsPage(app: app),
-                    ToolsPage(app: app),
-                    SchedulePage(app: app),
-                    HistoryPage(app: app),
-                    HelpPage(app: app),
-                    VisionPage(app: app),
-                    SettingsPage(app: app),
+                    SafetyBanner(app: app),
+                    Expanded(
+                      child: IndexedStack(
+                        index: _page,
+                        children: [
+                          ScriptsPage(app: app),
+                          ToolsPage(app: app),
+                          SchedulePage(app: app),
+                          HistoryPage(app: app),
+                          HelpPage(app: app),
+                          VisionPage(app: app),
+                          SettingsPage(app: app),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),

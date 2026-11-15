@@ -24,6 +24,7 @@ import '../../platform/keys.dart';
 import '../../platform/stub_backend.dart';
 import '../../core/system/access.dart';
 import '../../core/system/startup.dart';
+import '../../core/system/safety.dart';
 import '../../core/automation/autorun.dart';
 import '../../core/recorder/recorder.dart';
 import '../../core/reports/report.dart';
@@ -55,6 +56,7 @@ part 'controller_pictures.dart';
 part 'controller_ask.dart';
 part 'controller_batch.dart';
 part 'controller_backup.dart';
+part 'controller_safety.dart';
 
 /// A piece of the screen selected by the user.
 class ScreenCapture {
@@ -359,6 +361,18 @@ class AppController extends ChangeNotifier {
   /// Windows started the program at logon (`--autostart`): it goes to the
   /// tray as soon as its window appears, if the settings say so.
   bool startedWithWindows = false;
+
+  /// Safe mode: nothing starts by itself (schedule, autorun, restart after
+  /// an error); why it is on. See controller_safety.dart.
+  bool safeMode = false;
+  String safeReason = '';
+
+  /// After a start with Windows automation waits until this moment.
+  DateTime? automationHeldUntil;
+
+  /// "Do not turn automation on until the program restarts".
+  bool automationOff = false;
+  SafetyJournal? _safety;
 
   /// The window is hidden; only the tray icon is left.
   bool hiddenToTray = false;

@@ -10,12 +10,12 @@ const settingsGroups = <String, List<String>>{
   'editor': ['hintTyping', 'hintHover'],
   'mini': ['miniKey', 'miniOnRun'],
   'tray': ['trayOnMinimize', 'trayOnClose'],
-  'startup': ['autostartTray'],
+  'startup': ['autostartTray', 'autostartDelaySec'],
   'data': ['resetWord'],
   'hotkeys': ['stopKey', 'stopKey2', 'cornerStop', 'pauseKey', 'recordKey', 'pickKey', 'ghostKey', 'markKey', 'runKey', 'holdBackHotkeys'],
   'run': [
     'runDelaySec', 'maxRuntimeMin', 'maxLoops', 'checkBeforeRun', //
-    'restartOnError', 'restartDelaySec', 'allowPower', 'actionDelayMs', 'slowRunMs',
+    'restartOnError', 'restartDelaySec', 'allowPower', 'selfProtect', 'actionDelayMs', 'slowRunMs',
   ],
   'record': [
     'recordDelaySec', 'recMode', 'recDwellMs', 'recWindow', 'recText', //
@@ -133,6 +133,14 @@ class Settings {
   /// Started together with Windows: go to the tray right away.
   bool autostartTray = true;
 
+  /// After a start together with Windows the schedule, autorun and restart
+  /// after an error wait this long (0 — at once).
+  int autostartDelaySec = 300;
+
+  /// Guard against self-destruction (core/system/safety.dart): no restart
+  /// loops, a script cannot end the program or Windows itself.
+  bool selfProtect = true;
+
   /// The word to type before "reset everything" (up to 30 letters).
   String resetWord = 'reset';
   bool trayOnClose = false;
@@ -233,6 +241,8 @@ class Settings {
     s.miniOnRun = get('miniOnRun', s.miniOnRun);
     s.trayOnMinimize = get('trayOnMinimize', s.trayOnMinimize);
     s.autostartTray = get('autostartTray', s.autostartTray);
+    s.autostartDelaySec = get('autostartDelaySec', s.autostartDelaySec).clamp(0, 3600);
+    s.selfProtect = get('selfProtect', s.selfProtect);
     final w = get('resetWord', s.resetWord).trim();
     s.resetWord = w.isEmpty || w.length > 30 ? 'reset' : w;
     s.trayOnClose = get('trayOnClose', s.trayOnClose);
@@ -307,6 +317,8 @@ class Settings {
         'miniOnRun': miniOnRun,
         'trayOnMinimize': trayOnMinimize,
         'autostartTray': autostartTray,
+        'autostartDelaySec': autostartDelaySec,
+        'selfProtect': selfProtect,
         'resetWord': resetWord,
         'trayOnClose': trayOnClose,
         'hintTyping': hintTyping,
