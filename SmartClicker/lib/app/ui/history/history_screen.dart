@@ -1,4 +1,5 @@
-// The "History" page: past runs (with error reports) and notifications.
+// The "History" page: past runs (with error reports), statistics of
+// scripts and notifications.
 
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ import '../../../core/reports/report.dart';
 import '../widgets/status_colors.dart';
 import '../widgets/page_parts.dart';
 import '../help/help_screen.dart';
+import 'script_stats_view.dart';
 
 class HistoryPage extends StatelessWidget {
   final AppController app;
@@ -18,19 +20,20 @@ class HistoryPage extends StatelessWidget {
     return ListenableBuilder(
       listenable: app,
       builder: (context, _) => DefaultTabController(
-        length: 2,
+        length: 3,
         child: Column(
           children: [
             pageHeader('История'),
             TabBar(
               tabs: [
                 Tab(text: 'Запуски (${app.history.length})'),
+                const Tab(text: 'По скриптам'),
                 Tab(text: 'Уведомления (${app.notifications.length})'),
               ],
             ),
             Expanded(
               child: TabBarView(
-                children: [_runs(context), _notifications(context)],
+                children: [_runs(context), ScriptStatsList(app: app), _notifications(context)],
               ),
             ),
           ],

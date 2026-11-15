@@ -47,17 +47,19 @@ lib/
     windows/              реализация для Windows: windows_backend (ввод, экран),
                           system_windows (окна, процессы, система), program_window
                           (трей, маркер, рамка, мини-панель), win32_bindings,
-                          ocr (Windows.Media.Ocr), tray, single_instance,
+                          ocr (Windows.Media.Ocr), tray (+ tray_icon — точка
+                          состояния на значке), single_instance,
                           folder_dialog (выбор папки), com (вызовы COM),
                           key_hook (горячие клавиши не доходят до других программ;
-                          мышь человека / скрипта для «мышь в угол»),
+                          мышь человека / скрипта для «мышь в угол»; призрак записи),
                           startup_entry (запуск вместе с Windows, реестр HKCU\Run)
     onnx/ort.dart         ONNX Runtime для PaddleOCR
   app/
     state/        AppController: app_controller.dart (поля, создание) +
                   controller_*.dart — действия по темам (scripts, settings, debug,
                   notify, run, autorun, window, files, reports, record, hotkeys, ask, batch,
-                  backup…); edit_history.dart — Ctrl+Z / Ctrl+Y своего скрипта
+                  backup…); edit_history.dart — Ctrl+Z / Ctrl+Y своего скрипта;
+                  script_stats.dart — статистика скриптов по истории запусков
     services/     ocr_install (загрузка моделей по кнопке)
     help/         тексты справки, по файлу на раздел (help_texts.dart — общий экспорт)
     (ui/vision/picture_actions.dart — окна «где используется», переименование, удаление картинки)

@@ -7,6 +7,7 @@ import '../new_script/new_script_dialog.dart';
 import '../widgets/name_dialog.dart';
 import 'share_dialogs.dart';
 import 'ask_dialog.dart';
+import '../history/script_stats_view.dart';
 
 class _Folder {
   final String path;
@@ -158,6 +159,7 @@ class ScriptList extends StatelessWidget {
       PopupMenuItem(value: 'copy', child: Text('Создать копию')),
       PopupMenuItem(value: 'share', child: Text('Поделиться (ZIP с картинками)…')),
       PopupMenuItem(value: 'answers', child: Text('Ответы на вопросы (ask)…')),
+      PopupMenuItem(value: 'stats', child: Text('Статистика запусков…')),
       PopupMenuDivider(),
       PopupMenuItem(value: 'delete', child: Text('Удалить…')),
     ]);
@@ -186,6 +188,8 @@ class ScriptList extends StatelessWidget {
         }
         final got = await showAskDialog(context, script, asks, initial, saveOnly: true);
         if (got != null) app.saveAnswers(script, got);
+      case 'stats':
+        await showScriptStats(context, app, script);
       case 'delete':
         if (await _confirm(context, 'Удалить скрипт?',
             '«$script» будет удалён без возможности восстановления.')) {
