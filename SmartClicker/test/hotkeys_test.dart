@@ -21,7 +21,23 @@ void main() {
     down.add(0x12);
     expect(completesCombo(0x53, ctrlAltS, isDown), isTrue); // Ctrl+Alt+S
     expect(completesCombo(0x11, ctrlAltS, isDown), isFalse); // modifiers pass
-    expect(completesCombo(0x7B, AppController.comboVks('f12'), isDown), isTrue);
+    // An extra Ctrl/Alt/Win is another combo: Ctrl+Alt+F12 is not F12, and
+    // with F4 as a hotkey Alt+F4 still closes windows. Shift may be extra.
+    final f4 = AppController.comboVks('f4');
+    expect(completesCombo(0x7B, AppController.comboVks('f12'), isDown), isFalse);
+    expect(completesCombo(0x73, f4, isDown), isFalse);
+    down.clear();
+    expect(completesCombo(0x73, f4, isDown), isTrue);
+    down.add(0x12);
+    expect(completesCombo(0x73, f4, isDown), isFalse); // Alt+F4
+    down
+      ..clear()
+      ..add(0x5C);
+    expect(completesCombo(0x73, f4, isDown), isFalse); // right Win + F4
+    down
+      ..clear()
+      ..add(0x10);
+    expect(completesCombo(0x73, f4, isDown), isTrue); // Shift+F4
   });
 
   test('перехватываются только клавиши, которые сейчас что-то делают', () {

@@ -25,10 +25,20 @@ int? mainKeyOf(List<int> combo) {
   return null;
 }
 
-/// True when pressing [vk] completes [combo]: it is the main key and all
-/// the other keys of the combo are already down.
+/// True when pressing [vk] completes [combo]: it is the main key, all the
+/// other keys of the combo are already down and no other Ctrl, Alt or Win
+/// is (F4 as a hotkey must leave Alt+F4 alone).
 bool completesCombo(int vk, List<int> combo, bool Function(int vk) isDown) =>
-    mainKeyOf(combo) == vk && combo.every((k) => k == vk || isDown(k));
+    mainKeyOf(combo) == vk &&
+    combo.every((k) => k == vk || isDown(k)) &&
+    !extraModifierHeld(combo, isDown);
+
+/// Ctrl, Alt or Win is held, but [combo] does not have it. An extra Shift
+/// does not count: Shift + the key of a script asks its questions first.
+bool extraModifierHeld(List<int> combo, bool Function(int vk) isDown) =>
+    (!combo.contains(0x11) && isDown(0x11)) ||
+    (!combo.contains(0x12) && isDown(0x12)) ||
+    (!combo.contains(0x5B) && !combo.contains(0x5C) && (isDown(0x5B) || isDown(0x5C)));
 
 /// Keys that need KEYEVENTF_EXTENDEDKEY.
 const extendedVks = {

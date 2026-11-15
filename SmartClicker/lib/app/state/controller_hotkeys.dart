@@ -5,7 +5,9 @@ part of 'app_controller.dart';
 extension AppControllerHotkeys on AppController {
   bool _comboDown(String combo) {
     final vks = AppController.comboVks(combo);
-    return vks.isNotEmpty && vks.every(backend.isUserKeyDown);
+    return vks.isNotEmpty &&
+        vks.every(backend.isUserKeyDown) &&
+        !extraModifierHeld(vks, backend.isUserKeyDown);
   }
 
   bool _pressed(String combo) =>
