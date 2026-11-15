@@ -34,7 +34,7 @@ extension AppControllerDebug on AppController {
     if (settings.bottomTab == tab) return;
     settings.bottomTab = tab;
     saveSettingsQuiet();
-    if (isRunning) _runner.setWatch(tab == 'vars');
+    if (isRunning) _runner.setWatch(tab == 'vars' || settings.stateFile);
     _changed();
   }
 

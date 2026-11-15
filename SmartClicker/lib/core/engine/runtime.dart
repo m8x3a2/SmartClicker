@@ -29,6 +29,7 @@ part 'builtins/time.dart';
 part 'builtins/screen.dart';
 part 'builtins/windows.dart';
 part 'builtins/system.dart';
+part 'builtins/files.dart';
 part 'builtins/util.dart';
 
 typedef Emit = void Function(Map<String, Object?> event);
@@ -96,6 +97,7 @@ class ScriptRuntime implements Host {
   final Stopwatch _sinceKeys = Stopwatch(); // since the last keyboard input
   int _keysUnsettled = 0; // keys sent since the last _settleKeys()
   Map<String, Object?>? _data;
+  String _dataStamp = '';
 
   /// paste(): what was in the clipboard before, put back a moment later.
   Timer? _clipRestore;
@@ -377,6 +379,7 @@ class ScriptRuntime implements Host {
     _registerScreen();
     _registerWindows();
     _registerSystem();
+    _registerFiles();
     _registerUtil();
   }
 }

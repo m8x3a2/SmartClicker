@@ -25,6 +25,7 @@ const helpSections = [
   HelpSection('Для новичков', 'Первые 5 минут, запись, клавиши', Icons.school_outlined, beginnerGuide),
   HelpSection('Конструктор блоков', 'Собрать скрипт мышью', Icons.extension_outlined, blocksGuide),
   HelpSection('Картинки и текст', 'Найти кнопку, прочитать надпись', Icons.image_search, imageGuide),
+  HelpSection('Идеи использования', 'Нейросеть, файлы, запуск извне', Icons.lightbulb_outline, usageGuide),
   HelpSection('Частые ошибки', 'Почему не работает и что делать', Icons.report_problem_outlined, commonMistakes),
   HelpSection('Справочник по языку', 'Все команды кратко', Icons.menu_book_outlined, languageReference),
   HelpSection('Мои заметки', 'Свои записи, входят в промпт', Icons.sticky_note_2_outlined, null),
@@ -34,7 +35,7 @@ const helpSections = [
 /// pictures and text, and the user's notes.
 String aiPrompt(AppPaths paths) {
   final notes = notesAsText(paths);
-  return '$aiPromptHeader\n$languageReference\n$commonMistakes\n$imageGuide\n'
+  return '$aiPromptHeader\n$languageReference\n$commonMistakes\n$imageGuide\n$usageGuide\n'
       '${notes.isEmpty ? '' : '\nЗАМЕТКИ ПОЛЬЗОВАТЕЛЯ (его скрипты, функции, координаты)\n$notes'}'
       '\nЗАДАЧА: ';
 }

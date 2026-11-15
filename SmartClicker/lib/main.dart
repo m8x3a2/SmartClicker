@@ -20,10 +20,17 @@ void main(List<String> args) {
   // quits before its own window appears (it is shown after the first
   // frame). `--multi` skips the check (flutter run next to an open copy),
   // `--restarted` waits for the old copy (restart as administrator).
+  // `--run "Скрипт"` / `--stop` from another program: the open copy gets
+  // the request (and decides by its settings), its window is not shown.
+  final request = requestFromArgs(args);
   if (Platform.isWindows && !args.contains('--multi')) {
     final waitMs = args.contains('--restarted') ? 60000 : 0;
     if (!SingleInstance.acquire(waitMs: waitMs)) {
-      SingleInstance.activateOther();
+      if (request != null) {
+        sendRequest(AppPaths.detect(), request);
+      } else {
+        SingleInstance.activateOther();
+      }
       exit(0);
     }
   }
@@ -53,6 +60,7 @@ void main(List<String> args) {
     safe: args.contains(safeArg),
     rescue: rescue,
     resetMoved: moved,
+    request: request,
   ));
 }
 
@@ -64,12 +72,16 @@ class SmartClickerApp extends StatefulWidget {
   final bool safe;
   final RescueRequest? rescue;
   final List<String> resetMoved;
+
+  /// `--run` / `--stop` given to this very copy.
+  final Map<String, Object?>? request;
   const SmartClickerApp(
       {super.key,
       this.startedWithWindows = false,
       this.safe = false,
       this.rescue,
-      this.resetMoved = const []});
+      this.resetMoved = const [],
+      this.request});
 
   @override
   State<SmartClickerApp> createState() => _SmartClickerAppState();
@@ -78,7 +90,8 @@ class SmartClickerApp extends StatefulWidget {
 class _SmartClickerAppState extends State<SmartClickerApp> {
   late final AppController app = AppController(CodeController())
     ..startedWithWindows = widget.startedWithWindows
-    ..beginStart(safeArg: widget.safe, rescue: widget.rescue, resetMoved: widget.resetMoved);
+    ..beginStart(safeArg: widget.safe, rescue: widget.rescue, resetMoved: widget.resetMoved)
+    ..maybeQueue(widget.request);
   final _nav = GlobalKey<NavigatorState>();
   late final AppLifecycleListener _lifecycle =
       AppLifecycleListener(onExitRequested: _onExitRequested);

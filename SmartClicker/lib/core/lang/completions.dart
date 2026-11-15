@@ -133,6 +133,14 @@ const completions = <Completion>[
   Completion('append_file', 'append_file("a.txt", "текст")',
       'дописать в конец файла'),
   Completion('file_exists', 'file_exists("a.txt")', 'есть ли файл'),
+  Completion('read_json', 'read_json("задание.json", "ключ", значение_если_нет)',
+      'прочитать JSON-файл: весь или одно значение по ключу ("a.b" — внутрь); файла или ключа нет — третий аргумент'),
+  Completion('write_json', 'write_json("задание.json", "ключ", значение)',
+      'записать значение по ключу в JSON-файл (остальное в файле остаётся); с двумя аргументами — весь файл'),
+  Completion('wait_file', 'wait_file("задание.json", key: "ready", value: true)',
+      'ждать, пока файл изменится (или появится); с key: — пока значение не станет value:; timeout:, interval: 1000'),
+  Completion('export_vars', 'export_vars("состояние.json")',
+      'записать переменные скрипта в JSON-файл — чтобы другая программа видела, где скрипт'),
   Completion('save_data', 'save_data("ключ", значение)',
       'запомнить значение между запусками'),
   Completion('load_data', 'load_data("ключ", 0)',
@@ -214,6 +222,8 @@ const paramHints = <String, String>{
   'percent': 'вместо errors: сколько процентов образца должно совпасть, percent: 80',
   'case': '"ignore" (по умолчанию) — заглавные и строчные буквы не различаются; "exact" — различаются',
   'part': 'true (по умолчанию) — образец может быть частью текста («Начать» в «Начать игру»); false — весь текст целиком',
+  'key': 'wait_file: ключ в JSON-файле, значение которого ждать ("a.b" — внутрь)',
+  'value': 'wait_file: какое значение ждать по key: (без value: — любое «да»: true, не 0, не пустое)',
   'lookalike': 'true (по умолчанию) — похожие русские и латинские буквы считаются одинаковыми (Р и P, о и o)',
 };
 

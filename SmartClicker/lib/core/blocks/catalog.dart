@@ -194,6 +194,8 @@ final namedParams = <String, PSpec>{
       label: 'регистр',
       options: const {'"ignore"': 'не важен', '"exact"': 'важен'}),
   'part': PSpec('part', paramHints['part']!, kind: PK.bool, def: 'false', label: 'часть текста'),
+  'key': PSpec('key', paramHints['key']!, kind: PK.text, def: '"ready"', label: 'ключ'),
+  'value': PSpec('value', paramHints['value']!, def: 'true', label: 'значение'),
   'lookalike': PSpec('lookalike', paramHints['lookalike']!,
       kind: PK.bool, def: 'false', label: 'похожие рус/лат буквы'),
 };
@@ -516,7 +518,27 @@ const functionSpecs = <FSpec>[
   FSpec('file_exists', 'system', 'файл {path} есть',
       [PSpec('path', 'имя файла (в папке files) или полный путь', kind: PK.text, def: '"a.txt"')],
       'file_exists("a.txt")', returns: 'true / false', saveAs: 'exists', statement: false),
+  FSpec('read_json', 'system', 'из JSON-файла {path} значение {key} (если нет — {default})', [
+    _jsonPath,
+    PSpec('key', 'ключ: "prompt", "a.b" — внутрь; без ключа — весь файл', kind: PK.text, def: '"prompt"'),
+    PSpec('default', 'что вернуть, если файла или ключа нет', def: 'null'),
+  ], 'read_json("задание.json", "prompt")', returns: 'значение из файла', saveAs: 'value', statement: false),
+  FSpec('write_json', 'system', 'в JSON-файл {path} записать {key} = {value}', [
+    _jsonPath,
+    PSpec('key', 'ключ ("a.b" — внутрь); остальное в файле остаётся', kind: PK.text, def: '"done"'),
+    PSpec('value', 'значение', def: 'true'),
+  ], 'write_json("задание.json", "done", true)'),
+  FSpec('wait_file', 'wait', 'ждать изменения файла {path}', [_jsonPath],
+      'wait_file("задание.json")',
+      named: ['key', 'value', 'timeout', 'interval'],
+      returns: 'true — дождались, false — время вышло'),
+  FSpec('export_vars', 'system', 'записать переменные в файл {path}',
+      [PSpec('path', 'имя файла (в папке files) или полный путь', kind: PK.text, def: '"состояние.json"')],
+      'export_vars("состояние.json")'),
 ];
+
+const _jsonPath = PSpec('path', 'JSON-файл: имя (в папке files) или полный путь',
+    kind: PK.text, def: '"задание.json"');
 
 final Map<String, FSpec> _byName = {for (final f in functionSpecs) f.name: f};
 

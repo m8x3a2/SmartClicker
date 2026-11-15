@@ -15,7 +15,8 @@ const settingsGroups = <String, List<String>>{
   'hotkeys': ['stopKey', 'stopKey2', 'cornerStop', 'pauseKey', 'recordKey', 'pickKey', 'ghostKey', 'markKey', 'runKey', 'holdBackHotkeys'],
   'run': [
     'runDelaySec', 'maxRuntimeMin', 'maxLoops', 'checkBeforeRun', //
-    'restartOnError', 'restartDelaySec', 'allowPower', 'selfProtect', 'actionDelayMs', 'slowRunMs',
+    'restartOnError', 'restartDelaySec', 'allowPower', 'selfProtect', 'allowExternalRun', 'stateFile',
+    'actionDelayMs', 'slowRunMs',
   ],
   'record': [
     'recordDelaySec', 'recMode', 'recDwellMs', 'recWindow', 'recText', //
@@ -141,6 +142,12 @@ class Settings {
   /// loops, a script cannot end the program or Windows itself.
   bool selfProtect = true;
 
+  /// Other programs may run and stop scripts: `smart_clicker.exe --run "…"`.
+  bool allowExternalRun = false;
+
+  /// While a script works its state is written to files\state.json.
+  bool stateFile = false;
+
   /// The word to type before "reset everything" (up to 30 letters).
   String resetWord = 'reset';
   bool trayOnClose = false;
@@ -243,6 +250,8 @@ class Settings {
     s.autostartTray = get('autostartTray', s.autostartTray);
     s.autostartDelaySec = get('autostartDelaySec', s.autostartDelaySec).clamp(0, 3600);
     s.selfProtect = get('selfProtect', s.selfProtect);
+    s.allowExternalRun = get('allowExternalRun', s.allowExternalRun);
+    s.stateFile = get('stateFile', s.stateFile);
     final w = get('resetWord', s.resetWord).trim();
     s.resetWord = w.isEmpty || w.length > 30 ? 'reset' : w;
     s.trayOnClose = get('trayOnClose', s.trayOnClose);
@@ -319,6 +328,8 @@ class Settings {
         'autostartTray': autostartTray,
         'autostartDelaySec': autostartDelaySec,
         'selfProtect': selfProtect,
+        'allowExternalRun': allowExternalRun,
+        'stateFile': stateFile,
         'resetWord': resetWord,
         'trayOnClose': trayOnClose,
         'hintTyping': hintTyping,

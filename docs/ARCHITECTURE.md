@@ -28,7 +28,7 @@ lib/
                  runtime_args / runtime_input — разбор аргументов, ввод;
                  runtime_safety — защита от самоуничтожения внутри движка;
                  builtins/ — встроенные функции по темам (mouse, keyboard, time,
-                 screen, windows, system, util); runner — изолят; human — «как человек»
+                 screen, windows, system, files — JSON-файлы для других программ, util); runner — изолят; human — «как человек»
     vision/      bitmap, png (свой кодек), image_search (поиск картинки),
                  paddle_ocr, ocr (выбор способа распознавания),
                  text_match (нестрогое сравнение текста: similar, errors:)
@@ -62,14 +62,16 @@ lib/
     state/        AppController: app_controller.dart (поля, создание) +
                   controller_*.dart — действия по темам (scripts, settings, debug,
                   notify, run, autorun, window, files, reports, record, hotkeys, ask, batch,
-                  backup, safety — безопасный режим и задержка автоматики…); edit_history.dart — Ctrl+Z / Ctrl+Y своего скрипта;
+                  backup, safety — безопасный режим и задержка автоматики, watch — скрипты,
+                  изменённые снаружи, requests — --run / --stop и state.json…); edit_history.dart — Ctrl+Z / Ctrl+Y своего скрипта;
                   script_stats.dart — статистика скриптов по истории запусков
     services/     ocr_install (загрузка моделей по кнопке)
     help/         тексты справки, по файлу на раздел (help_texts.dart — общий экспорт)
     (ui/vision/picture_actions.dart — окна «где используется», переименование, удаление картинки)
     templates/    шаблоны окна «Новый скрипт»
     ui/           экраны, по папке на экран:
-                  home/ (+ safety_banner — полоса безопасного режима) scripts/ editor/ blocks/ (+ render/) help/ settings/
+                  home/ (+ safety_banner — полоса безопасного режима, external_change_banner —
+                  скрипт изменён снаружи) scripts/ editor/ blocks/ (+ render/) help/ settings/
                   autorun/ history/ tools/ vision/ notes/ new_script/ mini_panel/
                   widgets/ — общие части (заголовок страницы, диалоги, SplitView…)
 test/   тесты (flutter test)

@@ -7,3 +7,4 @@ export 'beginner_guide.dart';
 export 'image_guide.dart';
 export 'blocks_guide.dart';
 export 'features_guide.dart';
+export 'usage_guide.dart';

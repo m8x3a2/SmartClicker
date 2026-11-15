@@ -48,6 +48,9 @@ class AppPaths {
   /// when scripts switched the computer off). Not in dataEntries on purpose:
   /// it only matters on this computer, for minutes.
   String get safetyFile => _p('safety.json');
+  /// Requests of other programs to this copy (--run / --stop); read and
+  /// deleted at once, so not in dataEntries.
+  String get requests => _p('requests');
   /// Last answers to the questions of scripts (ask).
   String get answersFile => _p('answers.json');
   String get reports => _p('reports');

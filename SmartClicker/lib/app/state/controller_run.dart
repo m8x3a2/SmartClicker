@@ -94,7 +94,7 @@ extension AppControllerRun on AppController {
     'slowMs': _slowStart ? settings.slowRunMs : 0,
     'answers': answers,
     'breaks': name == current ? breaks.value.toList() : const <int>[],
-    'watch': settings.bottomTab == 'vars',
+    'watch': settings.bottomTab == 'vars' || settings.stateFile,
     'showClicks': settings.showClicks,
     'allowPower': settings.allowPower,
     'selfProtect': settings.selfProtect,
@@ -356,6 +356,7 @@ extension AppControllerRun on AppController {
       report,
     );
     lastRun = rec;
+    _writeState(status: status == 'ok' ? 'done' : status, error: errText);
     history.insert(0, rec);
     while (history.length > settings.historySize.clamp(1, 10000)) {
       history.removeLast();

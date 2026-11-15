@@ -57,6 +57,8 @@ part 'controller_ask.dart';
 part 'controller_batch.dart';
 part 'controller_backup.dart';
 part 'controller_safety.dart';
+part 'controller_watch.dart';
+part 'controller_requests.dart';
 
 /// A piece of the screen selected by the user.
 class ScreenCapture {
@@ -197,6 +199,10 @@ class AppController extends ChangeNotifier {
   bool dirty = false;
   bool _loading = false;
   String _savedText = '';
+
+  /// The open script was changed on disk by another program while it has
+  /// unsaved edits here: the text on disk (null — nothing to decide).
+  String? externalText;
 
   /// Changes whenever another text is loaded into the editor, so the
   /// editor widget is rebuilt with an empty undo history (otherwise Ctrl+Z
@@ -376,6 +382,12 @@ class AppController extends ChangeNotifier {
   /// "Do not turn automation on until the program restarts".
   bool automationOff = false;
   SafetyJournal? _safety;
+
+  /// Requests from other programs (--run / --stop) and when they came.
+  final List<(Map<String, Object?>, DateTime)> _requests = [];
+
+  /// The line the running script is on (also when it is not the open one).
+  int _runLine = 0;
 
   /// The window is hidden; only the tray icon is left.
   bool hiddenToTray = false;

@@ -234,7 +234,11 @@ extension ScriptRuntimeRuntimeInput on ScriptRuntime {
   File get _dataFile => File(cfg['dataFile'] as String? ?? 'data.json');
 
   Map<String, Object?> _loadData() {
-    if (_data != null) return _data!;
+    // Another script or program may have changed data.json meanwhile: it is
+    // read again when its time or size changed.
+    final stamp = _stamp(_dataFile.path);
+    if (_data != null && stamp == _dataStamp) return _data!;
+    _dataStamp = stamp;
     try {
       final f = _dataFile;
       if (f.existsSync()) {

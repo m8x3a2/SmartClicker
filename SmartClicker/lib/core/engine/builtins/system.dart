@@ -146,6 +146,7 @@ extension ScriptRuntimeBuiltinsSystem on ScriptRuntime {
       d[_s(c, c.arg(0), 'save_data')] = _jsonSafe(c.arg(1));
       try {
         _dataFile.writeAsStringSync(jsonEncode(d));
+        _dataStamp = _stamp(_dataFile.path); // own write: no need to read it again
       } catch (e) {
         log('save_data: не удалось записать файл: $e', 'warn');
       }

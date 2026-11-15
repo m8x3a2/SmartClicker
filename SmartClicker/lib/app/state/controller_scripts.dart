@@ -61,6 +61,7 @@ extension AppControllerScripts on AppController {
     if (name == current) return;
     if (current != null && dirty) buffers[current!] = editor.text;
     current = name;
+    externalText = null;
     selectedFolder = ScriptStore.folderOf(name);
     _savedText = store.read(name);
     _setEditor(buffers.remove(name) ?? _savedText);
@@ -75,6 +76,7 @@ extension AppControllerScripts on AppController {
     if (current == null || !dirty) return;
     store.write(current!, editor.text);
     _savedText = editor.text;
+    externalText = null;
     dirty = false;
     _changed();
   }

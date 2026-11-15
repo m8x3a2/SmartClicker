@@ -234,9 +234,10 @@ class _ImportDialogState extends State<_ImportDialog> {
   }
 }
 
-/// Line differences of my script and the one from the archive: removed
-/// lines red, added green, long unchanged runs folded.
-Future<void> showScriptDiff(BuildContext context, String name, String mine, String theirs) {
+/// Line differences of my script and the one from the archive (or [where] —
+/// "на диске"): removed lines red, added green, long unchanged runs folded.
+Future<void> showScriptDiff(BuildContext context, String name, String mine, String theirs,
+    {String where = 'в архиве'}) {
   final lines = lineDiff(mine, theirs);
   final changed = lines.where((l) => l.kind != DiffKind.same).length;
   // Show changed lines with two lines of context around them.
@@ -293,8 +294,8 @@ Future<void> showScriptDiff(BuildContext context, String name, String mine, Stri
             Text(
                 changed == 0
                     ? 'Тексты отличаются только пробелами в конце.'
-                    : '− красным — строки вашего скрипта, которых нет в архиве; '
-                        '+ зелёным — новые строки из архива.',
+                    : '− красным — строки вашего скрипта, которых нет $where; '
+                        '+ зелёным — новые строки, которые есть только $where.',
                 style: const TextStyle(fontSize: 12.5, color: Colors.grey)),
             const SizedBox(height: 8),
             Expanded(

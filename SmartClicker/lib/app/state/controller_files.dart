@@ -192,10 +192,12 @@ extension AppControllerFiles on AppController {
       case 'log':
         _log('${e['lv']}', '${e['m']}', (e['l'] as int?) ?? 0);
       case 'line':
+        _runLine = (e['l'] as int?) ?? 0;
         // Highlight lines only when the running script is the one on screen.
-        if (_runScript == current) currentLine.value = (e['l'] as int?) ?? 0;
+        if (_runScript == current) currentLine.value = _runLine;
       case 'paused':
         // Step mode or a breakpoint stopped before a line.
+        _runLine = (e['l'] as int?) ?? 0;
         if (_runScript == current) currentLine.value = (e['l'] as int?) ?? 0;
         if (e['why'] == 'break') {
           _log('system',

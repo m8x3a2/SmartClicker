@@ -16,6 +16,7 @@ import '../scripts/ask_dialog.dart';
 import '../scripts/batch_summary.dart';
 import '../scripts/run_script_fix_dialog.dart';
 import '../scripts/scripts_screen.dart';
+import 'external_change_banner.dart';
 import 'safety_banner.dart';
 
 class HomePage extends StatefulWidget {
@@ -160,6 +161,7 @@ class _HomePageState extends State<HomePage> {
                 child: Column(
                   children: [
                     SafetyBanner(app: app),
+                    ExternalChangeBanner(app: app),
                     Expanded(
                       child: IndexedStack(
                         index: _page,
