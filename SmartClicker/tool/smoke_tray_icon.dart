@@ -1,6 +1,6 @@
 // Makes the tray icons with status dots on the real Windows and saves them
 // enlarged as PNG for a look.   dart run tool/smoke_tray_icon.dart <folder>
-// ignore_for_file: avoid_print
+// ignore_for_file: avoid_print, non_constant_identifier_names
 import 'dart:ffi';
 import 'dart:io';
 import 'dart:typed_data';
