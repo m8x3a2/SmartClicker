@@ -658,18 +658,54 @@ click(10, 10)
       final src =
           rec.stop(const RecordOptions(percent: false, window: true));
       expect(code(src), [
-        'focus_window("Notepad.exe|Doc — Блокнот")',
-        'use_window("Notepad.exe|Doc — Блокнот")',
-        'require_window("Notepad.exe|Doc — Блокнот")',
-        'click(200, 250)',
-        'use_screen()',
-        'require_window(null)',
+        'with_window("Notepad.exe|Doc — Блокнот") {',
+        '    click(200, 250)',
+        '}',
       ]);
 
       // And the generated script really clicks inside that window.
-      final r = await run(src, backend: StubBackend()..windowList = [taskbar, doc, other]);
+      final r = await run(src,
+          backend: StubBackend()
+            ..windowList = [taskbar, doc, other]
+            ..active = doc);
       expect(r.result['error'], isNull, reason: '${r.result}');
       expect(r.backend.calls.where((c) => c.startsWith('move')), ['move 300,350']);
+
+      // Without "clicks only into its window": the old focus_window + use_window.
+      final rec2 = Recorder(b, () => false, const []);
+      rec2.start();
+      await click(b, 500, 1040);
+      await click(b, 300, 350);
+      expect(code(rec2.stop(const RecordOptions(percent: false, window: true, requireWindow: false))), [
+        'focus_window("Notepad.exe|Doc — Блокнот")',
+        'use_window("Notepad.exe|Doc — Блокнот")',
+        'click(200, 250)',
+        'use_screen()',
+      ]);
+    });
+
+    test('запись по двум окнам — два блока with_window, пауза внутри блока', () async {
+      const a = WindowInfo(2, 'Чат — Браузер', 'chrome.exe', 5, 0, 0, 1000, 800);
+      const c = WindowInfo(4, 'Почта', 'outlook.exe', 6, 1000, 0, 900, 800);
+      final b = StubBackend()..windowList = [a, c];
+      final rec = Recorder(b, () => false, const []);
+      rec.start();
+      await click(b, 100, 100);
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      await click(b, 200, 200);
+      await click(b, 1100, 100);
+      final lines = rec
+          .stop(const RecordOptions(percent: false, window: true))
+          .split('\n')
+          .where((l) => l.isNotEmpty)
+          .toList();
+      expect(lines.first, 'with_window("chrome.exe") {');
+      expect(lines[1], '    click(100, 100)');
+      expect(lines[2], startsWith('    wait('));
+      expect(lines[3], '    click(200, 200)');
+      expect(lines.sublist(lines.length - 3),
+          ['with_window("outlook.exe") {', '    click(100, 100)', '}']);
+      expect(lines.where((l) => l == '}').length, 2);
     });
 
     test('без привязки к окнам клики остаются экранными', () async {

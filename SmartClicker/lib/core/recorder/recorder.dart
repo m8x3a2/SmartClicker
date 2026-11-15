@@ -27,8 +27,10 @@ class RecordOptions {
   /// Bind actions to the window they happened in (focus_window/use_window).
   final bool window;
 
-  /// With [window]: also require_window("…") — clicks go only into that
-  /// window, which is brought to the front if something covers it.
+  /// With [window]: every part done in one window becomes a block
+  /// `with_window("…") { … }` — coordinates from that window, which is
+  /// brought to the front if something covers it, and nothing of it leaks
+  /// into the next part. False: focus_window + use_window … use_screen().
   final bool requireWindow;
 
   /// Record system-wide combos (Win+..., Alt+Tab, PrintScreen) even while
@@ -480,23 +482,26 @@ class _Generator {
         _area = it.client!;
         return const [];
       }
+      final close = _boundHandle != null && o.requireWindow;
       _boundHandle = it.win!.handle;
       _area = it.client!;
       final sel = _esc(_selector(it.win!));
-      return [
-        'focus_window("$sel")',
-        'use_window("$sel")',
-        if (o.requireWindow) 'require_window("$sel")',
-      ];
+      if (o.requireWindow) {
+        return [if (close) _blockEnd, 'with_window("$sel") {'];
+      }
+      return ['focus_window("$sel")', 'use_window("$sel")'];
     }
     if (it.win == null) return const []; // modifier chord: no window info
     if (_boundHandle != null) {
       _boundHandle = null;
       _area = _screen;
-      return ['use_screen()', if (o.requireWindow) 'require_window(null)'];
+      return [o.requireWindow ? _blockEnd : 'use_screen()'];
     }
     return const [];
   }
+
+  /// Closes a with_window block (a line of its own, never indented).
+  static const _blockEnd = '}';
 
   String _code(_Item it) {
     final btn = it.button == 'left' ? '' : ', button: "${it.button}"';
@@ -638,19 +643,27 @@ class _Generator {
 
     final sb = StringBuffer();
     var end = -1;
+    var inBlock = false; // inside with_window("…") { — lines are indented
+    void line(String l) {
+      if (l == _blockEnd && inBlock) {
+        inBlock = false;
+        sb.writeln(l);
+      } else {
+        sb.writeln(inBlock ? '    $l' : l);
+        if (l.startsWith('with_window(') && l.endsWith('{')) inBlock = true;
+      }
+    }
+
     for (final a in out) {
       if (end >= 0) {
         var gap = a.start - end;
         if (o.smart) gap = gap < 25 ? 0 : _round(gap);
-        if (gap >= (o.smart ? 50 : 10)) sb.writeln('wait($gap)');
+        if (gap >= (o.smart ? 50 : 10)) line('wait($gap)');
       }
-      a.lines.forEach(sb.writeln);
+      a.lines.forEach(line);
       end = a.end;
     }
-    if (_boundHandle != null) {
-      sb.writeln('use_screen()');
-      if (o.requireWindow) sb.writeln('require_window(null)');
-    }
+    if (_boundHandle != null) line(o.requireWindow ? _blockEnd : 'use_screen()');
     return sb.toString();
   }
 }
