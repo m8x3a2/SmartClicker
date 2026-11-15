@@ -199,6 +199,19 @@ class SettingsPage extends StatelessWidget {
           ]),
           hint: 'Один ZIP: скрипты (с несохранёнными правками), картинки, заметки, настройки, '
               'расписание, автозапуск, ответы на вопросы, история. Подходит и для переноса на другой компьютер'),
+      _row('Каждый день — копия сама',
+          Row(mainAxisSize: MainAxisSize.min, children: [
+            _bool(app.settings.autoBackup, (v) => app.settings.autoBackup = v),
+            const SizedBox(width: 8),
+            OutlinedButton(
+                onPressed: () => app.openFolder(app.paths.autoBackups),
+                child: Text('Копии (${app.autoBackupFiles().length})')),
+          ]),
+          hint: 'Раз в день (через полминуты после запуска) — такой же ZIP в папку backups внутри папки с данными. '
+              'Если испортили или удалили скрипт и заметили через пару дней — «Восстановить…» и выбрать копию нужного дня. '
+              '«Сбросить всё» эти копии не удаляет'),
+      _row('Хранить ежедневных копий',
+          _int(app.settings.autoBackupKeep, (v) => app.settings.autoBackupKeep = v, min: 1, max: 60)),
       _row('Сбросить всё (как после установки)',
           OutlinedButton(
               style: OutlinedButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),

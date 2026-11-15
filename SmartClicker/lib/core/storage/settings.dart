@@ -12,7 +12,7 @@ const settingsGroups = <String, List<String>>{
   'tray': ['trayOnMinimize', 'trayOnClose'],
   'startup': ['autostartTray', 'autostartDelaySec'],
   'clipboard': ['clipHistory', 'clipMaxItems', 'clipMaxMb', 'clipKey', 'clipOneByOne'],
-  'data': ['resetWord'],
+  'data': ['resetWord', 'autoBackup', 'autoBackupKeep'],
   'hotkeys': ['stopKey', 'stopKey2', 'cornerStop', 'pauseKey', 'recordKey', 'pickKey', 'ghostKey', 'markKey', 'runKey', 'holdBackHotkeys'],
   'run': [
     'runDelaySec', 'maxRuntimeMin', 'maxLoops', 'checkBeforeRun', //
@@ -68,6 +68,11 @@ class Settings {
 
   /// The hotkey pastes the oldest item at once, and it goes to the trash.
   bool clipOneByOne = false;
+
+  /// Once a day a backup of everything goes into the data folder backups\\
+  /// (the last [autoBackupKeep] are kept).
+  bool autoBackup = true;
+  int autoBackupKeep = 7;
 
   /// The history of runs keeps the text of the script as it was at the start.
   bool historyKeepSource = true;
@@ -226,6 +231,8 @@ class Settings {
     s.clipKey = get('clipKey', s.clipKey);
     s.clipOneByOne = get('clipOneByOne', s.clipOneByOne);
     s.historyKeepSource = get('historyKeepSource', s.historyKeepSource);
+    s.autoBackup = get('autoBackup', s.autoBackup);
+    s.autoBackupKeep = get('autoBackupKeep', s.autoBackupKeep).clamp(1, 60);
     s.markColor = get('markColor', s.markColor);
     s.markSize = get('markSize', s.markSize);
     s.runKey = get('runKey', s.runKey);
@@ -314,6 +321,8 @@ class Settings {
         'clipKey': clipKey,
         'clipOneByOne': clipOneByOne,
         'historyKeepSource': historyKeepSource,
+        'autoBackup': autoBackup,
+        'autoBackupKeep': autoBackupKeep,
         'markColor': markColor,
         'markSize': markSize,
         'runKey': runKey,

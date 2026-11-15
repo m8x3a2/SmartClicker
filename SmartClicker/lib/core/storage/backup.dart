@@ -18,13 +18,14 @@ const backupManifestName = 'smartclicker-backup.json';
 final backupEntries = [
   for (final e in dataEntries)
     // The clipboard history may hold private things: not in a backup.
-    if (!const {'logs', 'reports', 'ocr', 'clipboard', 'trash'}.contains(e)) e,
+    if (!const {'logs', 'reports', 'ocr', 'clipboard', 'trash', 'backups'}.contains(e)) e,
 ];
 
-/// What a reset deletes: everything of the program but the OCR models.
+/// What a reset deletes: everything of the program but the OCR models and
+/// the daily backups (they are what a reset may need to be undone with).
 final resetEntries = [
   for (final e in dataEntries)
-    if (e != 'ocr') e,
+    if (e != 'ocr' && e != 'backups') e,
 ];
 
 String _join(String a, String b) => '$a${Platform.pathSeparator}$b';

@@ -353,6 +353,7 @@ extension AppControllerHotkeys on AppController {
     if (_tick % 40 == 0) _syncTray();
     if (_tick % 80 == 60) _checkDiskChanges(); // scripts changed by other programs
     if (_tick % 20 == 7) _checkClipboard(); // clipboard history
+    if (_tick == 1200 || _tick % 144000 == 0) _checkAutoBackup(); // 30 s after the start, then hourly
     if (_tick % 40 == 30) {
       _checkRequests(); // --run / --stop from other programs
       _checkFileRules(); // scripts started when a file changes

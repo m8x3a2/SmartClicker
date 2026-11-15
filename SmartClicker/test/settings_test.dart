@@ -35,7 +35,7 @@ void main() {
     expect(Settings.fromJson({'resetWord': ' стереть '}).resetWord, 'стереть');
     expect(Settings.fromJson({'resetWord': ''}).resetWord, 'reset');
     expect(Settings.fromJson({'resetWord': 'x' * 31}).resetWord, 'reset');
-    expect(settingsGroups['data'], ['resetWord']);
+    expect(settingsGroups['data'], ['resetWord', 'autoBackup', 'autoBackupKeep']);
   });
 
   test('длительность запуска для лога и истории', () {

@@ -2,7 +2,50 @@
 // replace the data folder and restart the program at once.
 part of 'app_controller.dart';
 
+/// The backup bytes in an isolate (the closure is made here, at the top
+/// level, so it does not take the controller along).
+Future<Uint8List> _autoBackupBytes(String dir, Map<String, String> scripts) =>
+    Isolate.run(() => makeBackup(dir, scripts: scripts));
+
 extension AppControllerBackup on AppController {
+  /// Daily automatic backup: called from the poll (half a minute after the
+  /// start, then every hour — the program may run over midnight).
+  Future<void> _checkAutoBackup() async {
+    if (!settings.autoBackup || _autoBackupBusy) return;
+    final dir = Directory(paths.autoBackups);
+    final names = dir.existsSync()
+        ? [for (final f in dir.listSync().whereType<File>()) f.uri.pathSegments.last]
+        : <String>[];
+    final now = DateTime.now();
+    if (!autoBackupDue(names, now)) return;
+    _autoBackupBusy = true;
+    try {
+      final bytes = await _autoBackupBytes(paths.base, _allScriptTexts());
+      dir.createSync(recursive: true);
+      final name = autoBackupName(now);
+      final tmp = File('${dir.path}${Platform.pathSeparator}$name.tmp');
+      tmp.writeAsBytesSync(bytes);
+      tmp.renameSync('${dir.path}${Platform.pathSeparator}$name');
+      for (final old in autoBackupsToDelete([...names, name], settings.autoBackupKeep)) {
+        try {
+          File('${dir.path}${Platform.pathSeparator}$old').deleteSync();
+        } catch (_) {}
+      }
+      _log('system', '💾 Ежедневная копия данных: $name');
+    } catch (e, s) {
+      ErrorJournal.record(e, s, where: 'auto backup');
+    } finally {
+      _autoBackupBusy = false;
+    }
+  }
+
+  /// The copies made by the daily backup, newest first.
+  List<String> autoBackupFiles() {
+    final dir = Directory(paths.autoBackups);
+    if (!dir.existsSync()) return const [];
+    return autoBackupsIn([for (final f in dir.listSync().whereType<File>()) f.uri.pathSegments.last]);
+  }
+
   /// Saves a backup of everything into a ZIP chosen by the user.
   /// Returns true if it was saved.
   bool saveBackup() {

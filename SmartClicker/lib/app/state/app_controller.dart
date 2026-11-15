@@ -32,6 +32,7 @@ import '../../core/recorder/recorder.dart';
 import '../../core/reports/report.dart';
 import '../../core/storage/storage.dart';
 import '../../core/storage/backup.dart';
+import '../../core/storage/auto_backup.dart';
 import '../../core/storage/clip_history.dart';
 import '../../core/storage/trash.dart';
 import '../../core/storage/share_pack.dart';
@@ -506,6 +507,7 @@ class AppController extends ChangeNotifier {
   /// seen, a picture being saved, the window to paste into, the queue.
   ClipHistory? _clips;
   Trash? _trash;
+  bool _autoBackupBusy = false;
   int _clipSeq = -1;
   bool _clipReading = false;
   WindowInfo? _clipTarget;
