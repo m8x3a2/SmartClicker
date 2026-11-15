@@ -9,6 +9,7 @@ extension AppControllerRecord on AppController {
         settings.recordKey,
         settings.pickKey,
         settings.ghostKey,
+        settings.markKey,
         settings.runKey,
         settings.miniKey,
         ...settings.scriptKeys.values,

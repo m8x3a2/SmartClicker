@@ -26,7 +26,9 @@ extension AppControllerHotkeys on AppController {
   /// recorded nor passed to the program. All other keys (Esc, pause, keys of
   /// scripts) do nothing then, so they go to the program and get recorded.
   static List<String> recordingHotkeys(Settings s) =>
-      [s.stopKey, s.recordKey, s.pickKey, s.miniKey, s.ghostKey].where((k) => k.isNotEmpty).toList();
+      [s.stopKey, s.recordKey, s.pickKey, s.miniKey, s.ghostKey, s.markKey]
+          .where((k) => k.isNotEmpty)
+          .toList();
 
   /// Hotkeys to keep away from other programs right now: only the ones that
   /// do something in this [state] (F12 with nothing running stays F12).
@@ -43,6 +45,7 @@ extension AppControllerHotkeys on AppController {
       if (running) s.pauseKey,
       if ((idle && hasScript) || recording) s.recordKey,
       s.pickKey,
+      s.markKey,
       s.miniKey,
       if (idle && hasScript) s.runKey,
       if (idle) ...s.scriptKeys.values,
@@ -345,6 +348,7 @@ extension AppControllerHotkeys on AppController {
       if (_pressed(settings.recordKey)) toggleRecording();
       if (_pressed(settings.pickKey)) pickPoint();
       if (_pressed(settings.ghostKey) && state == RunState.recording) setGhost(!ghost);
+      if (_pressed(settings.markKey)) toggleLandmark();
       if (_pressed(settings.miniKey)) toggleCompact();
       // Hotkey starts have no countdown: the user is already in the right
       // window when pressing the key.

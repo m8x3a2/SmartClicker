@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../state/app_controller.dart';
+import 'landmarks_row.dart';
 import '../../../platform/backend.dart';
 import '../editor/code_editor.dart';
 import '../widgets/page_parts.dart';
@@ -176,6 +177,7 @@ class _ToolsPageState extends State<ToolsPage> {
             ],
           ),
         ),
+        LandmarksRow(app: app),
         Padding(
           padding: const EdgeInsets.fromLTRB(24, 10, 20, 2),
           child: Text(_system, style: const TextStyle(color: mutedText)),

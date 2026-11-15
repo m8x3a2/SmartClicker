@@ -175,6 +175,11 @@ abstract class PlatformBackend {
   void showFrame(int x, int y, int w, int h);
   void hideFrame();
 
+  /// Landmarks: click-through dots of [rgb] and [size] px over every window
+  /// at [points] (screen px), for the eyes only. Replaces the ones shown.
+  void showLandmarks(List<({int x, int y})> points, int rgb, int size);
+  void hideLandmarks();
+
   /// Turns the application's own main window into a small borderless panel
   /// that stays above other windows and does not take the keyboard focus.
   /// [x], [y] null = top right corner of the screen. Sizes are in physical

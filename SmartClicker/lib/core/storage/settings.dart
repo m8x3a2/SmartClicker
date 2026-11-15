@@ -6,13 +6,13 @@ import 'dart:convert';
 /// 'layout' is the look of the window; "reset all" resets it too. Not
 /// reset at all: keys of single scripts, breakpoints, the OCR engine.
 const settingsGroups = <String, List<String>>{
-  'general': ['recPercent', 'showClicks', 'pickFromWindow'],
+  'general': ['recPercent', 'showClicks', 'pickFromWindow', 'markColor', 'markSize'],
   'editor': ['hintTyping', 'hintHover'],
   'mini': ['miniKey', 'miniOnRun'],
   'tray': ['trayOnMinimize', 'trayOnClose'],
   'startup': ['autostartTray'],
   'data': ['resetWord'],
-  'hotkeys': ['stopKey', 'stopKey2', 'cornerStop', 'pauseKey', 'recordKey', 'pickKey', 'ghostKey', 'runKey', 'holdBackHotkeys'],
+  'hotkeys': ['stopKey', 'stopKey2', 'cornerStop', 'pauseKey', 'recordKey', 'pickKey', 'ghostKey', 'markKey', 'runKey', 'holdBackHotkeys'],
   'run': [
     'runDelaySec', 'maxRuntimeMin', 'maxLoops', 'checkBeforeRun', //
     'restartOnError', 'restartDelaySec', 'allowPower', 'actionDelayMs', 'slowRunMs',
@@ -52,6 +52,12 @@ class Settings {
   /// During a recording: the "ghost" mode on/off — clicks and keys are
   /// recorded but reach no program.
   String ghostKey = 'f3';
+
+  /// Landmarks (dots on the screen for the eyes): the key puts one under
+  /// the cursor or takes it away; their colour (0xRRGGBB) and size, px.
+  String markKey = 'f4';
+  int markColor = 0xFF2BD6;
+  int markSize = 14;
   String runKey = '';
 
   /// Hotkeys do not reach the active program (keyboard hook).
@@ -180,6 +186,9 @@ class Settings {
     s.recordKey = get('recordKey', s.recordKey);
     s.pickKey = get('pickKey', s.pickKey);
     s.ghostKey = get('ghostKey', s.ghostKey);
+    s.markKey = get('markKey', s.markKey);
+    s.markColor = get('markColor', s.markColor);
+    s.markSize = get('markSize', s.markSize);
     s.runKey = get('runKey', s.runKey);
     s.holdBackHotkeys = get('holdBackHotkeys', s.holdBackHotkeys);
     final sk = json['scriptKeys'];
@@ -254,6 +263,9 @@ class Settings {
         'recordKey': recordKey,
         'pickKey': pickKey,
         'ghostKey': ghostKey,
+        'markKey': markKey,
+        'markColor': markColor,
+        'markSize': markSize,
         'runKey': runKey,
         'holdBackHotkeys': holdBackHotkeys,
         'scriptKeys': scriptKeys,

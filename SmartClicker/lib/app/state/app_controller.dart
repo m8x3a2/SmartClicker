@@ -47,6 +47,7 @@ part 'controller_files.dart';
 part 'controller_reports.dart';
 part 'controller_record.dart';
 part 'controller_hotkeys.dart';
+part 'controller_landmarks.dart';
 part 'controller_startup.dart';
 part 'controller_corner.dart';
 part 'controller_data.dart';
@@ -372,6 +373,11 @@ class AppController extends ChangeNotifier {
   /// A script stopped with an error: the red dot stays on the tray icon
   /// until the window is opened.
   bool trayError = false;
+
+  /// Landmarks on the screen (for the eyes only; kept until the program
+  /// quits) and whether they are hidden for now.
+  final List<({int x, int y})> landmarks = [];
+  bool landmarksHidden = false;
 
   /// The click map of the last test run (null — none yet).
   ClickMap? clickMap;

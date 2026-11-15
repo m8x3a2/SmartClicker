@@ -49,18 +49,20 @@ void main() {
         AppControllerHotkeys.heldBackHotkeys(s, st, hasScript: hasScript);
 
     // Nothing runs: F12 and F8 stay with the active program.
-    expect(held(RunState.idle), unorderedEquals(['f9', 'f6', 'f7', 'ctrl+f5', 'f4']));
-    expect(held(RunState.idle, hasScript: false), unorderedEquals(['f6', 'f7', 'f4']));
+    // The script key here is F4 too, so landmarks get another key.
+    s.markKey = 'f2';
+    expect(held(RunState.idle), unorderedEquals(['f9', 'f6', 'f2', 'f7', 'ctrl+f5', 'f4']));
+    expect(held(RunState.idle, hasScript: false), unorderedEquals(['f6', 'f2', 'f7', 'f4']));
 
     // Esc (second stop key) stops scripts only: during recording it is a
     // key to record and goes to the program.
-    expect(held(RunState.running), unorderedEquals(['f12', 'esc', 'f8', 'f6', 'f7']));
-    expect(held(RunState.paused), unorderedEquals(['f12', 'esc', 'f8', 'f6', 'f7']));
-    expect(held(RunState.countdown), unorderedEquals(['f12', 'esc', 'f6', 'f7']));
-    expect(held(RunState.recording), unorderedEquals(['f12', 'f9', 'f6', 'f7', 'f3']));
+    expect(held(RunState.running), unorderedEquals(['f12', 'esc', 'f8', 'f6', 'f2', 'f7']));
+    expect(held(RunState.paused), unorderedEquals(['f12', 'esc', 'f8', 'f6', 'f2', 'f7']));
+    expect(held(RunState.countdown), unorderedEquals(['f12', 'esc', 'f6', 'f2', 'f7']));
+    expect(held(RunState.recording), unorderedEquals(['f12', 'f9', 'f6', 'f7', 'f3', 'f2']));
 
     s.stopKey2 = '';
-    expect(held(RunState.running), unorderedEquals(['f12', 'f8', 'f6', 'f7']));
+    expect(held(RunState.running), unorderedEquals(['f12', 'f8', 'f6', 'f2', 'f7']));
 
     s.miniKey = '';
     expect(held(RunState.running), isNot(contains('')));
@@ -83,16 +85,17 @@ void main() {
     final s = Settings()
       ..miniKey = 'f7'
       ..runKey = 'ctrl+f5'
-      ..scriptKeys = {'Ферма': 'f4'};
+      ..scriptKeys = {'Ферма': 'f10'};
     final rec = AppControllerHotkeys.recordingHotkeys(s);
-    // F3 — the ghost mode: works only while recording, never recorded.
-    expect(rec, unorderedEquals(['f12', 'f9', 'f6', 'f7', 'f3']));
+    // F3 — the ghost mode: works only while recording, never recorded;
+    // F4 — landmarks: work always, never recorded.
+    expect(rec, unorderedEquals(['f12', 'f9', 'f6', 'f7', 'f3', 'f4']));
     expect(AppControllerHotkeys.heldBackHotkeys(s, RunState.idle, hasScript: true),
         isNot(contains('f3')));
     // Pause, Esc and keys of scripts do nothing while recording: recorded.
     expect(rec, isNot(contains('f8')));
     expect(rec, isNot(contains('esc')));
-    expect(rec, isNot(contains('f4')));
+    expect(rec, isNot(contains('f10')));
     expect(AppControllerHotkeys.heldBackHotkeys(s, RunState.recording, hasScript: true),
         unorderedEquals(rec));
   });
@@ -118,5 +121,18 @@ void main() {
     ]);
     b.stopKeyHook();
     expect(b.heldBack, isEmpty);
+  });
+
+  test('точки-ориентиры: клавиша ставит точку, на точке — убирает', () {
+    const empty = <({int x, int y})>[];
+    var pts = AppControllerLandmarks.toggled(empty, (x: 100, y: 100), 14);
+    expect(pts, [(x: 100, y: 100)]);
+    pts = AppControllerLandmarks.toggled(pts, (x: 300, y: 100), 14);
+    expect(pts, hasLength(2));
+    pts = AppControllerLandmarks.toggled(pts, (x: 104, y: 97), 14); // on the first one
+    expect(pts, [(x: 300, y: 100)]);
+    pts = AppControllerLandmarks.toggled(pts, (x: 320, y: 100), 14); // near, but not on it
+    expect(pts, hasLength(2));
+    expect(Settings().markKey, 'f4');
   });
 }

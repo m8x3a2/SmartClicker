@@ -135,6 +135,11 @@ class StubBackend implements PlatformBackend {
   List<String> lastMenu = const [];
 
   String trayMark = '';
+  List<({int x, int y})> landmarks = const [];
+  @override
+  void showLandmarks(List<({int x, int y})> points, int rgb, int size) => landmarks = List.of(points);
+  @override
+  void hideLandmarks() => landmarks = const [];
   @override
   bool showTray(String tip, void Function(String event) onEvent, {String mark = ''}) {
     trayTip = tip;
