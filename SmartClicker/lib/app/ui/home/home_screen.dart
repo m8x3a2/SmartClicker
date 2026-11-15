@@ -1,6 +1,7 @@
 // Main window: navigation rail, pages, the "pick a point" banner and toasts.
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../state/app_controller.dart';
 import '../editor/code_editor.dart';
 import '../mini_panel/mini_panel.dart';
@@ -19,6 +20,7 @@ import '../scripts/scripts_screen.dart';
 import 'external_change_banner.dart';
 import '../clipboard/clipboard_screen.dart';
 import 'file_ask_banner.dart';
+import 'command_palette.dart';
 import 'safety_banner.dart';
 
 class HomePage extends StatefulWidget {
@@ -121,7 +123,20 @@ class _HomePageState extends State<HomePage> {
         app.fileAsk != null,
       ].where((v) => v).length;
 
+  void _palette(AppController app) =>
+      showCommandPalette(context, app, (i) => setState(() => _page = i));
+
   Widget _full(AppController app) {
+    // Ctrl+K anywhere in the window: the command palette.
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.keyK, control: true): () => _palette(app),
+      },
+      child: Focus(autofocus: true, child: _layout(app)),
+    );
+  }
+
+  Widget _layout(AppController app) {
     return Stack(
         children: [
           Row(
@@ -155,11 +170,18 @@ class _HomePageState extends State<HomePage> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      IconButton(
-                        tooltip: 'Быстрые настройки: самое нужное в одном месте',
-                        icon: const Icon(Icons.tune),
-                        onPressed: () => showQuickSettings(context, app),
-                      ),
+                      Row(mainAxisSize: MainAxisSize.min, children: [
+                        IconButton(
+                          tooltip: 'Быстрые настройки: самое нужное в одном месте',
+                          icon: const Icon(Icons.tune),
+                          onPressed: () => showQuickSettings(context, app),
+                        ),
+                        IconButton(
+                          tooltip: 'Палитра команд (Ctrl+K): найти и сделать любое действие',
+                          icon: const Icon(Icons.bolt),
+                          onPressed: () => _palette(app),
+                        ),
+                      ]),
                       IconButton(
                         tooltip: 'Мини-панель поверх всех окон: '
                             'координаты курсора, запуск, пауза, стоп',
