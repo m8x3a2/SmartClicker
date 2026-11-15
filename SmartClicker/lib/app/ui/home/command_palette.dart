@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 
 import '../../state/app_controller.dart';
 import '../new_script/new_script_dialog.dart';
+import '../scripts/profile_dialog.dart';
 import '../scripts/search_dialog.dart';
 import '../scripts/share_dialogs.dart' show importFromZip;
 import '../scripts/trash_dialog.dart';
@@ -74,6 +75,8 @@ List<PaletteCommand> paletteCommands(BuildContext context, AppController app, vo
         () => toggle(() => s.dryRun = !s.dryRun, 'Тест без кликов', !s.dryRun),
         keywords: 'тестовый режим проверка сухой'),
     PaletteCommand('Проверить скрипт на ошибки', Icons.rule, app.checkNow, keywords: 'проверка'),
+    PaletteCommand('Профиль последнего запуска', Icons.speed, () => showProfile(context, app),
+        keywords: 'медленно тормозит время профилировщик'),
     // Scripts
     PaletteCommand('Новый скрипт…', Icons.note_add_outlined, () => showNewScript(context, app),
         keywords: 'создать шаблон'),

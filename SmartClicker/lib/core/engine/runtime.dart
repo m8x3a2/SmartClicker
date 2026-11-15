@@ -23,6 +23,7 @@ import '../system/safety.dart';
 part 'runtime_args.dart';
 part 'runtime_input.dart';
 part 'runtime_safety.dart';
+part 'runtime_profile.dart';
 part 'builtins/mouse.dart';
 part 'builtins/keyboard.dart';
 part 'builtins/time.dart';
@@ -81,6 +82,14 @@ class ScriptRuntime implements Host {
   late final int maxLoops = (cfg['maxLoops'] as num?)?.toInt() ?? 0;
 
   final Stopwatch _total = Stopwatch();
+
+  /// Profiler (runtime_profile.dart): µs per line of the main script, how
+  /// often it ran, and [calls, µs] per built-in function.
+  final Map<int, int> _lineUs = {}, _lineHits = {};
+  final Map<String, List<int>> _callStats = {};
+  int _profLine = 0;
+  final Stopwatch _profSw = Stopwatch()..start();
+  final Stopwatch _profClock = Stopwatch()..start();
 
   /// Watchdog: time since the last action (click, key, type…); explicit
   /// waits (wait, wait_until, wait_file) and the pause do not count.
@@ -222,6 +231,7 @@ class ScriptRuntime implements Host {
       'ms': _total.elapsedMilliseconds,
       'loops': _loops,
       'acts': _mapCount,
+      'profile': _profile(),
     };
   }
 
@@ -281,11 +291,13 @@ class ScriptRuntime implements Host {
   }
 
   Future<void> _waitWhilePaused() async {
+    _profSw.stop(); // the pause is not the time of the line
     while (paused) {
       if (stopRequested) throw const StopSignal();
       await Future<void>.delayed(const Duration(milliseconds: 40));
     }
     _alive(); // the pause is not a hang
+    _profSw.start();
   }
 
   void _emitLine() {
@@ -299,6 +311,7 @@ class ScriptRuntime implements Host {
   @override
   Future<void> checkpoint(int line) async {
     _line = line;
+    _profileLine(line);
     _checkLimits();
     if (_yield.elapsedMilliseconds >= 8) {
       // Let the isolate's event loop deliver pause/stop messages.
@@ -391,7 +404,7 @@ class ScriptRuntime implements Host {
   // ---------------------------------------------------------------- builtins
 
   void _def(String name, BuiltinFn fn, [List<String> aliases = const []]) {
-    final b = Builtin(name, fn);
+    final b = Builtin(name, _timed(name, fn));
     interp.define(name, b);
     // snake_case -> camelCase alias, so JS-style names work too.
     final camel = name.replaceAllMapped(

@@ -309,6 +309,7 @@ extension AppControllerRun on AppController {
 
     if (status == 'error') trayError = true;
     _finishMap(name, (e['acts'] as num?)?.toInt() ?? _mapActs.length);
+    if (e['profile'] case final Map p) lastProfile = RunProfile.of(name, _runSource, ms, p);
     String? errText;
     switch (status) {
       case 'ok':

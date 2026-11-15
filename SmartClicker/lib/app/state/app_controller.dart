@@ -162,6 +162,40 @@ class RunRecord {
       source: j['source'] as String?);
 }
 
+/// The profile of a run: the slowest lines of the main script and the
+/// slowest functions (see core/engine/runtime_profile.dart).
+class RunProfile {
+  final String script, source;
+  final int totalMs;
+
+  /// (line, µs, how many times it ran), slowest first.
+  final List<(int, int, int)> lines;
+
+  /// (function, calls, µs), slowest first.
+  final List<(String, int, int)> calls;
+  const RunProfile(this.script, this.source, this.totalMs, this.lines, this.calls);
+
+  factory RunProfile.of(String script, String source, int totalMs, Map p) => RunProfile(
+        script,
+        source,
+        totalMs,
+        [
+          for (final l in (p['lines'] as List? ?? const []))
+            if (l is List && l.length == 3) ((l[0] as num).toInt(), (l[1] as num).toInt(), (l[2] as num).toInt())
+        ],
+        [
+          for (final c in (p['calls'] as List? ?? const []))
+            if (c is List && c.length == 3) ('${c[0]}', (c[1] as num).toInt(), (c[2] as num).toInt())
+        ],
+      );
+
+  /// The text of line [n] of the script (1-based), trimmed.
+  String lineText(int n) {
+    final all = source.split('\n');
+    return n >= 1 && n <= all.length ? all[n - 1].trim() : '';
+  }
+}
+
 /// How a run was started: id → words for the history.
 const runViaLabels = {
   'manual': 'вручную',
@@ -455,6 +489,9 @@ class AppController extends ChangeNotifier {
 
   /// The click map of the last test run (null — none yet).
   ClickMap? clickMap;
+
+  /// Where the time of the last run went (the profiler).
+  RunProfile? lastProfile;
   final List<MapAction> _mapActs = [];
   ({int w, int h, Uint8List bgra})? _mapShot;
 

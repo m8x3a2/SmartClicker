@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import '../../state/app_controller.dart';
 import 'click_map_dialog.dart';
 import 'files_view.dart';
+import 'profile_dialog.dart';
 import '../editor/code_editor.dart';
 
 class LogPanel extends StatefulWidget {
@@ -206,6 +207,13 @@ class _LogPanelState extends State<LogPanel> {
                           onLine: app.current == app.clickMap!.script
                               ? (line) => app.revealLine.value = line
                               : null),
+                ),
+                IconButton(
+                  tooltip: app.lastProfile == null
+                      ? 'Профиль — появится после запуска: на что ушло время'
+                      : 'Профиль последнего запуска: какие строки и команды заняли больше всего времени',
+                  icon: const Icon(Icons.speed, size: 18),
+                  onPressed: app.lastProfile == null ? null : () => showProfile(context, app),
                 ),
                 IconButton(
                   tooltip: 'Сохранить отчёт: скрипт, лог, настройки и снимок экрана — одним файлом',
