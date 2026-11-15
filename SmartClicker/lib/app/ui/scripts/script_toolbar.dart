@@ -37,7 +37,8 @@ class ScriptToolbar extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Удалить скрипт?'),
-        content: Text('«${app.current}» будет удалён без возможности восстановления.'),
+        content: Text('«${app.current}» уйдёт в корзину на 30 дней (⋮ над списком скриптов → «Корзина…») — '
+            'оттуда можно вернуть.'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),

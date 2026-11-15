@@ -245,7 +245,7 @@ extension AppControllerScripts on AppController {
       deleteCurrent();
       return;
     }
-    store.delete(name);
+    _scriptToTrash(name, buffers[name]);
     buffers.remove(name);
     _forgetAnswers([name]);
     if (settings.scriptKeys.remove(name) != null) saveSettingsQuiet();
@@ -256,7 +256,7 @@ extension AppControllerScripts on AppController {
   void deleteCurrent() {
     final name = current;
     if (name == null) return;
-    store.delete(name);
+    _scriptToTrash(name, dirty ? editor.text : null);
     buffers.remove(name);
     _forgetAnswers([name]);
     if (settings.scriptKeys.remove(name) != null) saveSettingsQuiet();
@@ -281,7 +281,11 @@ extension AppControllerScripts on AppController {
   void deleteAllScripts() {
     if (busy) return;
     try {
-      store.deleteAll();
+      final n = store.list().length;
+      if (n > 0) {
+        trash.put('folder', '', paths.scripts, count: n);
+        Directory(paths.scripts).createSync(recursive: true);
+      }
     } catch (e) {
       notify('Не удалось удалить все скрипты', '$e', level: 'error');
     }
@@ -342,7 +346,7 @@ extension AppControllerScripts on AppController {
     final inside = scriptsIn(path);
     final hadCurrent = current != null && inside.contains(current);
     try {
-      store.deleteFolderRecursive(path);
+      trash.put('folder', path, store.folderPathOf(path), count: inside.length);
     } catch (e) {
       notify('Не удалось удалить папку', '$e', level: 'error');
       return;

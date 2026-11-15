@@ -18,7 +18,7 @@ const backupManifestName = 'smartclicker-backup.json';
 final backupEntries = [
   for (final e in dataEntries)
     // The clipboard history may hold private things: not in a backup.
-    if (!const {'logs', 'reports', 'ocr', 'clipboard'}.contains(e)) e,
+    if (!const {'logs', 'reports', 'ocr', 'clipboard', 'trash'}.contains(e)) e,
 ];
 
 /// What a reset deletes: everything of the program but the OCR models.

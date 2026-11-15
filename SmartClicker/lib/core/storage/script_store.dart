@@ -62,6 +62,10 @@ class ScriptStore {
 
   String _native(String name) => '$dir$_sep${name.replaceAll('/', _sep)}';
   File _file(String name) => File('${_native(name)}$ext');
+
+  /// The file of script [name] and the folder of [path] on disk.
+  String pathOf(String name) => _file(name).path;
+  String folderPathOf(String path) => _native(path);
   String _rel(String path) =>
       path.substring(dir.length + 1).replaceAll(r'\', '/');
 

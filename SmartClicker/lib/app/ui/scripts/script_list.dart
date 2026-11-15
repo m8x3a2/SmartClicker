@@ -8,6 +8,7 @@ import '../widgets/name_dialog.dart';
 import 'share_dialogs.dart';
 import 'ask_dialog.dart';
 import '../history/script_stats_view.dart';
+import 'trash_dialog.dart';
 
 class _Folder {
   final String path;
@@ -50,6 +51,8 @@ class ScriptList extends StatelessWidget {
         app.restoreExamples();
       case 'checks':
         app.addCheckScripts();
+      case 'trash':
+        showTrash(context, app);
       case 'clear':
         _confirmDeleteAll(context);
       case 'export':
@@ -101,7 +104,7 @@ class ScriptList extends StatelessWidget {
           child: Text(
               'Будут удалены все скрипты (${app.scripts.length}) и папки'
               '${app.unsaved.isEmpty ? '' : ', в том числе несохранённые изменения'}. '
-              'Вернуть их будет нельзя.\n\n'
+              'Они уйдут в корзину на 30 дней (⋮ → «Корзина…»), оттуда можно вернуть.\n\n'
               'Картинки, настройки, история и заметки останутся.\n\n'
               'Совет: сначала сохраните всё в ZIP — потом можно будет вернуть '
               'через «Импорт из ZIP…».'),
@@ -192,7 +195,7 @@ class ScriptList extends StatelessWidget {
         await showScriptStats(context, app, script);
       case 'delete':
         if (await _confirm(context, 'Удалить скрипт?',
-            '«$script» будет удалён без возможности восстановления.')) {
+            '«$script» уйдёт в корзину на 30 дней (⋮ над списком → «Корзина…») — оттуда можно вернуть.')) {
           app.deleteScript(script);
         }
     }
@@ -235,7 +238,7 @@ class ScriptList extends StatelessWidget {
             'Удалить папку?',
             count == 0
                 ? 'Папка «$path» пуста и будет удалена.'
-                : 'Папка «$path» и все скрипты в ней ($count шт.) будут удалены без возможности восстановления.')) {
+                : 'Папка «$path» и все скрипты в ней ($count шт.) уйдут в корзину на 30 дней — оттуда можно вернуть.')) {
           app.deleteFolder(path);
         }
     }
@@ -407,6 +410,7 @@ class ScriptList extends StatelessWidget {
                       value: 'checks',
                       child: Text('Добавить скрипты-проверки настроек')),
                   PopupMenuDivider(),
+                  PopupMenuItem(value: 'trash', child: Text('Корзина (удалённое за 30 дней)…')),
                   PopupMenuItem(value: 'clear', child: Text('Удалить все скрипты…')),
                   PopupMenuDivider(),
                   PopupMenuItem(

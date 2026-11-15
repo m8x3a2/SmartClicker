@@ -58,7 +58,7 @@ extension AppControllerPictures on AppController {
 
   String? deletePicture(String name) {
     try {
-      File(imagePath(name)).deleteSync();
+      trash.put('picture', name, imagePath(name));
     } catch (e) {
       return 'Не получилось удалить: $e';
     }

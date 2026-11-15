@@ -46,6 +46,8 @@ class AppPaths {
   String get fileRulesFile => _p('file_rules.json');
   /// Clipboard history: index.json and pictures (the «Буфер» page).
   String get clipboard => _p('clipboard');
+  /// Deleted scripts, folders and pictures (kept for 30 days).
+  String get trash => _p('trash');
   String get notificationsFile => _p('notifications.json');
   String get dataFile => _p('data.json');
   /// Journal of the guard against self-destruction (starts of the program,

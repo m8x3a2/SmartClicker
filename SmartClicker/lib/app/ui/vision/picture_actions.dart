@@ -129,7 +129,7 @@ Future<bool> deletePictureAsk(BuildContext context, AppController app, String na
       content: SizedBox(
         width: 620,
         child: uses.isEmpty
-            ? const Text('Ни один скрипт её не использует.')
+            ? const Text('Ни один скрипт её не использует. Она уйдёт в корзину на 30 дней (Скрипты → ⋮ → «Корзина…»).')
             : Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text('Её ищут ${uses.length} ${_scripts(uses.length)} — они перестанут её находить:'),
                 _usesList(uses),

@@ -15,6 +15,7 @@ extension AppControllerSafety on AppController {
     journal.launches.add(LaunchRecord(now));
     journal.save();
     _safety = journal;
+    _purgeTrash(); // older than 30 days goes for good
 
     final reasons = <String>[
       if (safeArg) 'запуск с параметром --safe',
