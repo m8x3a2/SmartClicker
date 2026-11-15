@@ -103,8 +103,8 @@ class ScriptStatsList extends StatelessWidget {
 Widget _note(AppController app) => Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
       child: Text(
-        'По последним ${app.history.length} запускам в истории (хранится до '
-        '${app.settings.historySize} — меняется в Настройках → «Логи и уведомления»)',
+        'Считается по истории запусков: в ней сейчас ${app.history.length}, хранится до '
+        '${app.settings.historySize} (меняется в Настройках → «Логи и уведомления»)',
         style: const TextStyle(color: mutedText, fontSize: 12),
       ),
     );
