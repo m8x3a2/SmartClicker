@@ -10,6 +10,9 @@ extension AppControllerFiles on AppController {
   }
 
   /// Every script as it is now: unsaved edits included.
+  /// Every script with what is on the screen (unsaved edits too).
+  Map<String, String> allScriptTexts() => _allScriptTexts();
+
   Map<String, String> _allScriptTexts() => {
         ...store.all(),
         ...buffers,

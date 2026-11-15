@@ -9,6 +9,7 @@ import 'share_dialogs.dart';
 import 'ask_dialog.dart';
 import '../history/script_stats_view.dart';
 import 'trash_dialog.dart';
+import 'search_dialog.dart';
 
 class _Folder {
   final String path;
@@ -51,6 +52,8 @@ class ScriptList extends StatelessWidget {
         app.restoreExamples();
       case 'checks':
         app.addCheckScripts();
+      case 'search':
+        showScriptSearch(context, app);
       case 'trash':
         showTrash(context, app);
       case 'clear':
@@ -410,6 +413,7 @@ class ScriptList extends StatelessWidget {
                       value: 'checks',
                       child: Text('Добавить скрипты-проверки настроек')),
                   PopupMenuDivider(),
+                  PopupMenuItem(value: 'search', child: Text('Поиск по всем скриптам (Ctrl+Shift+F)…')),
                   PopupMenuItem(value: 'trash', child: Text('Корзина (удалённое за 30 дней)…')),
                   PopupMenuItem(value: 'clear', child: Text('Удалить все скрипты…')),
                   PopupMenuDivider(),
