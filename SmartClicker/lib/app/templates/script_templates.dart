@@ -296,4 +296,39 @@ final scriptTemplates = <ScriptTemplate>[
         '}\n'
         'log("готово")\n',
   ),
+  ScriptTemplate(
+    'ai_message',
+    'Сообщение из файла',
+    'Нейросеть пишет файл — скрипт отправляет',
+    Icons.smart_toy_outlined,
+    'Ждёт задание в JSON-файле (его пишет нейросеть или вы), вставляет текст в поле ввода '
+        'чата и отправляет; может дождаться нужного времени. Подробно — справка '
+        '«Сообщения от нейросети».',
+    const [
+      TemplateParam('window', 'Окно чата (процесс)', ParamKind.text, 'chrome.exe',
+          help: 'Имя процесса окна, куда писать: chrome.exe, msedge.exe, claude.exe, telegram.exe …'),
+      TemplateParam('point', 'Поле ввода (x, y от окна)', ParamKind.point, '50%, 92%',
+          help: 'Инструменты → «от окна» → «Взять координаты кликом» — щёлкните по полю ввода'),
+      TemplateParam('file', 'Файл задания', ParamKind.text, 'задание.json',
+          help: 'В папке files (или полный путь). В нём: {"prompt": "текст", "time": "05:00", "ready": true}'),
+      TemplateParam('send', 'Клавиша «Отправить»', ParamKind.key, 'enter',
+          help: 'Обычно enter; в некоторых чатах ctrl+enter'),
+    ],
+    (v) => '${_header('Сообщение из файла', 'Ждёт задание в ${v['file']}, вставляет текст в ${v['window']} и отправляет.\n'
+            'Файл: {"prompt": "текст", "time": "05:00", "ready": true}; time — необязательно.')}\n'
+        'repeat {\n'
+        '    wait_file(${q(v['file']!)}, key: "ready", value: true)\n'
+        '    let task = read_json(${q(v['file']!)})\n'
+        '    if (task.time) { wait_until(task.time) }\n'
+        '    with_window(${q(v['window']!)}) {\n'
+        '        click(${v['point']})\n'
+        '        paste(task.prompt)\n'
+        '        wait(300)\n'
+        '        key(${q(v['send']!)})\n'
+        '    }\n'
+        '    write_json(${q(v['file']!)}, "ready", false)\n'
+        '    write_json(${q(v['file']!)}, "sent", date() + " " + time())\n'
+        '    log("отправлено:", task.prompt)\n'
+        '}\n',
+  ),
 ];

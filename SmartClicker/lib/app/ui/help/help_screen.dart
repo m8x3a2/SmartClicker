@@ -25,6 +25,7 @@ const helpSections = [
   HelpSection('Для новичков', 'Первые 5 минут, запись, клавиши', Icons.school_outlined, beginnerGuide),
   HelpSection('Конструктор блоков', 'Собрать скрипт мышью', Icons.extension_outlined, blocksGuide),
   HelpSection('Картинки и текст', 'Найти кнопку, прочитать надпись', Icons.image_search, imageGuide),
+  HelpSection('Сообщения от нейросети', 'Нейросеть пишет — скрипт отправляет', Icons.smart_toy_outlined, aiMessageGuide),
   HelpSection('Идеи использования', 'Нейросеть, файлы, запуск извне', Icons.lightbulb_outline, usageGuide),
   HelpSection('Частые ошибки', 'Почему не работает и что делать', Icons.report_problem_outlined, commonMistakes),
   HelpSection('Справочник по языку', 'Все команды кратко', Icons.menu_book_outlined, languageReference),
