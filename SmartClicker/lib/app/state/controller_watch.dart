@@ -65,3 +65,56 @@ extension AppControllerWatch on AppController {
     return true;
   }
 }
+
+/// A file the open script reads or writes (the "Файлы" tab under the editor).
+class LinkedFile {
+  /// As written in the script, or a description ("data.json — save_data").
+  final String label;
+  final String path;
+
+  /// What the script does with it: "читает, пишет".
+  final String uses;
+
+  /// First line that mentions it (0 — the program itself writes it).
+  final int line;
+  const LinkedFile(this.label, this.path, this.uses, this.line);
+}
+
+extension AppControllerLinkedFiles on AppController {
+  /// Files of the open script (by its text in the editor), plus state.json
+  /// when the program writes it and data.json when save_data is used.
+  List<LinkedFile> linkedFiles() {
+    final refs = findFileRefs(editor.text);
+    final sep = Platform.pathSeparator;
+    String full(String name) {
+      final abs = name.startsWith('/') ||
+          name.startsWith(r'\') ||
+          RegExp(r'^[A-Za-z]:').hasMatch(name);
+      return abs ? name : '${paths.files}$sep$name';
+    }
+
+    final out = [
+      for (final r in refs.files) LinkedFile(r.name, full(r.name), r.uses.join(', '), r.line),
+    ];
+    final state = full('state.json');
+    if (settings.stateFile && !out.any((f) => f.path.toLowerCase() == state.toLowerCase())) {
+      out.add(LinkedFile('state.json', state, 'программа пишет состояние скрипта', 0));
+    }
+    if (refs.data) {
+      out.add(LinkedFile('data.json', paths.dataFile, 'save_data / load_data — общие значения', 0));
+    }
+    return out;
+  }
+
+  /// Saves a file edited on the "Файлы" tab (written whole, never half).
+  String? saveLinkedFile(String path, String text) {
+    try {
+      final tmp = File('$path.tmp')..parent.createSync(recursive: true);
+      tmp.writeAsStringSync(text);
+      tmp.renameSync(path);
+      return null;
+    } catch (e) {
+      return '$e';
+    }
+  }
+}

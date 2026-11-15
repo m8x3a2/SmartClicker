@@ -1,9 +1,10 @@
-// Log of the run and the "Variables" tab under the editor.
+// Log of the run, the "Variables" and "Files" tabs under the editor.
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../state/app_controller.dart';
 import 'click_map_dialog.dart';
+import 'files_view.dart';
 import '../editor/code_editor.dart';
 
 class LogPanel extends StatefulWidget {
@@ -136,6 +137,7 @@ class _LogPanelState extends State<LogPanel> {
   Widget build(BuildContext context) {
     final app = widget.app;
     final vars = app.settings.bottomTab == 'vars';
+    final files = app.settings.bottomTab == 'files';
     return Container(
       color: const Color(0xFF16181D),
       child: Column(
@@ -160,8 +162,11 @@ class _LogPanelState extends State<LogPanel> {
                   builder: (_, v, _) => _tab(
                       v.isEmpty ? 'Переменные' : 'Переменные (${v.length})', 'vars'),
                 ),
+                const SizedBox(width: 4),
+                _tab('Файлы', 'files'),
                 const Spacer(),
-                if (vars) ...[
+                if (files) ...[
+                ] else if (vars) ...[
                   IconButton(
                     tooltip: 'Скопировать значения',
                     icon: const Icon(Icons.copy, size: 18),
@@ -218,7 +223,9 @@ class _LogPanelState extends State<LogPanel> {
           ),
           if (!app.settings.logCollapsed && vars)
             Expanded(child: _varsView(app)),
-          if (!app.settings.logCollapsed && !vars)
+          if (!app.settings.logCollapsed && files)
+            Expanded(child: FilesView(app: app)),
+          if (!app.settings.logCollapsed && !vars && !files)
           Expanded(
             child: ValueListenableBuilder<int>(
               valueListenable: app.logVersion,

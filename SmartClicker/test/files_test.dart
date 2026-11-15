@@ -7,6 +7,7 @@ import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smart_clicker/app/state/app_controller.dart';
 import 'package:smart_clicker/core/engine/runtime.dart';
+import 'package:smart_clicker/core/lang/file_refs.dart';
 import 'package:smart_clicker/core/storage/storage.dart';
 import 'package:smart_clicker/platform/stub_backend.dart';
 
@@ -127,5 +128,25 @@ log(load_data("ход"))
     final back = Settings.fromJson({...s.toJson(), 'allowExternalRun': true, 'stateFile': true});
     expect(back.allowExternalRun, isTrue);
     expect(back.stateFile, isTrue);
+  });
+
+  test('вкладка «Файлы»: какие файлы читает и пишет скрипт', () {
+    final r = findFileRefs('''
+let t = read_json("задание.json", "prompt")
+wait_file("Задание.json", key: "ready")
+write_json("задание.json", "done", true)
+appendFile("C:/logs/a.txt", "x")
+let name = "не файл.txt"
+read_file(name)
+export_vars()
+save_data("ход", 1)
+''');
+    expect([for (final f in r.files) f.name], ['задание.json', 'C:/logs/a.txt', 'state.json']);
+    expect(r.files.first.uses, ['читает', 'ждёт', 'пишет']);
+    expect(r.files.first.line, 1);
+    expect(r.files[1].uses, ['дописывает']);
+    expect(r.data, isTrue);
+    expect(findFileRefs('click(1, 2)').files, isEmpty);
+    expect(findFileRefs('read_json("a.json"').files.single.name, 'a.json'); // being typed
   });
 }

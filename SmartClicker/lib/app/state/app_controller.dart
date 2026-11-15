@@ -17,6 +17,7 @@ import '../../core/engine/runner.dart';
 import '../../core/engine/runtime.dart';
 import '../../core/lang/ask_scan.dart';
 import '../../core/lang/checker.dart';
+import '../../core/lang/file_refs.dart';
 import '../../core/lang/picture_refs.dart';
 import '../../core/lang/script_refs.dart';
 import '../../platform/backend.dart';
