@@ -1,4 +1,5 @@
-// The "Autorun" page: tasks by schedule and rules "start when a program opens".
+// The "Autorun" page: tasks by schedule, rules "start when a program opens"
+// and "start when a file changes" (file_rules_tab.dart).
 
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -7,6 +8,7 @@ import '../../../core/automation/autorun.dart';
 import '../../state/app_controller.dart';
 import '../../../core/storage/storage.dart';
 import '../widgets/page_parts.dart';
+import 'file_rules_tab.dart';
 
 class SchedulePage extends StatelessWidget {
   final AppController app;
@@ -392,7 +394,7 @@ class SchedulePage extends StatelessWidget {
     return ListenableBuilder(
       listenable: app,
       builder: (context, _) => DefaultTabController(
-        length: 2,
+        length: 3,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -401,11 +403,12 @@ class SchedulePage extends StatelessWidget {
               tabs: [
                 Tab(text: 'По расписанию (${app.schedule.length})'),
                 Tab(text: 'По программе (${app.autoRules.length})'),
+                Tab(text: 'По файлу (${app.fileRules.length})'),
               ],
             ),
             Expanded(
               child: TabBarView(
-                children: [_timeTab(context), _programTab(context)],
+                children: [_timeTab(context), _programTab(context), FileRulesTab(app: app)],
               ),
             ),
           ],

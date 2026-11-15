@@ -10,6 +10,7 @@ extension AppControllerRun on AppController {
     final name = current!, source = editor.text;
     _stepStart = step;
     _slowStart = slow;
+    _forceDry = false;
     logs.clear();
     errorLine.value = 0;
     currentLine.value = 0;
@@ -36,8 +37,10 @@ extension AppControllerRun on AppController {
 
   /// Starts any script right away (used by the schedule). The version with
   /// unsaved edits is used if there is one.
-  Future<bool> runByName(String name, {String reason = ''}) async {
+  /// [dry] — this run only in the test mode (actions go to the log).
+  Future<bool> runByName(String name, {String reason = '', bool dry = false}) async {
     if (busy || !store.exists(name)) return false;
+    _forceDry = dry;
     _stepStart = false;
     _slowStart = false;
     logs.clear();
@@ -67,7 +70,7 @@ extension AppControllerRun on AppController {
     _changed();
     _log(
       'system',
-      '▶ Запуск "$name" в ${_clockText(_runStarted!)}${settings.dryRun ? ' — ТЕСТОВЫЙ РЕЖИМ (без кликов)' : ''}'
+      '▶ Запуск "$name" в ${_clockText(_runStarted!)}${settings.dryRun || _forceDry ? ' — ТЕСТОВЫЙ РЕЖИМ (без кликов)' : ''}'
           '  ·  стоп: ${settings.stopKeysLabel}, пауза: ${settings.pauseKey.toUpperCase()}',
     );
     if (answers.isNotEmpty) _log('system', '❓ Ответы: ${describeAnswers(answers)}');
@@ -102,7 +105,7 @@ extension AppControllerRun on AppController {
     'dataDir': paths.base,
     // Unsaved edits take part in the run: what you see is what runs.
     'scripts': {...store.all(), ...buffers, ?current: editor.text},
-    'dryRun': settings.dryRun,
+    'dryRun': settings.dryRun || _forceDry,
     'human': settings.human,
     'clickOffset': settings.clickOffset,
     'typeDelay': settings.typeDelayMs,

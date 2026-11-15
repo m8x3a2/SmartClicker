@@ -17,6 +17,7 @@ import '../scripts/batch_summary.dart';
 import '../scripts/run_script_fix_dialog.dart';
 import '../scripts/scripts_screen.dart';
 import 'external_change_banner.dart';
+import 'file_ask_banner.dart';
 import 'safety_banner.dart';
 
 class HomePage extends StatefulWidget {
@@ -109,6 +110,14 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  /// How many strips are shown above the pages (see SafetyBanner,
+  /// ExternalChangeBanner, FileAskBanner).
+  static int _strips(AppController app) => [
+        app.safeMode || app.automationOff || app.automationWaitSec > 0,
+        app.externalText != null && app.current != null,
+        app.fileAsk != null,
+      ].where((v) => v).length;
+
   Widget _full(AppController app) {
     return Stack(
         children: [
@@ -162,6 +171,7 @@ class _HomePageState extends State<HomePage> {
                   children: [
                     SafetyBanner(app: app),
                     ExternalChangeBanner(app: app),
+                    FileAskBanner(app: app),
                     Expanded(
                       child: IndexedStack(
                         index: _page,
@@ -197,11 +207,17 @@ class _HomePageState extends State<HomePage> {
             right: 12,
             child: ListenableBuilder(
               listenable: app,
-              builder: (_, _) => Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  for (final t in app.toasts.reversed.take(4)) _Toast(app, t),
-                ],
+              // Below the strips with buttons (safe mode, a file asks to run…):
+              // a toast must not cover them — when it disappears by itself, a
+              // click meant for its cross would hit a button of the strip.
+              builder: (_, _) => Padding(
+                padding: EdgeInsets.only(top: 54.0 * _strips(app)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    for (final t in app.toasts.reversed.take(4)) _Toast(app, t),
+                  ],
+                ),
               ),
             ),
           ),

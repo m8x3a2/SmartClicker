@@ -27,6 +27,7 @@ import '../../core/system/access.dart';
 import '../../core/system/startup.dart';
 import '../../core/system/safety.dart';
 import '../../core/automation/autorun.dart';
+import '../../core/automation/file_watch.dart';
 import '../../core/recorder/recorder.dart';
 import '../../core/reports/report.dart';
 import '../../core/storage/storage.dart';
@@ -60,6 +61,7 @@ part 'controller_backup.dart';
 part 'controller_safety.dart';
 part 'controller_watch.dart';
 part 'controller_requests.dart';
+part 'controller_file_rules.dart';
 
 /// A piece of the screen selected by the user.
 class ScreenCapture {
@@ -314,6 +316,10 @@ class AppController extends ChangeNotifier {
     if (auto is List) {
       autoRules.addAll(auto.whereType<Map>().map(AutoRule.fromJson));
     }
+    final fr = readJson(paths.fileRulesFile);
+    if (fr is List) {
+      fileRules.addAll(fr.whereType<Map>().map(FileRule.fromJson));
+    }
     _refresh();
     editor.addListener(_onEdit);
     if (scripts.isNotEmpty) open(scripts.first);
@@ -448,6 +454,19 @@ class AppController extends ChangeNotifier {
   /// Scripts tied to programs (start when the program starts or its window
   /// becomes active).
   final List<AutoRule> autoRules = [];
+
+  /// Scripts tied to files (a neural network wrote a task) and their watch.
+  final List<FileRule> fileRules = [];
+  final FileWatch _fileWatch = FileWatch();
+
+  /// Started by a file rule and waiting to run (rule, how, since when).
+  final List<(FileRule, FileRunMode, DateTime)> _fileQueue = [];
+
+  /// A file rule asks "run?" (the strip above the pages) and since when.
+  (FileRule, DateTime)? fileAsk;
+
+  /// This run only in the test mode (a file rule with FileRunMode.test).
+  bool _forceDry = false;
   final AutoWatch _autoWatch = AutoWatch();
 
   /// The rule whose script is running now, and whether the rule paused it.

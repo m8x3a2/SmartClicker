@@ -340,6 +340,7 @@ extension AppControllerHotkeys on AppController {
     if (_tick % 80 == 60) _checkDiskChanges(); // scripts changed by other programs
     if (_tick % 40 == 30) {
       _checkRequests(); // --run / --stop from other programs
+      _checkFileRules(); // scripts started when a file changes
       if (isRunning) _writeState();
     }
     // Countdown of the delayed automation in the banner (and turning it on).

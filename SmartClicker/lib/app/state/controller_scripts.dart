@@ -126,6 +126,9 @@ extension AppControllerScripts on AppController {
     for (final r in autoRules.where((r) => r.script == old)) {
       r.script = name;
     }
+    for (final r in fileRules.where((r) => r.script == old)) {
+      r.script = name;
+    }
     _retargetAnswers(old, name);
     if (current == old) {
       current = name;
@@ -210,6 +213,7 @@ extension AppControllerScripts on AppController {
     saveSettingsQuiet();
     saveSchedule();
     saveAutoRules();
+    saveFileRules();
     _refresh();
     _changed();
     return null;
@@ -327,6 +331,7 @@ extension AppControllerScripts on AppController {
     saveSettingsQuiet();
     saveSchedule();
     saveAutoRules();
+    saveFileRules();
     _refresh();
     _changed();
     return null;

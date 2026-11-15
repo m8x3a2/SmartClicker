@@ -42,6 +42,8 @@ class AppPaths {
   String get historyFile => _p('history.json');
   String get scheduleFile => _p('schedule.json');
   String get autorunFile => _p('autorun.json');
+  /// Scripts started when a file changes (Автозапуск → «По файлу»).
+  String get fileRulesFile => _p('file_rules.json');
   String get notificationsFile => _p('notifications.json');
   String get dataFile => _p('data.json');
   /// Journal of the guard against self-destruction (starts of the program,

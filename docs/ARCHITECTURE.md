@@ -38,7 +38,7 @@ lib/
                  script_store, schedule_task, example_scripts, check_scripts, zip,
                  backup (резервная копия всего, восстановление, сброс),
                  share_pack («Поделиться»: архив скрипта, импорт, опасные команды)
-    automation/  автозапуск по программе
+    automation/  автозапуск по программе (autorun) и по изменению файла (file_watch)
     reports/     отчёты об ошибках, журнал сбоев программы
     system/      «Доступы»: что работает на этом компьютере и что мешает;
                  startup — запуск вместе с Windows (команда, разбор записи);
