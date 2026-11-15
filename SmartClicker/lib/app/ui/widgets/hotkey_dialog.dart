@@ -41,6 +41,8 @@ class _HotkeyDialog extends StatefulWidget {
 class _HotkeyDialogState extends State<_HotkeyDialog> {
   Timer? _timer;
   bool _armed = false; // true once every key from before the dialog is released
+  bool _capsHeld = false; // Caps Lock went down: waiting for a key or its release
+  static const _capsVk = 0x14;
   bool _closed = false;
   String _mods = '';
 
@@ -72,8 +74,12 @@ class _HotkeyDialogState extends State<_HotkeyDialog> {
       for (final m in const ['ctrl', 'shift', 'alt', 'win'])
         if (b.isVkDown(vkByName[m]!)) m,
     ];
+    // Caps Lock works like a modifier here: held with another key it makes
+    // "capslock+q"; pressed and released alone it is the key itself.
+    final caps = b.isVkDown(_capsVk);
     String? key;
     for (final vk in recordableVks) {
+      if (vk == _capsVk) continue;
       final name = nameByVk[vk]!;
       if (modifierKeys.contains(name) || name.contains('+')) continue;
       if (b.isVkDown(vk)) {
@@ -82,14 +88,20 @@ class _HotkeyDialogState extends State<_HotkeyDialog> {
       }
     }
     if (!_armed) {
-      if (key == null && mods.isEmpty) _armed = true;
+      if (key == null && mods.isEmpty && !caps) _armed = true;
       return;
     }
     if (key != null) {
-      _close([...mods, key].join('+'));
+      _close([...mods, if (caps || _capsHeld) 'capslock', key].join('+'));
       return;
     }
-    final shown = mods.join('+');
+    if (caps) {
+      _capsHeld = true;
+    } else if (_capsHeld) {
+      _close([...mods, 'capslock'].join('+'));
+      return;
+    }
+    final shown = [...mods, if (caps) 'capslock'].join('+');
     if (shown != _mods) setState(() => _mods = shown);
   }
 

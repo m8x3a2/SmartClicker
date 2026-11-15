@@ -10,8 +10,23 @@ extension AppControllerHotkeys on AppController {
         !extraModifierHeld(vks, backend.isUserKeyDown);
   }
 
-  bool _pressed(String combo) =>
-      combo.isNotEmpty && AppControllerHotkeys.freshPress(_hotkeyState, combo, _comboDown(combo));
+  bool _pressed(String combo) {
+    final hit = combo.isNotEmpty &&
+        AppControllerHotkeys.freshPress(_hotkeyState, combo, _comboDown(combo));
+    // Caps Lock of a hotkey ("capslock+q") also switched capital letters on
+    // or off; it is switched back once released (see _onPoll) — only when
+    // the hotkey does something now (otherwise the keys go on as usual).
+    if (hit &&
+        combo.contains('+') &&
+        AppController.comboVks(combo).contains(0x14) &&
+        !_hotkeysSuspended &&
+        AppControllerHotkeys.heldBackHotkeys(settings, state,
+                hasScript: current != null, active: true)
+            .contains(combo)) {
+      _capsRestore = true;
+    }
+    return hit;
+  }
 
   /// The combo went down since the last poll. A combo seen for the first
   /// time is not a press: a hotkey that was just assigned is still held
@@ -32,9 +47,10 @@ extension AppControllerHotkeys on AppController {
 
   /// Hotkeys to keep away from other programs right now: only the ones that
   /// do something in this [state] (F12 with nothing running stays F12).
+  /// [active] — the same list even when holding back is off in the settings.
   static List<String> heldBackHotkeys(Settings s, RunState state,
-      {required bool hasScript}) {
-    if (!s.holdBackHotkeys) return const [];
+      {required bool hasScript, bool active = false}) {
+    if (!s.holdBackHotkeys && !active) return const [];
     final idle = state == RunState.idle;
     final running = state == RunState.running || state == RunState.paused;
     if (state == RunState.recording) return recordingHotkeys(s);
@@ -324,6 +340,11 @@ extension AppControllerHotkeys on AppController {
     // Countdown of the delayed automation in the banner (and turning it on).
     if (_tick % 40 == 10 && automationHeldUntil != null && !automationOn) _changed();
     _hideAfterAutostart();
+    if (_capsRestore && !backend.isUserKeyDown(0x14)) {
+      _capsRestore = false;
+      backend.keyEvent('capslock', true); // own input: no hotkey, not recorded
+      backend.keyEvent('capslock', false);
+    }
     // Another copy of the program showed our window (see SingleInstance):
     // it is no longer in the tray.
     if (_tick % 8 == 0 && hiddenToTray && backend.isMainVisible()) {

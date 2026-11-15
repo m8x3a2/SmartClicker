@@ -69,7 +69,11 @@ const completions = <Completion>[
   Completion('read_text', 'read_text(x, y, w, h)',
       'прочитать текст в области экрана (строки через перенос); lang: "en-US", scale: 3'),
   Completion('text_in', 'text_in(x, y, w, h, "Готово")',
-      'true, если в области есть такой текст (регистр и лишние пробелы не важны)'),
+      'true, если в области есть такой текст (регистр и лишние пробелы не важны); errors: 1 — допустить ошибку в букве'),
+  Completion('similar', 'similar(text, "Начать")',
+      'true, если текст похож на образец: распознавание может ошибиться в букве («Враv» ≈ «враг»); errors: 1, percent: 80, case: "exact", part: false'),
+  Completion('similarity', 'similarity(text, "Начать")',
+      'насколько текст похож на образец, 0..100 (100 — одинаковые)'),
   Completion('wait_text', 'wait_text(x, y, w, h, "Готово", timeout: 10s)',
       'ждать, пока в области появится текст; true, если дождались; interval: 500'),
   Completion('read_number', 'read_number(x, y, w, h)',
@@ -206,6 +210,11 @@ const paramHints = <String, String>{
   'wait': 'false — не ждать, пока команда завершится',
   'horizontal': 'true — крутить колесо вбок (горизонтальная прокрутка)',
   'options': 'варианты ответа для выпадающего списка: options: ["быстро", "медленно"]',
+  'errors': 'сколько букв может быть неверно, пропущено или лишнее: errors: 1. В similar по умолчанию — 1 на каждые 4 буквы образца, в text_in / wait_text — 0',
+  'percent': 'вместо errors: сколько процентов образца должно совпасть, percent: 80',
+  'case': '"ignore" (по умолчанию) — заглавные и строчные буквы не различаются; "exact" — различаются',
+  'part': 'true (по умолчанию) — образец может быть частью текста («Начать» в «Начать игру»); false — весь текст целиком',
+  'lookalike': 'true (по умолчанию) — похожие русские и латинские буквы считаются одинаковыми (Р и P, о и o)',
 };
 
 final _functionDecl = RegExp(r'function\s+([A-Za-z_]\w*)\s*\(([^)\n]*)\)');

@@ -186,6 +186,16 @@ final namedParams = <String, PSpec>{
   'options': PSpec('options', paramHints['options']!, def: '["быстро", "медленно"]', label: 'варианты'),
   'horizontal': PSpec('horizontal', paramHints['horizontal']!,
       kind: PK.bool, def: 'true', label: 'вбок'),
+  'errors': PSpec('errors', paramHints['errors']!, kind: PK.number, def: '1', label: 'ошибок в буквах'),
+  'percent': PSpec('percent', paramHints['percent']!, kind: PK.number, def: '80', label: 'совпадает на %'),
+  'case': PSpec('case', paramHints['case']!,
+      kind: PK.choice,
+      def: '"exact"',
+      label: 'регистр',
+      options: const {'"ignore"': 'не важен', '"exact"': 'важен'}),
+  'part': PSpec('part', paramHints['part']!, kind: PK.bool, def: 'false', label: 'часть текста'),
+  'lookalike': PSpec('lookalike', paramHints['lookalike']!,
+      kind: PK.bool, def: 'false', label: 'похожие рус/лат буквы'),
 };
 
 PSpec namedSpec(String name) =>
@@ -194,6 +204,7 @@ PSpec namedSpec(String name) =>
 
 const _click = ['offset', 'hold', 'duration'];
 const _ocr = ['engine', 'lang', 'scale'];
+const _match = ['errors', 'percent', 'case', 'part', 'lookalike'];
 const _image = ['tolerance', 'scale'];
 
 // ------------------------------------------------------------------ functions
@@ -271,7 +282,7 @@ const functionSpecs = <FSpec>[
     PSpec('text', 'какой текст ждать (регистр и лишние пробелы не важны)',
         kind: PK.text, def: '"Готово"'),
   ], 'wait_text(40%, 40%, 20%, 10%, "Готово", timeout: 10s)',
-      named: ['timeout', 'interval', ..._ocr], returns: 'true — дождались, false — время вышло'),
+      named: ['timeout', 'interval', ..._ocr, ..._match], returns: 'true — дождались, false — время вышло'),
   FSpec('wait_image', 'wait', 'ждать картинку {name}', [_picture, _ax, _ay, _aw, _ah],
       'wait_image("кнопка", timeout: 10s)',
       named: ['timeout', 'interval', ..._image],
@@ -306,7 +317,17 @@ const functionSpecs = <FSpec>[
     PSpec('text', 'какой текст искать (регистр и лишние пробелы не важны)',
         kind: PK.text, def: '"Готово"'),
   ], 'text_in(40%, 40%, 20%, 10%, "Готово")',
-      named: _ocr, returns: 'true / false', saveAs: 'found', statement: false),
+      named: [..._ocr, ..._match], returns: 'true / false', saveAs: 'found', statement: false),
+  FSpec('similar', 'screen', 'текст {text} похож на {pattern}', [
+    PSpec('text', 'текст — обычно то, что прочитал read_text', def: 'text'),
+    PSpec('pattern', 'образец: какое слово ожидается', kind: PK.text, def: '"Начать"'),
+  ], 'similar(text, "Начать")',
+      named: _match, returns: 'true / false', saveAs: 'ok', statement: false),
+  FSpec('similarity', 'screen', 'насколько {text} похож на {pattern}', [
+    PSpec('text', 'текст — обычно то, что прочитал read_text', def: 'text'),
+    PSpec('pattern', 'образец: какое слово ожидается', kind: PK.text, def: '"Начать"'),
+  ], 'similarity(text, "Начать")',
+      named: _match, returns: '0..100', saveAs: 'score', statement: false),
   FSpec('read_number', 'screen', 'число в области {x} {y} {w} {h}', [_rx, _ry, _w, _h],
       'read_number(40%, 40%, 20%, 10%)',
       named: _ocr, returns: 'число или null', saveAs: 'n', statement: false),

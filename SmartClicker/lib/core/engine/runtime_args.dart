@@ -216,4 +216,35 @@ extension ScriptRuntimeRuntimeArgs on ScriptRuntime {
     }
     c.fail('Цвет задаётся как "#RRGGBB", получено ${stringify(v, quote: true)}');
   }
+
+  /// Text to compare: null (nothing recognized) is an empty text.
+  String _plain(Object? v) => v == null ? '' : v is String ? v : stringify(v);
+
+  /// errors:, percent:, case:, part:, lookalike: of similar / text_in.
+  MatchRules _matchRules(CallCtx c, String fn) {
+    final mode = '${c.opt('case', 'ignore')}'.toLowerCase();
+    if (!const {'ignore', 'lower', 'upper', 'exact'}.contains(mode)) {
+      c.fail('$fn: case может быть "ignore" (по умолчанию — регистр не важен) или "exact", а не "$mode"');
+    }
+    final e = c.opt('errors'), p = c.opt('percent');
+    return MatchRules(
+      errors: e == null ? null : _n(c, e, 'errors').round(),
+      percent: p == null ? null : _n(c, p, 'percent'),
+      exactCase: mode == 'exact',
+      part: c.opt('part', true) != false,
+      lookalike: c.opt('lookalike', true) != false,
+    );
+  }
+
+  /// text_in / wait_text: the recognized [text] has [want]. Without errors:
+  /// or percent: — as before (exact letters, case and spaces do not matter).
+  bool _textFound(CallCtx c, String text, String want, String fn) {
+    if (c.opt('errors') == null && c.opt('percent') == null && c.opt('case') == null) {
+      return ScriptRuntime._loose(text).contains(ScriptRuntime._loose(want));
+    }
+    final r = _matchRules(c, fn);
+    return textMatches(text, want, MatchRules(
+        errors: r.errors ?? 0, percent: r.percent, exactCase: r.exactCase,
+        part: r.part, lookalike: r.lookalike));
+  }
 }

@@ -270,6 +270,9 @@ class AppController extends ChangeNotifier {
   bool _hotkeysSuspended = false;
   bool _holdBackWarned = false;
 
+  /// A hotkey with Caps Lock fired: switch Caps Lock back once it is released.
+  bool _capsRestore = false;
+
   /// "Mouse into a corner" stop: polls the mouse spent in a corner, the
   /// tick the check from the settings ends at, whether the mouse is watched.
   int _cornerTicks = 0;

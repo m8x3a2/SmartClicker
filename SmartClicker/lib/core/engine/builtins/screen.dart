@@ -54,20 +54,26 @@ extension ScriptRuntimeBuiltinsScreen on ScriptRuntime {
       return ScriptRuntime.hex(((r ~/ n) << 16) | ((g ~/ n) << 8) | (b ~/ n));
     });
 
+    // Loose comparison of recognized text (core/vision/text_match.dart).
+    _def('similar', (c) => textMatches(
+        _plain(c.arg(0, 'text')), _s(c, c.arg(1, 'pattern'), 'similar'), _matchRules(c, 'similar')));
+    _def('similarity', (c) => textSimilarity(_plain(c.arg(0, 'text')),
+        _s(c, c.arg(1, 'pattern'), 'similarity'), _matchRules(c, 'similarity')));
+
     _def('read_text', (c) => _ocr(c, _region(c, 0, 'read_text')), ['screen_text']);
 
     _def('text_in', (c) {
-      final want = ScriptRuntime._loose(_s(c, c.arg(4, 'text'), 'text_in'));
-      return ScriptRuntime._loose(_ocr(c, _region(c, 0, 'text_in'))).contains(want);
+      final want = _s(c, c.arg(4, 'text'), 'text_in');
+      return _textFound(c, _ocr(c, _region(c, 0, 'text_in')), want, 'text_in');
     }, ['has_text']);
 
     _def('wait_text', (c) async {
-      final want = ScriptRuntime._loose(_s(c, c.arg(4, 'text'), 'wait_text'));
+      final want = _s(c, c.arg(4, 'text'), 'wait_text');
       final timeout = _nOr(c, c.opt('timeout'), 10000, 'timeout');
       final interval = _nOr(c, c.opt('interval'), 500, 'interval');
       final sw = Stopwatch()..start();
       while (true) {
-        if (ScriptRuntime._loose(_ocr(c, _region(c, 0, 'wait_text'))).contains(want)) return true;
+        if (_textFound(c, _ocr(c, _region(c, 0, 'wait_text')), want, 'wait_text')) return true;
         if (timeout > 0 && sw.elapsedMilliseconds >= timeout) return false;
         await this.sleep(math.max(interval, 50), jitter: false);
       }

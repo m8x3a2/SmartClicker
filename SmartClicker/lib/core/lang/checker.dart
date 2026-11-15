@@ -163,7 +163,7 @@ class _Checker {
                 issues.add(Issue(
                     n.line,
                     'read_text(...) ${n.op} "..." почти никогда не совпадёт точно: '
-                    'распознавание ошибается в мелочах. Используйте text_in или wait_text',
+                    'распознавание ошибается в мелочах. Используйте similar(текст, "…"), text_in или wait_text',
                     error: false));
               }
             }

@@ -135,4 +135,19 @@ void main() {
     expect(pts, hasLength(2));
     expect(Settings().markKey, 'f4');
   });
+
+  test('Caps Lock в сочетании: главная клавиша — Q, работает и без перехвата', () {
+    final vks = AppController.comboVks('capslock+q');
+    expect(vks, [0x14, 0x51]);
+    expect(mainKeyOf(vks), 0x51);
+    bool down(int vk) => vk == 0x14;
+    expect(completesCombo(0x51, vks, down), isTrue);
+    final s = Settings()
+      ..stopKey = 'capslock+q'
+      ..holdBackHotkeys = false;
+    expect(AppControllerHotkeys.heldBackHotkeys(s, RunState.running, hasScript: true), isEmpty);
+    expect(
+        AppControllerHotkeys.heldBackHotkeys(s, RunState.running, hasScript: true, active: true),
+        contains('capslock+q'));
+  });
 }
