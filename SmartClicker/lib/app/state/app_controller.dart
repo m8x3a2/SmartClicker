@@ -31,7 +31,10 @@ import '../../core/storage/storage.dart';
 import '../../core/storage/backup.dart';
 import '../../core/storage/share_pack.dart';
 import '../../core/storage/zip.dart';
+import 'click_map.dart';
 import 'edit_history.dart';
+
+export 'click_map.dart';
 
 part 'controller_scripts.dart';
 part 'controller_settings.dart';
@@ -369,6 +372,11 @@ class AppController extends ChangeNotifier {
   /// A script stopped with an error: the red dot stays on the tray icon
   /// until the window is opened.
   bool trayError = false;
+
+  /// The click map of the last test run (null — none yet).
+  ClickMap? clickMap;
+  final List<MapAction> _mapActs = [];
+  ({int w, int h, Uint8List bgra})? _mapShot;
 
   /// Items of the tray menu and what each of them does ('' = separator).
   static ({List<String> items, List<String> actions}) trayMenuFor(

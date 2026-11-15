@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../state/app_controller.dart';
+import 'click_map_dialog.dart';
 import '../editor/code_editor.dart';
 
 class LogPanel extends StatefulWidget {
@@ -188,6 +189,18 @@ class _LogPanelState extends State<LogPanel> {
                   tooltip: 'Папка с логами',
                   icon: const Icon(Icons.folder_open, size: 18),
                   onPressed: () => app.openFolder(app.paths.logs),
+                ),
+                IconButton(
+                  tooltip: app.clickMap == null
+                      ? 'Карта кликов — появится после запуска в тестовом режиме («Тест без кликов»)'
+                      : 'Карта кликов последнего теста: куда скрипт нажал бы, по номерам',
+                  icon: const Icon(Icons.map_outlined, size: 18),
+                  onPressed: app.clickMap == null
+                      ? null
+                      : () => showClickMap(context, app.clickMap!,
+                          onLine: app.current == app.clickMap!.script
+                              ? (line) => app.revealLine.value = line
+                              : null),
                 ),
                 IconButton(
                   tooltip: 'Сохранить отчёт: скрипт, лог, настройки и снимок экрана — одним файлом',

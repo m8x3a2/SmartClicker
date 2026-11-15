@@ -206,6 +206,8 @@ extension AppControllerFiles on AppController {
         _changed();
       case 'vars':
         _onVars(e['rows'] as List? ?? const []);
+      case 'act':
+        _onMapAction(e);
       case 'mark':
         backend.showMarker((e['x'] as num).toInt(), (e['y'] as num).toInt());
         _markerTimer?.cancel();

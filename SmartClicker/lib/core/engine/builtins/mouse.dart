@@ -10,7 +10,7 @@ extension ScriptRuntimeBuiltinsMouse on ScriptRuntime {
 
     _def('move', (c) async {
       final p = _scatter(c, _point(c, 0, 'move'));
-      if (!await _guardInput('курсор → ${_fmtPt(p)}')) return null;
+      if (!await _guardInput('курсор → ${_fmtPt(p)}', at: p, press: false)) return null;
       await _goto(c, p);
       return null;
     }, ['move_to']);
@@ -19,7 +19,7 @@ extension ScriptRuntimeBuiltinsMouse on ScriptRuntime {
       final btn = _s(c, c.opt('button', 'left'), 'button');
       Pt? p;
       if (c.args.isNotEmpty) p = _point(c, 0, 'mouse_down');
-      if (!await _guardInput('зажать кнопку мыши ($btn)')) return null;
+      if (!await _guardInput('зажать кнопку мыши ($btn)', at: p ?? backend.cursorPos())) return null;
       if (p != null) await _goto(c, p);
       await _buttonDown(btn);
       return null;
@@ -95,7 +95,7 @@ extension ScriptRuntimeBuiltinsMouse on ScriptRuntime {
       final amount = _n(c, c.arg(0, 'amount'), 'scroll').round();
       Pt? p;
       if (c.args.length >= 3) p = _point(c, 1, 'scroll');
-      if (!await _guardInput('колесо мыши: $amount')) return null;
+      if (!await _guardInput('колесо мыши: $amount', at: p, press: false)) return null;
       if (p != null) backend.moveTo(p.x, p.y);
       final step = amount > 0 ? 1 : -1;
       for (var i = 0; i < amount.abs(); i++) {

@@ -118,7 +118,10 @@ extension ScriptRuntimeBuiltinsScreen on ScriptRuntime {
           await _click(CallCtx([hit], c.named, c.line));
           return true;
         }
-        if (sw.elapsedMilliseconds >= timeout) return false;
+        if (sw.elapsedMilliseconds >= timeout) {
+          if (dryRun) _mapAction('картинка "${stringify(c.arg(0))}" не найдена — клика нет', null, 'miss');
+          return false;
+        }
         await this.sleep(math.max(interval, 50), jitter: false);
       }
     });

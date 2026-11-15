@@ -67,6 +67,7 @@ class ScriptRuntime implements Host {
   late num actionDelay = (cfg['actionDelay'] as num?) ?? 0; // ms after every input action
   TypeMethod typeMethod = TypeMethod.auto; // set_option("type_method")
   bool _actionDone = false; // an input action ran since the last statement
+  int _mapCount = 0; // actions of a test run sent to the click map
 
   /// «Запустить замедленно»: pause before every line of the main script.
   late final int slowMs = (cfg['slowMs'] as num?)?.toInt() ?? 0;
@@ -209,6 +210,7 @@ class ScriptRuntime implements Host {
       'script': script,
       'ms': _total.elapsedMilliseconds,
       'loops': _loops,
+      'acts': _mapCount,
     };
   }
 

@@ -58,6 +58,8 @@ extension AppControllerRun on AppController {
     _runAnswers = answers;
     _runStarted = DateTime.now();
     trayError = false;
+    _mapActs.clear();
+    _mapShot = null;
     vars.value = const [];
     changedVars.clear();
     state = RunState.running;
@@ -287,6 +289,7 @@ extension AppControllerRun on AppController {
     final ended = began.add(Duration(milliseconds: ms));
 
     if (status == 'error') trayError = true;
+    _finishMap(name, (e['acts'] as num?)?.toInt() ?? _mapActs.length);
     String? errText;
     switch (status) {
       case 'ok':
@@ -383,5 +386,32 @@ extension AppControllerRun on AppController {
     } catch (_) {
       return null;
     }
+  }
+
+  /// An action of a test run: the screen is taken at the first one (what
+  /// the script saw when it started acting).
+  void _onMapAction(Map<String, Object?> e) {
+    if (_mapActs.isEmpty) {
+      try {
+        final s = backend.screenSize();
+        _mapShot = (w: s.w, h: s.h, bgra: opaque(backend.capture(0, 0, s.w, s.h)));
+      } catch (_) {
+        _mapShot = null;
+      }
+    }
+    _mapActs.add(MapAction.of(_mapActs.length + 1, e));
+  }
+
+  void _finishMap(String name, int total) {
+    final shot = _mapShot;
+    if (_mapActs.isEmpty || shot == null) return;
+    clickMap = ClickMap(name, _runStarted ?? DateTime.now(), shot.w, shot.h, shot.bgra,
+        List.of(_mapActs), total);
+    _mapActs.clear();
+    _mapShot = null;
+    final points = clickMap!.points.length;
+    _log('system',
+        '🗺 Карта кликов: действий — $total${points > 0 ? ', с точкой на экране — $points' : ''}. '
+        'Открыть — значок карты над логом');
   }
 }

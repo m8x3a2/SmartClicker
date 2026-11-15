@@ -37,9 +37,11 @@ extension ScriptRuntimeRuntimeInput on ScriptRuntime {
   }
 
   /// Must precede every input action. Returns false in test mode (the action
-  /// is only logged). With require_window the action waits until that
-  /// window is active (focus: true — brings it to the front first).
-  Future<bool> _guardInput(String description, {Pt? at}) async {
+  /// is only logged and goes on the click map). With require_window the
+  /// action waits until that window is active (focus: true — brings it to
+  /// the front first). [at]: where it happens; [press] — false for a move
+  /// or the wheel (no click marker, a hollow dot on the click map).
+  Future<bool> _guardInput(String description, {Pt? at, bool press = true}) async {
     _checkLimits();
     if (!_windowOk()) {
       if (dryRun && _requireFocus) {
@@ -60,18 +62,36 @@ extension ScriptRuntimeRuntimeInput on ScriptRuntime {
         log('Окно "$_requiredWindow" снова активно, продолжаю');
       }
     }
-    if (showClicks && at != null) {
+    if (showClicks && press && at != null) {
       // Let the user see where the action is about to happen.
       emit({'t': 'mark', 'x': at.x, 'y': at.y});
       await this.sleep(400, jitter: false);
     }
     _actionDone = true;
     if (dryRun) {
+      _mapAction(description, at, press ? 'press' : 'move');
       log('[тест] $description', 'action');
       return false;
     }
     log(description, 'action');
     return true;
+  }
+
+  /// The click map of a test run: what the script would do and where.
+  /// The first [mapLimit] actions are sent (a loop may make thousands).
+  static const mapLimit = 300;
+
+  void _mapAction(String what, Pt? at, String kind) {
+    if (++_mapCount > mapLimit) return;
+    emit({
+      't': 'act',
+      'm': what,
+      'l': _line,
+      'k': kind,
+      'x': ?at?.x,
+      'y': ?at?.y,
+      if (_nested > 0) 'other': true, // a line of a script from run_script
+    });
   }
 
   Future<void> _moveSmooth(Pt to, num duration, {bool curved = true}) async {
