@@ -8,7 +8,6 @@ import 'script_toolbar.dart';
 import 'editor_area.dart';
 import 'run_status_bar.dart';
 import 'log_panel.dart';
-import 'search_dialog.dart';
 
 class ScriptsPage extends StatelessWidget {
   final AppController app;
@@ -19,8 +18,6 @@ class ScriptsPage extends StatelessWidget {
     return CallbackShortcuts(
       bindings: {
         const SingleActivator(LogicalKeyboardKey.keyS, control: true): app.save,
-        const SingleActivator(LogicalKeyboardKey.keyF, control: true, shift: true): () =>
-            showScriptSearch(context, app),
         // Code -> blocks -> both -> code.
         const SingleActivator(LogicalKeyboardKey.keyB, control: true): () =>
             app.setEditorView(switch (app.settings.editorView) {

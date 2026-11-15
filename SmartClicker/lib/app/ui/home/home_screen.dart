@@ -21,6 +21,7 @@ import 'external_change_banner.dart';
 import '../clipboard/clipboard_screen.dart';
 import 'file_ask_banner.dart';
 import 'command_palette.dart';
+import '../scripts/search_dialog.dart';
 import 'safety_banner.dart';
 
 class HomePage extends StatefulWidget {
@@ -42,6 +43,28 @@ class _HomePageState extends State<HomePage> {
     widget.app.askHandler =
         (script, asks, initial) => showAskDialog(context, script, asks, initial);
     widget.app.runScriptFixHandler = (fixes) => showRunScriptFixDialog(context, fixes);
+    HardwareKeyboard.instance.addHandler(_onKey);
+  }
+
+  bool _dialogOpen = false;
+
+  /// Ctrl+K — the command palette, Ctrl+Shift+F — search in all scripts:
+  /// they work whatever has the keyboard focus (after a deleted script or a
+  /// closed window nothing may have it, and Shortcuts would not hear them).
+  bool _onKey(KeyEvent e) {
+    if (e is! KeyDownEvent || _dialogOpen || widget.app.compact) return false;
+    final k = HardwareKeyboard.instance;
+    if (!k.isControlPressed || k.isAltPressed || k.isMetaPressed) return false;
+    final Future<void> Function()? open = switch (e.logicalKey) {
+      LogicalKeyboardKey.keyK when !k.isShiftPressed => () =>
+          showCommandPalette(context, widget.app, (i) => setState(() => _page = i)),
+      LogicalKeyboardKey.keyF when k.isShiftPressed => () => showScriptSearch(context, widget.app),
+      _ => null,
+    };
+    if (open == null || ModalRoute.of(context)?.isCurrent == false) return false;
+    _dialogOpen = true;
+    open().whenComplete(() => _dialogOpen = false);
+    return true;
   }
 
   @override
@@ -50,6 +73,7 @@ class _HomePageState extends State<HomePage> {
     widget.app.batchSummary.removeListener(_onBatchSummary);
     widget.app.askHandler = null;
     widget.app.runScriptFixHandler = null;
+    HardwareKeyboard.instance.removeHandler(_onKey);
     super.dispose();
   }
 
@@ -123,20 +147,14 @@ class _HomePageState extends State<HomePage> {
         app.fileAsk != null,
       ].where((v) => v).length;
 
-  void _palette(AppController app) =>
-      showCommandPalette(context, app, (i) => setState(() => _page = i));
-
-  Widget _full(AppController app) {
-    // Ctrl+K anywhere in the window: the command palette.
-    return CallbackShortcuts(
-      bindings: {
-        const SingleActivator(LogicalKeyboardKey.keyK, control: true): () => _palette(app),
-      },
-      child: Focus(autofocus: true, child: _layout(app)),
-    );
+  void _palette(AppController app) {
+    if (_dialogOpen) return;
+    _dialogOpen = true;
+    showCommandPalette(context, app, (i) => setState(() => _page = i))
+        .whenComplete(() => _dialogOpen = false);
   }
 
-  Widget _layout(AppController app) {
+  Widget _full(AppController app) {
     return Stack(
         children: [
           Row(

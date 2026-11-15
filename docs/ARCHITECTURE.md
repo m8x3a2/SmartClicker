@@ -23,10 +23,12 @@ lib/
                  picture_refs (где скрипт упоминает картинку, переименование),
                  ask_scan (вопросы ask до запуска); walkNode в ast.dart — обход дерева;
                  script_refs (run_script: поиск скрипта по имени, переименование),
-                 line_diff (построчные различия), file_refs (какие файлы читает и пишет скрипт)
+                 line_diff (построчные различия), file_refs (какие файлы читает и пишет скрипт),
+                 script_search (поиск по всем скриптам)
     engine/      runtime.dart — среда работающего скрипта (пауза, стоп, лимиты);
                  runtime_args / runtime_input — разбор аргументов, ввод;
                  runtime_safety — защита от самоуничтожения внутри движка;
+                 runtime_profile — профилировщик (время строк и функций);
                  builtins/ — встроенные функции по темам (mouse, keyboard, time,
                  screen, windows, system, files — JSON-файлы для других программ, util); runner — изолят; human — «как человек»
     vision/      bitmap, png (свой кодек), image_search (поиск картинки),
@@ -38,7 +40,8 @@ lib/
                  script_store, schedule_task, example_scripts, check_scripts, zip,
                  backup (резервная копия всего, восстановление, сброс),
                  share_pack («Поделиться»: архив скрипта, импорт, опасные команды),
-                 clip_history (история буфера обмена и корзина)
+                 clip_history (история буфера обмена и корзина), trash (корзина
+                 удалённых скриптов/папок/картинок), auto_backup (ежедневная копия)
     automation/  автозапуск по программе (autorun) и по изменению файла (file_watch)
     reports/     отчёты об ошибках, журнал сбоев программы
     system/      «Доступы»: что работает на этом компьютере и что мешает;

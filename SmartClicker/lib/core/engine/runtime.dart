@@ -267,8 +267,11 @@ class ScriptRuntime implements Host {
     }
     if (watchdogMs > 0 && _explicitWait == 0 && _idle.elapsedMilliseconds > watchdogMs) {
       final min = watchdogMs / 60000;
+      final span = watchdogMs < 60000
+          ? '${(watchdogMs / 1000).round()} с'
+          : '${min == min.roundToDouble() ? min.round() : min.toStringAsFixed(1)} мин';
       throw ScriptError(
-          'Сторожевой таймер: ${min == min.roundToDouble() ? min.round() : min.toStringAsFixed(1)} мин '
+          'Сторожевой таймер: $span '
           'без единого действия — похоже, скрипт завис (ждёт то, что не появится). '
           'Настройки → Запуск → «Сторожевой таймер» или set_option("watchdog", …)',
           _line);
