@@ -62,6 +62,15 @@ extension AppControllerWindow on AppController {
     };
   }
 
+  /// The dot on the tray icon: green — running, yellow — paused or about
+  /// to start (also before a restart after an error), red — the last run
+  /// stopped with an error and the window was not opened since.
+  static String trayMarkFor(RunState state, {required bool error}) => switch (state) {
+    RunState.running => 'run',
+    RunState.paused || RunState.countdown => 'pause',
+    _ => error ? 'error' : '',
+  };
+
   /// Shows, updates or removes the tray icon to match the settings.
   void _syncTray() {
     final want = settings.trayOnMinimize || settings.trayOnClose || hiddenToTray;
@@ -71,10 +80,14 @@ extension AppControllerWindow on AppController {
       _trayTipShown = '';
       return;
     }
-    final tip = _trayTip();
-    if (_trayShown && tip == _trayTipShown) return;
-    _trayShown = backend.showTray(tip, _onTrayEvent);
+    // The red dot goes once the user has looked at the window.
+    if (trayError && !hiddenToTray && _ownWindowActive()) trayError = false;
+    final tip = trayError && state == RunState.idle ? '${_trayTip()} — ошибка в «${_runScript ?? ''}»' : _trayTip();
+    final mark = AppControllerWindow.trayMarkFor(state, error: trayError);
+    if (_trayShown && tip == _trayTipShown && mark == _trayMarkShown) return;
+    _trayShown = backend.showTray(tip, _onTrayEvent, mark: mark);
     _trayTipShown = _trayShown ? tip : '';
+    _trayMarkShown = _trayShown ? mark : '';
   }
 
   /// Hides the window; the tray icon stays. Does nothing without a tray

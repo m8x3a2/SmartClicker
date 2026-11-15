@@ -15,10 +15,10 @@ mixin _ProgramWindow implements PlatformBackend {
 
 
   @override
-  bool showTray(String tip, void Function(String event) onEvent) {
+  bool showTray(String tip, void Function(String event) onEvent, {String mark = ''}) {
     _traySink = onEvent;
     _tray ??= WinTray((e) => _traySink?.call(e), owner: _findMainWindow());
-    return _tray!.show(tip);
+    return _tray!.show(tip, mark: mark);
   }
 
 

@@ -57,6 +57,7 @@ extension AppControllerRun on AppController {
     _runSource = source;
     _runAnswers = answers;
     _runStarted = DateTime.now();
+    trayError = false;
     vars.value = const [];
     changedVars.clear();
     state = RunState.running;
@@ -285,6 +286,7 @@ extension AppControllerRun on AppController {
     final began = _runStarted ?? DateTime.now();
     final ended = began.add(Duration(milliseconds: ms));
 
+    if (status == 'error') trayError = true;
     String? errText;
     switch (status) {
       case 'ok':

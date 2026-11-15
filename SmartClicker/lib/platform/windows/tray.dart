@@ -7,6 +7,8 @@ import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
 
+import 'tray_icon.dart';
+
 final _user32 = DynamicLibrary.open('user32.dll');
 final _kernel32 = DynamicLibrary.open('kernel32.dll');
 final _shell32 = DynamicLibrary.open('shell32.dll');
@@ -74,7 +76,10 @@ class WinTray {
   WinTray(this.onEvent, {this.owner = 0});
 
   int _hwnd = 0;
-  int _icon = 0;
+  int _icon = 0; // the program's own icon
+  int _iconSize = 16;
+  String _mark = ''; // status dot: '', 'run', 'pause', 'error'
+  final Map<String, int> _marked = {}; // icons with a dot, made once
   int _taskbarCreated = 0;
   bool _added = false;
   String _tip = '';
@@ -115,7 +120,8 @@ class WinTray {
     _taskbarCreated = _RegisterWindowMessageW(name);
     calloc.free(name);
     // The application's own icon (IDI_APP_ICON = 101 in Runner.rc).
-    _icon = _LoadImageW(inst, 101, 1, _GetSystemMetrics(49), _GetSystemMetrics(50), 0);
+    _iconSize = _GetSystemMetrics(49);
+    _icon = _LoadImageW(inst, 101, 1, _iconSize, _GetSystemMetrics(50), 0);
     if (_icon == 0) _icon = _LoadImageW(0, 32512, 1, 0, 0, 0x8000); // IDI_APPLICATION, shared
     return true;
   }
@@ -131,7 +137,7 @@ class WinTray {
     if (msg == _taskbarCreated && _taskbarCreated != 0 && _added) {
       // Explorer restarted: the icon has to be added again.
       _added = false;
-      Timer.run(() => show(_tip));
+      Timer.run(() => show(_tip, mark: _mark));
       return 0;
     }
     return _DefWindowProcW(hwnd, msg, wParam, lParam);
@@ -145,7 +151,7 @@ class WinTray {
     d.setUint32(16, 1, Endian.little); // uID
     d.setUint32(20, flags, Endian.little);
     d.setUint32(24, _callbackMsg, Endian.little);
-    d.setUint64(32, _icon, Endian.little);
+    d.setUint64(32, _currentIcon(), Endian.little);
     _writeText(p, 40, _tip, 127);
     return p;
   }
@@ -160,10 +166,18 @@ class WinTray {
     w[n] = 0;
   }
 
-  /// Shows the icon (or updates its tooltip).
-  bool show(String tip) {
+  int _currentIcon() {
+    final rgb = trayMarkColors[_mark];
+    if (rgb == null || _icon == 0) return _icon;
+    final made = _marked[_mark] ??= markedIcon(_icon, _iconSize, rgb);
+    return made != 0 ? made : _icon;
+  }
+
+  /// Shows the icon (or updates its tooltip and status dot [mark]).
+  bool show(String tip, {String mark = ''}) {
     if (!_ensureWindow()) return false;
     _tip = tip;
+    _mark = mark;
     final p = _data(0x1 | 0x2 | 0x4); // MESSAGE | ICON | TIP
     try {
       if (_added) return _Shell_NotifyIconW(1, p) != 0; // NIM_MODIFY

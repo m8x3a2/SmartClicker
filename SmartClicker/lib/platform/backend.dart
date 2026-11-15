@@ -197,8 +197,9 @@ abstract class PlatformBackend {
 
   /// Icon in the notification area (system tray). [onEvent] gets 'open'
   /// (left click) and 'menu' (right click). Calling again updates the
-  /// tooltip. Returns false if not supported.
-  bool showTray(String tip, void Function(String event) onEvent);
+  /// tooltip. [mark] — a coloured dot on the icon: 'run' (green), 'pause'
+  /// (yellow), 'error' (red) or '' (none). Returns false if not supported.
+  bool showTray(String tip, void Function(String event) onEvent, {String mark = ''});
   void hideTray();
 
   /// A balloon / notification next to the tray icon.

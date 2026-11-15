@@ -134,9 +134,11 @@ class StubBackend implements PlatformBackend {
   int menuChoice = -1;
   List<String> lastMenu = const [];
 
+  String trayMark = '';
   @override
-  bool showTray(String tip, void Function(String event) onEvent) {
+  bool showTray(String tip, void Function(String event) onEvent, {String mark = ''}) {
     trayTip = tip;
+    trayMark = mark;
     trayEvents = onEvent;
     return true;
   }

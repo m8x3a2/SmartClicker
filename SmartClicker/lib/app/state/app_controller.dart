@@ -364,6 +364,11 @@ class AppController extends ChangeNotifier {
   bool _trayShown = false;
   bool _trayHintShown = false;
   String _trayTipShown = '';
+  String _trayMarkShown = '';
+
+  /// A script stopped with an error: the red dot stays on the tray icon
+  /// until the window is opened.
+  bool trayError = false;
 
   /// Items of the tray menu and what each of them does ('' = separator).
   static ({List<String> items, List<String> actions}) trayMenuFor(
