@@ -37,7 +37,8 @@ lib/
     storage/     app_paths, data_location (где папка с данными, перенос), settings,
                  script_store, schedule_task, example_scripts, check_scripts, zip,
                  backup (резервная копия всего, восстановление, сброс),
-                 share_pack («Поделиться»: архив скрипта, импорт, опасные команды)
+                 share_pack («Поделиться»: архив скрипта, импорт, опасные команды),
+                 clip_history (история буфера обмена и корзина)
     automation/  автозапуск по программе (autorun) и по изменению файла (file_watch)
     reports/     отчёты об ошибках, журнал сбоев программы
     system/      «Доступы»: что работает на этом компьютере и что мешает;
@@ -56,7 +57,8 @@ lib/
                           folder_dialog (выбор папки), com (вызовы COM),
                           key_hook (горячие клавиши не доходят до других программ;
                           мышь человека / скрипта для «мышь в угол»; призрак записи),
-                          startup_entry (запуск вместе с Windows, реестр HKCU\Run)
+                          startup_entry (запуск вместе с Windows, реестр HKCU\Run),
+                          clipboard_windows (буфер: файлы, картинки, пометки паролей)
     onnx/ort.dart         ONNX Runtime для PaddleOCR
   app/
     state/        AppController: app_controller.dart (поля, создание) +

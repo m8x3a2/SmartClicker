@@ -11,6 +11,7 @@ const settingsGroups = <String, List<String>>{
   'mini': ['miniKey', 'miniOnRun'],
   'tray': ['trayOnMinimize', 'trayOnClose'],
   'startup': ['autostartTray', 'autostartDelaySec'],
+  'clipboard': ['clipHistory', 'clipMaxItems', 'clipMaxMb', 'clipKey', 'clipOneByOne'],
   'data': ['resetWord'],
   'hotkeys': ['stopKey', 'stopKey2', 'cornerStop', 'pauseKey', 'recordKey', 'pickKey', 'ghostKey', 'markKey', 'runKey', 'holdBackHotkeys'],
   'run': [
@@ -57,6 +58,16 @@ class Settings {
   /// Landmarks (dots on the screen for the eyes): the key puts one under
   /// the cursor or takes it away; their colour (0xRRGGBB) and size, px.
   String markKey = 'f4';
+
+  /// Clipboard history (the «Буфер» page): on/off, limits, the hotkey that
+  /// shows it over the current window (and pastes the next one of a queue).
+  bool clipHistory = false;
+  int clipMaxItems = 30;
+  int clipMaxMb = 10;
+  String clipKey = 'win+alt+v';
+
+  /// The hotkey pastes the oldest item at once, and it goes to the trash.
+  bool clipOneByOne = false;
   int markColor = 0xFF2BD6;
   int markSize = 14;
   String runKey = '';
@@ -202,6 +213,11 @@ class Settings {
     s.pickKey = get('pickKey', s.pickKey);
     s.ghostKey = get('ghostKey', s.ghostKey);
     s.markKey = get('markKey', s.markKey);
+    s.clipHistory = get('clipHistory', s.clipHistory);
+    s.clipMaxItems = get('clipMaxItems', s.clipMaxItems).clamp(1, 5000);
+    s.clipMaxMb = get('clipMaxMb', s.clipMaxMb).clamp(1, 2000);
+    s.clipKey = get('clipKey', s.clipKey);
+    s.clipOneByOne = get('clipOneByOne', s.clipOneByOne);
     s.markColor = get('markColor', s.markColor);
     s.markSize = get('markSize', s.markSize);
     s.runKey = get('runKey', s.runKey);
@@ -283,6 +299,11 @@ class Settings {
         'pickKey': pickKey,
         'ghostKey': ghostKey,
         'markKey': markKey,
+        'clipHistory': clipHistory,
+        'clipMaxItems': clipMaxItems,
+        'clipMaxMb': clipMaxMb,
+        'clipKey': clipKey,
+        'clipOneByOne': clipOneByOne,
         'markColor': markColor,
         'markSize': markSize,
         'runKey': runKey,

@@ -25,6 +25,19 @@ extension AppControllerHotkeys on AppController {
             .contains(combo)) {
       _capsRestore = true;
     }
+    // The main key of a held-back hotkey does not reach the program, so it
+    // sees Alt (or Win) pressed and released alone: Alt opens the menu
+    // (Notepad: «Файл»), Win — the Start menu. A key of our own while they
+    // are still down makes them "used" (F24 — no program uses it).
+    if (hit &&
+        (combo.contains('alt') || combo.contains('win')) &&
+        settings.holdBackHotkeys &&
+        !_hotkeysSuspended &&
+        AppControllerHotkeys.heldBackHotkeys(settings, state, hasScript: current != null)
+            .contains(combo)) {
+      backend.keyEvent('f24', true);
+      backend.keyEvent('f24', false);
+    }
     return hit;
   }
 
@@ -63,6 +76,7 @@ extension AppControllerHotkeys on AppController {
       s.pickKey,
       s.markKey,
       s.miniKey,
+      if (s.clipHistory) s.clipKey,
       if (idle && hasScript) s.runKey,
       if (idle) ...s.scriptKeys.values,
     ].where((k) => k.isNotEmpty).toList();
@@ -338,6 +352,7 @@ extension AppControllerHotkeys on AppController {
     if (_tick % 40 == 20) _checkAutorun(); // every second
     if (_tick % 40 == 0) _syncTray();
     if (_tick % 80 == 60) _checkDiskChanges(); // scripts changed by other programs
+    if (_tick % 20 == 7) _checkClipboard(); // clipboard history
     if (_tick % 40 == 30) {
       _checkRequests(); // --run / --stop from other programs
       _checkFileRules(); // scripts started when a file changes
@@ -379,6 +394,7 @@ extension AppControllerHotkeys on AppController {
       if (_pressed(settings.ghostKey) && state == RunState.recording) setGhost(!ghost);
       if (_pressed(settings.markKey)) toggleLandmark();
       if (_pressed(settings.miniKey)) toggleCompact();
+      if (_pressed(settings.clipKey) && settings.clipHistory) _onClipHotkey();
       // Hotkey starts have no countdown: the user is already in the right
       // window when pressing the key.
       if (_pressed(settings.runKey) &&

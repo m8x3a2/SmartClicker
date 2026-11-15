@@ -17,7 +17,7 @@ const locationFileName = 'location.txt';
 const dataEntries = [
   'scripts', 'files', 'notes', 'logs', 'reports', 'ocr', //
   'settings.json', 'history.json', 'schedule.json', 'autorun.json',
-  'notifications.json', 'data.json', 'answers.json', 'file_rules.json',
+  'notifications.json', 'data.json', 'answers.json', 'file_rules.json', 'clipboard',
 ];
 
 /// How the data folder was found.

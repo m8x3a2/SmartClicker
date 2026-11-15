@@ -12,6 +12,7 @@ extension AppControllerRecord on AppController {
         settings.markKey,
         settings.runKey,
         settings.miniKey,
+        settings.clipKey,
         ...settings.scriptKeys.values,
       ];
 

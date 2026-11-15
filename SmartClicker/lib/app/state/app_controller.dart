@@ -32,6 +32,7 @@ import '../../core/recorder/recorder.dart';
 import '../../core/reports/report.dart';
 import '../../core/storage/storage.dart';
 import '../../core/storage/backup.dart';
+import '../../core/storage/clip_history.dart';
 import '../../core/storage/share_pack.dart';
 import '../../core/storage/zip.dart';
 import 'click_map.dart';
@@ -62,6 +63,7 @@ part 'controller_safety.dart';
 part 'controller_watch.dart';
 part 'controller_requests.dart';
 part 'controller_file_rules.dart';
+part 'controller_clipboard.dart';
 
 /// A piece of the screen selected by the user.
 class ScreenCapture {
@@ -464,6 +466,18 @@ class AppController extends ChangeNotifier {
 
   /// A file rule asks "run?" (the strip above the pages) and since when.
   (FileRule, DateTime)? fileAsk;
+
+  /// Clipboard history (made on first use), the last clipboard change
+  /// seen, a picture being saved, the window to paste into, the queue.
+  ClipHistory? _clips;
+  int _clipSeq = -1;
+  bool _clipReading = false;
+  WindowInfo? _clipTarget;
+  final List<ClipItem> clipQueue = [];
+  int clipQueueTotal = 0;
+
+  /// Changes when the clipboard history changes (the «Буфер» page listens).
+  final clipVersion = ValueNotifier<int>(0);
 
   /// This run only in the test mode (a file rule with FileRunMode.test).
   bool _forceDry = false;

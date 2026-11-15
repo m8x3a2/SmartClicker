@@ -23,9 +23,10 @@ part 'program_window.dart';
 part 'key_hook.dart';
 part 'startup_entry.dart';
 part 'landmarks_window.dart';
+part 'clipboard_windows.dart';
 
 class WindowsBackend
-    with _SystemWindows, _ProgramWindow, _KeyHook, _StartupEntry, _LandmarksWindow
+    with _SystemWindows, _ProgramWindow, _KeyHook, _StartupEntry, _LandmarksWindow, _ClipboardWindows
     implements PlatformBackend {
   @override
   String get name => 'windows';

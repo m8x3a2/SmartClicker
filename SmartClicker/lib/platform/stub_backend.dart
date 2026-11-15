@@ -277,7 +277,31 @@ class StubBackend implements PlatformBackend {
   @override
   String getClipboard() => clipboard;
   @override
-  void setClipboard(String text) => clipboard = text;
+  void setClipboard(String text) {
+    clipboard = text;
+    clipSeq++;
+    clipData = ClipData(text: text);
+  }
+
+  int clipSeq = 0;
+  ClipData clipData = const ClipData();
+  @override
+  int clipboardSequence() => clipSeq;
+  @override
+  ClipData? readClipboard() => clipData;
+  @override
+  bool setClipboardFiles(List<String> paths) {
+    clipSeq++;
+    clipData = ClipData(files: paths);
+    return true;
+  }
+
+  @override
+  bool setClipboardImage(int w, int h, Uint8List bgra) {
+    clipSeq++;
+    clipData = ClipData(image: (w: w, h: h, bgra: bgra));
+    return true;
+  }
   final Set<int> downVks = {};
   final Map<int, String> chars = {};
   @override

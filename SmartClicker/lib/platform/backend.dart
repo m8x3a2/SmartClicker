@@ -7,6 +7,17 @@ import 'dart:typed_data';
 import 'stub_backend.dart';
 import 'windows/windows_backend.dart';
 
+/// One state of the clipboard: files, a picture or text; [private] — a
+/// password manager asked not to keep it.
+class ClipData {
+  final String? text;
+  final List<String>? files;
+  final ({int w, int h, Uint8List bgra})? image;
+  final bool private;
+  const ClipData({this.text, this.files, this.image, this.private = false});
+  bool get isEmpty => text == null && files == null && image == null;
+}
+
 class WindowInfo {
   final int handle;
   final String title;
@@ -150,6 +161,19 @@ abstract class PlatformBackend {
 
   String getClipboard();
   void setClipboard(String text);
+
+  /// Grows by one with every change of the clipboard (by anyone).
+  int clipboardSequence();
+
+  /// What is in the clipboard now: files, a picture or text (null — busy).
+  ClipData? readClipboard();
+
+  /// Puts files into the clipboard: Ctrl+V pastes all of them (Explorer,
+  /// chats, mail).
+  bool setClipboardFiles(List<String> paths);
+
+  /// Puts a picture into the clipboard ([bgra] — top row first).
+  bool setClipboardImage(int w, int h, Uint8List bgra);
 
   /// A system sound: "info", "ok", "warn" or "error".
   void beep(String kind);

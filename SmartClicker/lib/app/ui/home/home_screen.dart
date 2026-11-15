@@ -17,6 +17,7 @@ import '../scripts/batch_summary.dart';
 import '../scripts/run_script_fix_dialog.dart';
 import '../scripts/scripts_screen.dart';
 import 'external_change_banner.dart';
+import '../clipboard/clipboard_screen.dart';
 import 'file_ask_banner.dart';
 import 'safety_banner.dart';
 
@@ -51,6 +52,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   static const _visionPage = 5;
+  static const _clipboardPage = 6;
 
   /// A dry run of a folder is over: show its summary.
   void _onBatchSummary() {
@@ -69,6 +71,7 @@ class _HomePageState extends State<HomePage> {
     widget.app.pageRequest.value = null;
     if (p == 'vision') setState(() => _page = _visionPage);
     if (p == 'scripts') setState(() => _page = 0);
+    if (p == 'clipboard') setState(() => _page = _clipboardPage);
   }
 
   @override
@@ -142,6 +145,8 @@ class _HomePageState extends State<HomePage> {
                   NavigationRailDestination(
                       icon: Icon(Icons.image_search), label: Text('Картинки')),
                   NavigationRailDestination(
+                      icon: Icon(Icons.content_paste), label: Text('Буфер')),
+                  NavigationRailDestination(
                       icon: Icon(Icons.settings), label: Text('Настройки')),
                 ],
                 trailingAtBottom: true,
@@ -182,6 +187,7 @@ class _HomePageState extends State<HomePage> {
                           HistoryPage(app: app),
                           HelpPage(app: app),
                           VisionPage(app: app),
+                          ClipboardPage(app: app),
                           SettingsPage(app: app),
                         ],
                       ),
