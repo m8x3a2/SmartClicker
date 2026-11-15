@@ -400,7 +400,7 @@ extension AppControllerHotkeys on AppController {
       if (_pressed(settings.runKey) &&
           state == RunState.idle &&
           current != null) {
-        runByName(current!);
+        runByName(current!, via: 'key');
       }
       for (final e in settings.scriptKeys.entries.toList()) {
         if (_pressed(e.value) && state == RunState.idle) {
@@ -408,9 +408,9 @@ extension AppControllerHotkeys on AppController {
             notify('Клавиша ${e.value.toUpperCase()}',
                 'Скрипт "${e.key}" не найден', level: 'warn');
           } else if (!e.value.contains('shift') && _comboDown('shift')) {
-            runWithQuestions(e.key); // Shift + key: ask the questions first
+            runWithQuestions(e.key, via: 'key'); // Shift + key: ask the questions first
           } else {
-            runByName(e.key);
+            runByName(e.key, via: 'key');
           }
         }
       }

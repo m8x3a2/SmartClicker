@@ -5,12 +5,13 @@ part of 'app_controller.dart';
 extension AppControllerRun on AppController {
   /// Starts the open script. With [step] it pauses before every line,
   /// with [slow] it waits [Settings.slowRunMs] before every line.
-  Future<void> run({bool step = false, bool slow = false}) async {
+  Future<void> run({bool step = false, bool slow = false, String via = 'manual'}) async {
     if (busy || current == null) return;
     final name = current!, source = editor.text;
     _stepStart = step;
     _slowStart = slow;
     _forceDry = false;
+    _runVia = via;
     logs.clear();
     errorLine.value = 0;
     currentLine.value = 0;
@@ -38,9 +39,12 @@ extension AppControllerRun on AppController {
   /// Starts any script right away (used by the schedule). The version with
   /// unsaved edits is used if there is one.
   /// [dry] — this run only in the test mode (actions go to the log).
-  Future<bool> runByName(String name, {String reason = '', bool dry = false}) async {
+  /// [via] — how it was started (for the history, see [runViaLabels]).
+  Future<bool> runByName(String name,
+      {String reason = '', bool dry = false, String via = 'manual'}) async {
     if (busy || !store.exists(name)) return false;
     _forceDry = dry;
+    _runVia = via;
     _stepStart = false;
     _slowStart = false;
     logs.clear();
@@ -58,6 +62,7 @@ extension AppControllerRun on AppController {
   Future<void> _start(String name, String source, Map<String, Object?> answers) async {
     _runScript = name;
     _runSource = source;
+    _runDry = settings.dryRun || _forceDry;
     _runAnswers = answers;
     _runStarted = DateTime.now();
     trayError = false;
@@ -261,6 +266,7 @@ extension AppControllerRun on AppController {
       errorLine.value = 0;
       _stepStart = false;
       _slowStart = false;
+      _runVia = 'restart';
       await _start(name, source, _runAnswers);
     });
   }
@@ -356,7 +362,10 @@ extension AppControllerRun on AppController {
       status,
       errText,
       logFile,
-      report,
+      report: report,
+      via: _runVia,
+      dry: _runDry,
+      source: settings.historyKeepSource ? _runSource : null,
     );
     lastRun = rec;
     _writeState(status: status == 'ok' ? 'done' : status, error: errText);

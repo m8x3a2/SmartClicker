@@ -463,6 +463,9 @@ class SettingsPage extends StatelessWidget {
                     _row('Сохранять лог каждого запуска в файл', _bool(s.saveLogs, (v) => s.saveLogs = v)),
                     _row('При ошибке сохранять отчёт (скрипт, лог, снимок экрана)', _bool(s.saveReports, (v) => s.saveReports = v)),
                     _row('Хранить записей истории', _int(s.historySize, (v) => s.historySize = v, min: 1, max: 10000)),
+                    _row('Хранить в истории текст скрипта', _bool(s.historyKeepSource, (v) => s.historyKeepSource = v),
+                        hint: 'История → Запуски → «Текст скрипта»: видно, что именно запускалось, даже если скрипт потом поменяли, '
+                            'можно сравнить с нынешним и вернуть. Занимает место: текст копируется при каждом запуске'),
                     _row('Показывать плашку, с', _int(s.toastSec, (v) => s.toastSec = v, min: 1, max: 60)),
                   ]),
                   Align(

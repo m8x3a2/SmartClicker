@@ -74,7 +74,7 @@ extension AppControllerAutorun on AppController {
           notify('Автозапуск', '"${r.script}" — ${r.trigger == 'focus' ? 'окно активно' : 'программа запущена'}: ${r.target}');
           _autoOwner = r;
           _autoPaused = false;
-          runByName(r.script, reason: '⚡ Автозапуск: ${r.describe()}').then((ok) {
+          runByName(r.script, reason: '⚡ Автозапуск: ${r.describe()}', via: 'autorun').then((ok) {
             if (!ok && identical(_autoOwner, r)) _autoOwner = null;
           });
         case AutoAction.stop:
@@ -110,7 +110,7 @@ extension AppControllerAutorun on AppController {
         continue;
       }
       notify('Запуск по расписанию', '"${t.script}" (${t.describe()})');
-      runByName(t.script, reason: '⏰ Запуск по расписанию: ${t.describe()}');
+      runByName(t.script, reason: '⏰ Запуск по расписанию: ${t.describe()}', via: 'schedule');
       return; // one script at a time
     }
   }

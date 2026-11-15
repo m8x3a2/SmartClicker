@@ -52,18 +52,18 @@ extension AppControllerAsk on AppController {
   /// started from (the "?" of the mini panel, Shift + the key of a script):
   /// the program window comes forward for the questions. Without questions
   /// it is an ordinary run.
-  Future<void> runWithQuestions(String script) async {
+  Future<void> runWithQuestions(String script, {String via = 'mini'}) async {
     if (busy || !store.exists(script)) return;
     if (questionsOf(script == current ? editor.text : (buffers[script] ?? store.read(script)))
         .isEmpty) {
-      await runByName(script);
+      await runByName(script, via: via);
       return;
     }
     if (compact) setCompact(false);
     restoreFromTray(); // also brings a minimized or covered window forward
     if (script != current) open(script);
     openPage('scripts');
-    await run();
+    await run(via: via);
   }
 
   void _rememberAnswers(String script, Map<String, Object?> got) {

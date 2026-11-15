@@ -118,3 +118,25 @@ extension AppControllerLinkedFiles on AppController {
     }
   }
 }
+
+extension AppControllerOldText on AppController {
+  /// The text of [script] from the history of runs goes into the editor as
+  /// unsaved edits: Ctrl+S keeps it, Ctrl+Z gives back the current one.
+  void loadOldText(String script, String text) {
+    if (!store.exists(script)) {
+      notify('Скрипта нет', '«$script» удалён или переименован', level: 'warn');
+      return;
+    }
+    if (isRunning) {
+      notify('Скрипт работает', 'Сначала остановите его', level: 'warn');
+      return;
+    }
+    open(script);
+    _setEditor(text);
+    dirty = editor.text != _savedText;
+    openPage('scripts');
+    notify('Старый текст в редакторе',
+        'Сохраните (Ctrl+S), чтобы оставить его; Ctrl+Z вернёт нынешний', level: 'ok');
+    _changed();
+  }
+}

@@ -99,7 +99,7 @@ extension AppControllerRequests on AppController {
     }
     _requests.removeAt(0);
     notify('Запуск извне', '«$name»');
-    runByName(name, reason: '⤴ Запуск извне ($runArg)');
+    runByName(name, reason: '⤴ Запуск извне ($runArg)', via: 'external');
   }
 
   /// The state of the running script for other programs (files\state.json),

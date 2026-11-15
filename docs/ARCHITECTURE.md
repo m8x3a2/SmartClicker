@@ -66,7 +66,8 @@ lib/
                   notify, run, autorun, window, files, reports, record, hotkeys, ask, batch,
                   backup, safety — безопасный режим и задержка автоматики, watch — скрипты,
                   изменённые снаружи, requests — --run / --stop и state.json…); edit_history.dart — Ctrl+Z / Ctrl+Y своего скрипта;
-                  script_stats.dart — статистика скриптов по истории запусков
+                  script_stats.dart — статистика скриптов по истории запусков;
+                  history_filter.dart — фильтры и сортировка истории запусков
     services/     ocr_install (загрузка моделей по кнопке)
     help/         тексты справки, по файлу на раздел (help_texts.dart — общий экспорт)
     (ui/vision/picture_actions.dart — окна «где используется», переименование, удаление картинки)

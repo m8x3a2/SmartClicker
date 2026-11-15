@@ -133,7 +133,7 @@ extension AppControllerWindow on AppController {
       case 'open':
         restoreFromTray();
       case 'run':
-        if (state == RunState.idle && current != null) runByName(current!);
+        if (state == RunState.idle && current != null) runByName(current!, via: 'tray');
       case 'pause':
         togglePause();
       case 'stop':
@@ -191,9 +191,9 @@ extension AppControllerWindow on AppController {
   void runFromPanel() {
     if (busy || current == null) return;
     if (_ownWindowActive()) {
-      run();
+      run(via: 'mini');
     } else {
-      runByName(current!);
+      runByName(current!, via: 'mini');
     }
   }
 }

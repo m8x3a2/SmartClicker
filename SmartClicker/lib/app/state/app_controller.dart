@@ -121,8 +121,18 @@ class RunRecord {
 
   /// ZIP with the error report (log, scripts, screenshot), if one was made.
   final String? report;
+
+  /// How it was started (see [runViaLabels]); '' — in older records.
+  final String via;
+
+  /// Ran in the test mode (actions only went to the log).
+  final bool dry;
+
+  /// The text of the script as it was at the start (null — not kept).
+  final String? source;
   const RunRecord(this.script, this.started, this.durationMs, this.status,
-      this.error, this.logFile, [this.report]);
+      this.error, this.logFile,
+      {this.report, this.via = '', this.dry = false, this.source});
 
   Map<String, Object?> toJson() => {
         'script': script,
@@ -132,6 +142,9 @@ class RunRecord {
         'error': error,
         'logFile': logFile,
         'report': report,
+        if (via.isNotEmpty) 'via': via,
+        if (dry) 'dry': true,
+        if (source != null) 'source': source,
       };
   factory RunRecord.fromJson(Map j) => RunRecord(
       '${j['script']}',
@@ -140,8 +153,24 @@ class RunRecord {
       '${j['status']}',
       j['error'] as String?,
       j['logFile'] as String?,
-      j['report'] as String?);
+      report: j['report'] as String?,
+      via: '${j['via'] ?? ''}',
+      dry: j['dry'] == true,
+      source: j['source'] as String?);
 }
+
+/// How a run was started: id → words for the history.
+const runViaLabels = {
+  'manual': 'вручную',
+  'mini': 'с мини-панели',
+  'tray': 'из трея',
+  'key': 'клавишей',
+  'schedule': 'по расписанию',
+  'autorun': 'по программе',
+  'file': 'по файлу',
+  'external': 'извне (--run)',
+  'restart': 'перезапуск после ошибки',
+};
 
 /// One variable in the variables view.
 class VarRow {
@@ -235,6 +264,10 @@ class AppController extends ChangeNotifier {
   DateTime? _runStarted;
   String? _runScript;
   String _runSource = '';
+
+  /// How the current run was started and whether in the test mode.
+  String _runVia = 'manual';
+  bool _runDry = false;
 
   /// The program is being closed: the run that ends now is "closed".
   bool _closing = false;

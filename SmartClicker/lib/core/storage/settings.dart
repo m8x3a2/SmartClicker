@@ -24,7 +24,7 @@ const settingsGroups = <String, List<String>>{
     'recSystemKeys', 'recSmart', 'recRequireWindow',
   ],
   'human': ['human', 'clickOffset', 'timeJitterPct', 'typeDelayMs'],
-  'logs': ['saveLogs', 'saveReports', 'historySize', 'toastSec'],
+  'logs': ['saveLogs', 'saveReports', 'historySize', 'historyKeepSource', 'toastSec'],
   'layout': [
     'dryRun', 'logHeight', 'logCollapsed', 'helpCollapsed', 'bottomTab', //
     'editorView', 'blocksPalette', 'blocksSplitPct', 'miniX', 'miniY',
@@ -68,6 +68,9 @@ class Settings {
 
   /// The hotkey pastes the oldest item at once, and it goes to the trash.
   bool clipOneByOne = false;
+
+  /// The history of runs keeps the text of the script as it was at the start.
+  bool historyKeepSource = true;
   int markColor = 0xFF2BD6;
   int markSize = 14;
   String runKey = '';
@@ -218,6 +221,7 @@ class Settings {
     s.clipMaxMb = get('clipMaxMb', s.clipMaxMb).clamp(1, 2000);
     s.clipKey = get('clipKey', s.clipKey);
     s.clipOneByOne = get('clipOneByOne', s.clipOneByOne);
+    s.historyKeepSource = get('historyKeepSource', s.historyKeepSource);
     s.markColor = get('markColor', s.markColor);
     s.markSize = get('markSize', s.markSize);
     s.runKey = get('runKey', s.runKey);
@@ -304,6 +308,7 @@ class Settings {
         'clipMaxMb': clipMaxMb,
         'clipKey': clipKey,
         'clipOneByOne': clipOneByOne,
+        'historyKeepSource': historyKeepSource,
         'markColor': markColor,
         'markSize': markSize,
         'runKey': runKey,

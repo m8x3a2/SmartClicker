@@ -9,6 +9,7 @@ import '../../../core/reports/report.dart';
 import '../widgets/status_colors.dart';
 import '../widgets/page_parts.dart';
 import '../help/help_screen.dart';
+import 'runs_view.dart';
 import 'script_stats_view.dart';
 
 class HistoryPage extends StatelessWidget {
@@ -33,7 +34,7 @@ class HistoryPage extends StatelessWidget {
             ),
             Expanded(
               child: TabBarView(
-                children: [_runs(context), ScriptStatsList(app: app), _notifications(context)],
+                children: [RunsView(app: app, onCopyReport: _copyReport), ScriptStatsList(app: app), _notifications(context)],
               ),
             ),
           ],
@@ -44,68 +45,6 @@ class HistoryPage extends StatelessWidget {
 
   Widget _empty(String text) =>
       Center(child: Text(text, style: const TextStyle(color: mutedText)));
-
-  Widget _runs(BuildContext context) {
-    if (app.history.isEmpty) return _empty('Запусков пока не было');
-    return Column(
-      children: [
-        Align(
-          alignment: Alignment.centerRight,
-          child: TextButton(
-              onPressed: app.clearHistory, child: const Text('Очистить')),
-        ),
-        Expanded(
-          child: ListView.builder(
-            itemCount: app.history.length,
-            itemBuilder: (_, i) {
-              final r = app.history[i];
-              final color = levelColor(switch (r.status) {
-                'ok' => 'ok',
-                'error' => 'error',
-                'stopped' => 'info',
-                _ => 'warn',
-              });
-              return ListTile(
-                dense: true,
-                leading: Icon(Icons.circle, size: 12, color: color),
-                title: Text(
-                    '${r.script} — ${statusLabels[r.status] ?? r.status}, ${formatDuration(r.durationMs)}'),
-                subtitle: Text(
-                    '${timeStamp(r.started)} → ${timeStamp(r.started.add(Duration(milliseconds: r.durationMs))).split(' ').last}'
-                    '${r.error != null ? '   ·   ${r.error}' : ''}',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: mutedText)),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (r.report != null) ...[
-                      IconButton(
-                        tooltip: 'Скопировать отчёт для ИИ — вставьте в чат, нейросеть найдёт причину',
-                        icon: const Icon(Icons.smart_toy_outlined, size: 18),
-                        onPressed: () => _copyReport(r.report!),
-                      ),
-                      IconButton(
-                        tooltip: 'Показать отчёт в папке (ZIP: скрипт, лог, снимок экрана)',
-                        icon: const Icon(Icons.bug_report_outlined, size: 18),
-                        onPressed: () => app.showInFolder(r.report!),
-                      ),
-                    ],
-                    if (r.logFile != null)
-                      IconButton(
-                        tooltip: 'Открыть лог',
-                        icon: const Icon(Icons.article_outlined, size: 18),
-                        onPressed: () => app.openFolder(r.logFile!),
-                      ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
 
   /// The report with the guide for the AI in front of it.
   void _copyReport(String path) {

@@ -138,7 +138,7 @@ extension AppControllerFileRules on AppController {
     rule.lastRun = DateTime.now();
     saveFileRules();
     notify('Автозапуск по файлу', '«${rule.script}»${dry ? ' (тестовый режим)' : ''}: изменился «${rule.path}»');
-    runByName(rule.script, reason: '📄 Автозапуск по файлу: ${rule.describe()}', dry: dry);
+    runByName(rule.script, reason: '📄 Автозапуск по файлу: ${rule.describe()}', dry: dry, via: 'file');
   }
 
   /// The answer in the strip: run (for real or in the test mode) or not.
