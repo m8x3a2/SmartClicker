@@ -38,7 +38,7 @@ extension ScriptRuntimeBuiltinsFiles on ScriptRuntime {
 
     // Waits until the file changes (or appears); with key: — until that
     // value becomes value: (or anything true, without value:).
-    _def('wait_file', (c) async {
+    _def('wait_file', (c) => _explicit(() async {
       final path = _path(_s(c, c.arg(0), 'wait_file'));
       final key = c.opt('key');
       final hasValue = c.named.containsKey('value');
@@ -58,7 +58,7 @@ extension ScriptRuntimeBuiltinsFiles on ScriptRuntime {
         if (timeout > 0 && sw.elapsedMilliseconds >= timeout) return false;
         await this.sleep(interval, jitter: false);
       }
-    });
+    }));
 
     // export_vars("состояние.json") — the variables of the script right now,
     // for another program (a neural network) to see where the script is.

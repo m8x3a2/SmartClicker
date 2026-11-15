@@ -81,6 +81,12 @@ class ScriptRuntime implements Host {
   late final int maxLoops = (cfg['maxLoops'] as num?)?.toInt() ?? 0;
 
   final Stopwatch _total = Stopwatch();
+
+  /// Watchdog: time since the last action (click, key, type…); explicit
+  /// waits (wait, wait_until, wait_file) and the pause do not count.
+  final Stopwatch _idle = Stopwatch()..start();
+  int _explicitWait = 0;
+  late int watchdogMs = (cfg['watchdogMs'] as num?)?.toInt() ?? 0;
   final Stopwatch _yield = Stopwatch();
   final Stopwatch _lineSw = Stopwatch();
   int _loops = 0;
@@ -249,6 +255,29 @@ class ScriptRuntime implements Host {
       throw LimitSignal(
           'Сработал лимит времени: ${(maxRuntimeMs / 60000).toStringAsFixed(1)} мин');
     }
+    if (watchdogMs > 0 && _explicitWait == 0 && _idle.elapsedMilliseconds > watchdogMs) {
+      final min = watchdogMs / 60000;
+      throw ScriptError(
+          'Сторожевой таймер: ${min == min.roundToDouble() ? min.round() : min.toStringAsFixed(1)} мин '
+          'без единого действия — похоже, скрипт завис (ждёт то, что не появится). '
+          'Настройки → Запуск → «Сторожевой таймер» или set_option("watchdog", …)',
+          _line);
+    }
+  }
+
+  /// Something was done (an action), or an explicit wait ended: the
+  /// watchdog counts from now.
+  void _alive() => _idle.reset();
+
+  /// Runs [body] as an explicit wait: the watchdog does not count it.
+  Future<T> _explicit<T>(Future<T> Function() body) async {
+    _explicitWait++;
+    try {
+      return await body();
+    } finally {
+      _explicitWait--;
+      _alive();
+    }
   }
 
   Future<void> _waitWhilePaused() async {
@@ -256,6 +285,7 @@ class ScriptRuntime implements Host {
       if (stopRequested) throw const StopSignal();
       await Future<void>.delayed(const Duration(milliseconds: 40));
     }
+    _alive(); // the pause is not a hang
   }
 
   void _emitLine() {

@@ -117,6 +117,7 @@ extension AppControllerRun on AppController {
     'actionDelay': settings.actionDelayMs,
     'timeJitter': settings.timeJitterPct / 100,
     'maxRuntimeMs': settings.maxRuntimeMin * 60000,
+    'watchdogMs': settings.watchdogMin * 60000,
     'maxLoops': settings.maxLoops,
     'dataFile': paths.dataFile,
     'filesDir': paths.files,

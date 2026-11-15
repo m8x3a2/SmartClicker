@@ -16,7 +16,7 @@ const settingsGroups = <String, List<String>>{
   'hotkeys': ['stopKey', 'stopKey2', 'cornerStop', 'pauseKey', 'recordKey', 'pickKey', 'ghostKey', 'markKey', 'runKey', 'holdBackHotkeys'],
   'run': [
     'runDelaySec', 'maxRuntimeMin', 'maxLoops', 'checkBeforeRun', //
-    'restartOnError', 'restartDelaySec', 'allowPower', 'selfProtect', 'allowExternalRun', 'stateFile',
+    'restartOnError', 'restartDelaySec', 'watchdogMin', 'allowPower', 'selfProtect', 'allowExternalRun', 'stateFile',
     'actionDelayMs', 'slowRunMs',
   ],
   'record': [
@@ -92,6 +92,10 @@ class Settings {
   /// row (0 — off), after a pause of [restartDelaySec].
   int restartOnError = 0;
   int restartDelaySec = 10;
+
+  /// Watchdog: a script that does no action this many minutes is taken as
+  /// hung (error → report → restart after error). 0 — off.
+  int watchdogMin = 0;
 
   /// Pause after every input action (click, key, type…), ms; 0 — none.
   int actionDelayMs = 0;
@@ -237,6 +241,7 @@ class Settings {
     s.checkBeforeRun = get('checkBeforeRun', s.checkBeforeRun);
     s.restartOnError = get('restartOnError', s.restartOnError);
     s.restartDelaySec = get('restartDelaySec', s.restartDelaySec);
+    s.watchdogMin = get('watchdogMin', s.watchdogMin).clamp(0, 1440);
     s.actionDelayMs = get('actionDelayMs', s.actionDelayMs);
     s.slowRunMs = get('slowRunMs', s.slowRunMs);
     s.recPercent = get('recPercent', s.recPercent);
@@ -321,6 +326,7 @@ class Settings {
         'checkBeforeRun': checkBeforeRun,
         'restartOnError': restartOnError,
         'restartDelaySec': restartDelaySec,
+        'watchdogMin': watchdogMin,
         'actionDelayMs': actionDelayMs,
         'slowRunMs': slowRunMs,
         'recPercent': recPercent,

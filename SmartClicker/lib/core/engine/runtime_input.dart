@@ -68,6 +68,7 @@ extension ScriptRuntimeRuntimeInput on ScriptRuntime {
       await this.sleep(400, jitter: false);
     }
     _actionDone = true;
+    _alive();
     if (dryRun) {
       _mapAction(description, at, press ? 'press' : 'move');
       log('[тест] $description', 'action');

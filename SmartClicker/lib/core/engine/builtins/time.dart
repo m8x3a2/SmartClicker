@@ -4,7 +4,14 @@ part of '../runtime.dart';
 extension ScriptRuntimeBuiltinsTime on ScriptRuntime {
   void _registerTime() {
     _def('wait', (c) async {
-      await this.sleep(_n(c, c.arg(0, 'ms'), 'wait'));
+      final ms = _n(c, c.arg(0, 'ms'), 'wait');
+      // A long planned pause is not a hang; short waits in a loop ("look,
+      // wait 1 s, look again") are polling — they count for the watchdog.
+      if (watchdogMs > 0 && ms >= watchdogMs) {
+        await _explicit(() => this.sleep(ms));
+      } else {
+        await this.sleep(ms);
+      }
       return null;
     }, ['sleep', 'delay']);
 
@@ -44,11 +51,13 @@ extension ScriptRuntimeBuiltinsTime on ScriptRuntime {
       log('Жду до $spec${target.day != now.day ? ' (завтра)' : ''} — '
           '${mins >= 60 ? '${mins ~/ 60} ч ${mins % 60} мин' : '$mins мин'}; '
           'часы сверяются раз в секунду');
-      while (true) {
-        final left = target.difference(DateTime.now()).inMilliseconds;
-        if (left <= 0) break;
-        await this.sleep(math.min(left, 1000), jitter: false);
-      }
+      await _explicit(() async {
+        while (true) {
+          final left = target.difference(DateTime.now()).inMilliseconds;
+          if (left <= 0) break;
+          await this.sleep(math.min(left, 1000), jitter: false);
+        }
+      });
       log('Дождался $spec (сейчас ${two(DateTime.now().hour)}:${two(DateTime.now().minute)}:${two(DateTime.now().second)})');
       return null;
     });

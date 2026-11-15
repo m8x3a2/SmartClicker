@@ -74,9 +74,13 @@ extension ScriptRuntimeBuiltinsUtil on ScriptRuntime {
           actionDelay = math.max(0, _n(c, v, name));
         case 'type_method':
           typeMethod = _typeMethod(c, v);
+        case 'watchdog':
+          // 10m, 600000 ms; 0 or false — off for this run.
+          watchdogMs = v == false || v == null ? 0 : math.max(0, _n(c, v, name)).round();
+          _alive();
         default:
           c.fail('set_option: неизвестная настройка "$name" '
-              '(human, click_offset, time_jitter, type_delay, type_method, action_delay, dry_run)');
+              '(human, click_offset, time_jitter, type_delay, type_method, action_delay, dry_run, watchdog)');
       }
       return null;
     });
