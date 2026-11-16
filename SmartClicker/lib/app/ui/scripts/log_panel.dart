@@ -248,12 +248,24 @@ class _LogPanelState extends State<LogPanel> {
                   itemExtent: 19,
                   itemBuilder: (_, i) {
                     final e = items[i];
-                    return Text(
-                      '${e.clock}  ${e.line > 0 ? '${e.line}'.padLeft(4) : '    '}  ${e.message}',
+                    // an error of another script: its line is not a line here
+                    final own = e.script == null || e.script == app.current;
+                    final text = Text(
+                      '${e.clock}  ${e.line > 0 && own ? '${e.line}'.padLeft(4) : '    '}  ${e.message}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: codeStyle.copyWith(
                           fontSize: 12.5, height: 1.4, color: _color(e.level)),
+                    );
+                    final at = e.script;
+                    if (at == null || e.line <= 0) return text;
+                    return Tooltip(
+                      message: 'Открыть «$at» на строке ${e.line}',
+                      waitDuration: const Duration(milliseconds: 600),
+                      child: MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: GestureDetector(onTap: () => app.showErrorAt(at, e.line), child: text),
+                      ),
                     );
                   },
                 );

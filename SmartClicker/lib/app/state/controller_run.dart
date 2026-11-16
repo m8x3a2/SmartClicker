@@ -294,6 +294,21 @@ extension AppControllerRun on AppController {
     _runner.kill();
   }
 
+  /// Opens [script] (the one that ran, or a connected one) on the error
+  /// [line] and marks it (a click on an error in the log or the history).
+  void showErrorAt(String script, int line) {
+    if (!store.exists(script)) {
+      notify('Скрипта нет', '«$script» удалён или переименован', level: 'warn');
+      return;
+    }
+    open(script);
+    openPage('scripts');
+    if (line > 0) {
+      errorLine.value = line;
+      revealLine.value = line;
+    }
+  }
+
   void _onDone(Map<String, Object?> e) {
     backend.releaseAll();
     backend.hideMarker();
@@ -335,7 +350,7 @@ extension AppControllerRun on AppController {
         errText = inOther != null
             ? '[$inOther] строка $line: $err'
             : (line > 0 ? 'Строка $line: $err' : '$err');
-        _log('error', '✖ $errText', inOther == null ? line : 0);
+        _log('error', '✖ $errText', line, inOther ?? name);
         if (inOther == null && name == current) errorLine.value = line;
         notify(
           'Ошибка в скрипте',

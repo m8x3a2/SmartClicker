@@ -124,6 +124,14 @@ for_each([1, 2], (x) => {
     expect(lines.difference({1, 2, 3}), isEmpty, reason: 'строки 9–10 библиотеки не показываются: $lines');
   });
 
+  test('лог и клики кода библиотеки показывают строку вызова в главном скрипте', () async {
+    final (_, r, _, events) = await _run('use("бой")\nlet a = 1\nattack("x")\nlog("атак:", hits_count())',
+        scripts: {'Общее/бой': _fight});
+    expect(r['error'], isNull, reason: '$r');
+    final lines = [for (final e in events) if (e['t'] == 'log' && e['lv'] == 'info') '${e['m']} @${e['l']}'];
+    expect(lines, ['бью x 1 @3', 'атак: 1 @4']);
+  });
+
   test('библиотека подключает другую; круг не зацикливается; снаружи — только её функции', () async {
     final (logs, r, _, _) = await _run('''
 use("А")

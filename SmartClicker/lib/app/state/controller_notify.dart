@@ -35,8 +35,8 @@ extension AppControllerNotify on AppController {
     _changed();
   }
 
-  void _log(String level, String message, [int line = 0]) {
-    logs.add(LogEntry(DateTime.now(), level, message, line));
+  void _log(String level, String message, [int line = 0, String? script]) {
+    logs.add(LogEntry(DateTime.now(), level, message, line, script: script));
     if (logs.length > 5000) logs.removeRange(0, 1000);
     logVersion.value++;
   }

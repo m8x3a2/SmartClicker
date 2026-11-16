@@ -60,6 +60,10 @@ void main() {
     expect([for (final (d, n) in historyDays(runs)) '${d.day}:$n'], ['15:1', '14:2', '1:1']);
     expect(errorLineOf(runs[1]), 7);
     expect(errorLineOf(runs[0]), 0);
+    final lib = RunRecord('Главный', DateTime(2026, 11, 16), 10, 'error',
+        '[Общее/бой] строка 10: неизвестное имя', null);
+    expect(errorPlaceOf(lib), (script: 'Общее/бой', line: 10));
+    expect(errorPlaceOf(runs[1]).script, runs[1].script);
     final f = HistoryFilter()
       ..script = 'Бой'
       ..query = 'x';

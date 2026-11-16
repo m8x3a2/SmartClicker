@@ -83,7 +83,11 @@ class LogEntry {
   final String level; // info, action, warn, error, system
   final String message;
   final int line;
-  const LogEntry(this.time, this.level, this.message, this.line);
+
+  /// An error: the script it is in (the one that ran, or a connected one) —
+  /// a click on the entry opens it on [line].
+  final String? script;
+  const LogEntry(this.time, this.level, this.message, this.line, {this.script});
 
   String get clock {
     String two(int n) => n.toString().padLeft(2, '0');
@@ -92,7 +96,7 @@ class LogEntry {
   }
 
   String format() =>
-      '$clock [$level]${line > 0 ? ' (стр. $line)' : ''} $message';
+      '$clock [$level]${line > 0 && script == null ? ' (стр. $line)' : ''} $message';
 }
 
 class AppNotification {
@@ -415,6 +419,7 @@ class AppController extends ChangeNotifier {
   bool get isRunning => state == RunState.running || state == RunState.paused;
 
   int _lineCount = 1;
+  String _editText = ""; // the editor text the last time it changed
 
   /// Breakpoints of the open script.
   final breaks = ValueNotifier<Set<int>>(const {});

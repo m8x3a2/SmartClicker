@@ -16,6 +16,9 @@ extension AppControllerScripts on AppController {
       buffers.containsKey(name) || (name == current && dirty);
 
   void _onEdit() {
+    // the listener also fires when only the cursor moves (a jump to a line)
+    final textChanged = editor.text != _editText;
+    _editText = editor.text;
     final count = '\n'.allMatches(editor.text).length + 1;
     final before = _lineCount;
     _lineCount = count;
@@ -27,7 +30,7 @@ extension AppControllerScripts on AppController {
       dirty = d;
       _changed();
     }
-    if (errorLine.value != 0) errorLine.value = 0;
+    if (textChanged && errorLine.value != 0) errorLine.value = 0;
   }
 
   void _setEditor(String text) {

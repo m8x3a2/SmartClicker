@@ -87,11 +87,10 @@ extension ScriptRuntimeRuntimeInput on ScriptRuntime {
     emit({
       't': 'act',
       'm': what,
-      'l': _line,
+      'l': _shownLine,
       'k': kind,
       'x': ?at?.x,
       'y': ?at?.y,
-      if (_foreign) 'other': true, // a line of another script (run_script, use)
     });
   }
 

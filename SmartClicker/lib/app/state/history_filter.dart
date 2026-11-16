@@ -146,8 +146,15 @@ List<(DateTime, int)> historyDays(List<RunRecord> runs) {
   return [for (final d in days) (d, count[d]!)];
 }
 
-/// The line of the error ("Строка 12: …"), or 0.
-int errorLineOf(RunRecord r) {
-  final m = RegExp(r'^Строка (\d+):').firstMatch(r.error ?? '');
-  return m == null ? 0 : int.parse(m[1]!);
+/// The line of the error ("Строка 12: …" or "[Общее/бой] строка 10: …"), or 0.
+int errorLineOf(RunRecord r) => errorPlaceOf(r).line;
+
+/// Where the error is: the script (the one that ran, or another one it
+/// connected with use / ran with run_script) and the line (0 — unknown).
+({String script, int line}) errorPlaceOf(RunRecord r) {
+  final e = r.error ?? '';
+  final other = RegExp(r'^\[(.+?)\] строка (\d+):').firstMatch(e);
+  if (other != null) return (script: other[1]!, line: int.parse(other[2]!));
+  final m = RegExp(r'^Строка (\d+):').firstMatch(e);
+  return (script: r.script, line: m == null ? 0 : int.parse(m[1]!));
 }

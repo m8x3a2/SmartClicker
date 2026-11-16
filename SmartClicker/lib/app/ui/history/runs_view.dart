@@ -210,7 +210,11 @@ class _RunsViewState extends State<RunsView> {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              tooltip: errorLineOf(r) > 0 ? 'Открыть скрипт на строке ошибки' : 'Открыть скрипт',
+              tooltip: errorLineOf(r) > 0
+                  ? (errorPlaceOf(r).script == r.script
+                      ? 'Открыть скрипт на строке ошибки'
+                      : 'Открыть «${errorPlaceOf(r).script}» на строке ошибки')
+                  : 'Открыть скрипт',
               icon: const Icon(Icons.open_in_new, size: 18),
               onPressed: () => _open(r),
             ),
@@ -245,14 +249,9 @@ class _RunsViewState extends State<RunsView> {
   }
 
   void _open(RunRecord r) {
-    if (!app.scripts.contains(r.script)) {
-      app.notify('Скрипта нет', '«${r.script}» удалён или переименован', level: 'warn');
-      return;
-    }
-    app.open(r.script);
-    app.openPage('scripts');
-    final line = errorLineOf(r);
-    if (line > 0) app.revealLine.value = line;
+    // the error may be in a script it connected with use (or ran)
+    final at = errorPlaceOf(r);
+    app.showErrorAt(at.script, at.line);
   }
 
   Future<void> _showSource(RunRecord r) {

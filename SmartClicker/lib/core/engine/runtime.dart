@@ -113,6 +113,11 @@ class ScriptRuntime implements Host {
   final Stopwatch _lineSw = Stopwatch();
   int _loops = 0;
   int _line = 0;
+
+  /// The last line of the main script: logs and actions of code of another
+  /// script (use, run_script) show the line it was called from.
+  int _mainLine = 0;
+  int get _shownLine => _mainLine;
   int _sentLine = -1;
   int _nested = 0;
 
@@ -351,11 +356,13 @@ class ScriptRuntime implements Host {
   @override
   Future<void> checkpoint(int line) async {
     _line = line;
+    if (!_foreign) _mainLine = line;
     _profileLine(line);
     _checkLimits();
     if (_reactions.isNotEmpty && !_inReaction) {
       await _reactionsTick();
       _line = line;
+      if (!_foreign) _mainLine = line;
     }
     if (_yield.elapsedMilliseconds >= 8) {
       // Let the isolate's event loop deliver pause/stop messages.
@@ -433,7 +440,7 @@ class ScriptRuntime implements Host {
   }
 
   void log(String message, [String level = 'info']) =>
-      emit({'t': 'log', 'lv': level, 'm': message, 'l': _line});
+      emit({'t': 'log', 'lv': level, 'm': message, 'l': _shownLine});
 
   bool _ocrFallbackLogged = false;
 
