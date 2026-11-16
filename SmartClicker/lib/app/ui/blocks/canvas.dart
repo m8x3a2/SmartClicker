@@ -84,11 +84,33 @@ extension _BlocksEditorStateCanvas on _BlocksEditorState {
         ),
       ),
     );
+    final code = widget.asCode;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         const Divider(height: 1),
         const SizedBox(height: 2),
+        Tooltip(
+          message: code
+              ? 'Блоки подписаны командами языка: click(x, y). Щелчок — подписи фразами'
+              : 'Блоки подписаны фразами. Щелчок — подписи командами языка, как в коде: click(x, y)',
+          child: InkWell(
+            onTap: widget.onAsCode == null ? null : () => widget.onAsCode!(!code),
+            borderRadius: BorderRadius.circular(6),
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
+              decoration: BoxDecoration(
+                color: code ? _accent.withValues(alpha: 0.25) : null,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(code ? '</>' : 'Аа',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: code ? Colors.white : _text,
+                      fontFamily: code ? 'Consolas' : null)),
+            ),
+          ),
+        ),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

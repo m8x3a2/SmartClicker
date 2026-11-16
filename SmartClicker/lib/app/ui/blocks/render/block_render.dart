@@ -56,6 +56,13 @@ class _R {
 
   bool get live => edit && !palette;
 
+  /// Labels as code (click(x, y)) instead of phrases.
+  bool get code => ed.widget.asCode;
+  TextStyle get _ws => code ? _codeWordStyle : _wordStyle;
+
+  /// [phrase] — the label in words, [asCode] — the same as code.
+  String say(String phrase, String asCode) => code ? asCode : phrase;
+
   Color _catColor(String id) => Color(catById(id).color);
 
   Color colorOf(BNode n) {
@@ -101,9 +108,9 @@ class _R {
     return _Drop(ed: ed, before: before, after: after, indent: indent, child: child);
   }
 
-  Widget word(String text, BNode n, List<int> path) => grab(n, path, Text(text, style: _wordStyle));
+  Widget word(String text, BNode n, List<int> path) => grab(n, path, Text(text, style: _ws));
 
-  Widget small(String text) => Text(text, style: _smallStyle);
+  Widget small(String text) => Text(text, style: code ? _codeWordStyle.copyWith(fontWeight: FontWeight.w500) : _smallStyle);
 
   /// Makes [child] a handle to drag the block by.
   Widget grab(BNode n, List<int> path, Widget child) {
@@ -314,7 +321,7 @@ class _R {
         return _call(n, path);
       case BK.let:
         return [
-          w(n.extra == 'const' ? 'постоянная' : 'переменная'),
+          w(n.extra == 'const' ? say('постоянная', 'const') : say('переменная', 'let')),
           _nameField(n, path, 'text', n.text, isIdentifier, look: _Look.variable),
           if (n.args.isNotEmpty) ...[
             w('='),
@@ -334,32 +341,42 @@ class _R {
           '--' => ('уменьшить', 'на 1'),
           _ => ('задать', '='),
         };
+        final value = op != '++' && op != '--' && n.args.isNotEmpty
+            ? arg(0, const PSpec('value', 'значение: число, текст, переменная, результат команды'))
+            : null;
+        if (code) {
+          // x += 5: the name first, the operator is the menu
+          return [
+            _nameField(n, path, 'text', n.text, isValidExpr, look: _Look.variable),
+            _opWord(n, path, op.isEmpty ? '=' : op),
+            ?value,
+          ];
+        }
         return [
           _opWord(n, path, first),
           _nameField(n, path, 'text', n.text, isValidExpr, look: _Look.variable),
           small(mid),
-          if (op != '++' && op != '--' && n.args.isNotEmpty)
-            arg(0, const PSpec('value', 'значение: число, текст, переменная, результат команды')),
+          ?value,
         ];
       case BK.ret:
         return [
-          w(n.args.isEmpty ? 'выйти из функции' : 'вернуть'),
+          w(n.args.isEmpty ? say('выйти из функции', 'return') : say('вернуть', 'return')),
           if (n.args.isNotEmpty) arg(0, const PSpec('value', 'что вернёт функция')),
         ];
       case BK.brk:
-        return [w('выйти из цикла')];
+        return [w(say('выйти из цикла', 'break'))];
       case BK.cont:
-        return [w('следующий круг цикла')];
+        return [w(say('следующий круг цикла', 'continue'))];
       case BK.thr:
-        return [w('ошибка'), arg(0, const PSpec('value', 'текст ошибки'))];
+        return [w(say('ошибка', 'throw')), arg(0, const PSpec('value', 'текст ошибки'))];
       default:
         return [w(n.kind)];
     }
   }
 
   Widget _opWord(BNode n, List<int> path, String text) {
-    if (!live) return Text(text, style: _wordStyle);
-    return _menuWord(text, () async {
+    if (!live) return Text(text, style: _ws);
+    return _menuWord(text, style: _ws, () async {
       final at = _lastTap;
       final v = await ed._menu<String>(at, [
         for (final (op, label) in const [
@@ -371,7 +388,7 @@ class _R {
           ('++', 'увеличить на 1'),
           ('--', 'уменьшить на 1'),
         ])
-          ed._item(op, label, keys: op),
+          ed._item(op, code ? op : label, keys: code ? label : op),
       ]);
       if (v == null) return;
       ed._change(path, (x) {
@@ -409,7 +426,41 @@ class _R {
     Widget w(String t) => word(t, n, path);
     ValueChanged<String>? setArg(int i) => live ? (v) => ed._setArg(path, i, v) : null;
     final out = <Widget>[];
-    if (spec == null) {
+    if (code) {
+      out.addAll(codePieces(
+        n.text,
+        spec,
+        n.args,
+        w,
+        (i, p) => slot(
+          i < n.args.length ? n.args[i] : '',
+          spec: p,
+          id: '$id/a$i',
+          set: setArg(i),
+          remove: live && (p.optional || (p.rest && i > 0) || spec == null) ? () => ed._removeArgsFrom(path, i) : null,
+        ),
+        [
+          for (final e in n.named.entries)
+            (
+              e.key,
+              slot(
+                e.value,
+                spec: namedSpec(e.key),
+                id: '$id/n:${e.key}',
+                set: live ? (v) => ed._setNamed(path, e.key, v) : null,
+                remove: live ? () => ed._setNamed(path, e.key, null) : null,
+              ),
+            ),
+        ],
+        user: user,
+      ));
+      if (live && spec == null && user != null && n.args.length < user.length) {
+        out.add(_plus([
+          for (var i = n.args.length; i < user.length; i++)
+            (user[i], 'параметр функции ${n.text}', () => ed._addArgs(path, i)),
+        ]));
+      }
+    } else if (spec == null) {
       out.add(w(n.text));
       for (var i = 0; i < n.args.length; i++) {
         final name = user != null && i < user.length ? user[i] : null;
@@ -450,7 +501,7 @@ class _R {
         }),
       );
     }
-    for (final e in n.named.entries) {
+    for (final e in code ? const <MapEntry<String, String>>[] : n.named.entries) {
       final p = namedSpec(e.key);
       out.add(small(p.label.isEmpty ? e.key : p.label));
       out.add(
@@ -473,6 +524,50 @@ class _R {
   }
 
   static final _hole = RegExp(r'\{(\w+)\}');
+
+  /// The call as code: `name(` slots separated by commas, `key:` slots of
+  /// the named arguments, `)`. The same slots as in the phrase: positional
+  /// ones that are given or required, then the extra ones (log).
+  List<Widget> codePieces(
+    String name,
+    FSpec? spec,
+    List<String> args,
+    Widget Function(String) word,
+    Widget Function(int i, PSpec p) slotAt,
+    List<(String, Widget)> named, {
+    List<String>? user,
+  }) {
+    final items = <Widget>[];
+    if (spec != null) {
+      final rest = spec.params.isNotEmpty && spec.params.last.rest ? spec.params.last : null;
+      final count = math.max(args.length, spec.params.length);
+      for (var i = 0; i < count; i++) {
+        final p = i < spec.params.length ? spec.params[i] : rest;
+        if (p == null) {
+          items.add(slotAt(i, PSpec('значение ${i + 1}', 'лишнее значение — команда его не ждёт')));
+        } else if (i < args.length || (!p.optional && i < spec.params.length)) {
+          items.add(slotAt(i, p));
+        }
+      }
+    } else {
+      for (var i = 0; i < args.length; i++) {
+        final pn = user != null && i < user.length ? user[i] : null;
+        items.add(slotAt(i, PSpec(pn ?? 'значение ${i + 1}', pn != null ? 'параметр «$pn» функции $name' : 'значение для $name')));
+      }
+    }
+    final out = <Widget>[word('$name(')];
+    for (var i = 0; i < items.length; i++) {
+      out.add(items[i]);
+      if (i < items.length - 1 || named.isNotEmpty) out.add(small(','));
+    }
+    for (var i = 0; i < named.length; i++) {
+      out.add(small('${named[i].$1}:'));
+      out.add(named[i].$2);
+      if (i < named.length - 1) out.add(small(','));
+    }
+    out.add(word(')'));
+    return out;
+  }
 
   /// Words and slots of [spec] in the order of its label; arguments that
   /// are not in the label follow with their short names.

@@ -49,6 +49,16 @@ const _wordStyle = TextStyle(
   height: 1.25,
 );
 
+/// Words of blocks shown as code.
+const _codeWordStyle = TextStyle(
+  color: Colors.white,
+  fontSize: 13,
+  fontWeight: FontWeight.w600,
+  height: 1.25,
+  fontFamily: 'Consolas',
+  fontFamilyFallback: ['Courier New', 'monospace'],
+);
+
 const _smallStyle = TextStyle(
   color: Color(0xE6FFFFFF),
   fontSize: 12,
@@ -106,6 +116,10 @@ class BlocksEditor extends StatefulWidget {
   final bool palette;
   final ValueChanged<bool>? onPalette;
 
+  /// Labels as code: click(x, y), if (…) — the same blocks and slots.
+  final bool asCode;
+  final ValueChanged<bool>? onAsCode;
+
   /// The code is visible next to the blocks: the block at the text cursor
   /// is marked.
   final bool besideCode;
@@ -124,6 +138,8 @@ class BlocksEditor extends StatefulWidget {
     this.hints = true,
     this.palette = true,
     this.onPalette,
+    this.asCode = false,
+    this.onAsCode,
     this.besideCode = false,
     this.onShowCode,
     this.host = const BlocksHost(),

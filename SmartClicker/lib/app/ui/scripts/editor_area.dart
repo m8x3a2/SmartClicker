@@ -43,6 +43,8 @@ class EditorArea extends StatelessWidget {
           hints: app.settings.hintHover,
           palette: app.settings.blocksPalette,
           onPalette: app.setBlocksPalette,
+          asCode: app.settings.blocksCode,
+          onAsCode: app.setBlocksCode,
           besideCode: view == 'split',
           onShowCode: (line) {
             if (app.settings.editorView == 'blocks') app.setEditorView('split');

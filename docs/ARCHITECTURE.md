@@ -35,7 +35,7 @@ lib/
     vision/      bitmap, png (свой кодек), image_search (поиск картинки; image_search_all — все места, find_images),
                  paddle_ocr, ocr (выбор способа распознавания), frame_diff (изменение области),
                  text_match (нестрогое сравнение текста: similar, errors:)
-    blocks/      конструктор блоков: blocks (код ↔ блоки), expr, catalog
+    blocks/      конструктор блоков: blocks (код ↔ блоки), expr, catalog (подписи-фразы; «как код» строится в app/ui/blocks/render — codePieces, say)
     recorder/    запись действий в код
     storage/     app_paths, data_location (где папка с данными, перенос), settings,
                  script_store, schedule_task, example_scripts, check_scripts, zip,

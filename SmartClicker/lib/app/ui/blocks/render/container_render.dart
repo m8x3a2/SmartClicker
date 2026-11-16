@@ -47,7 +47,9 @@ extension _RenderContainerRender on _R {
       case BK.ifs:
         for (var i = 0; i < n.args.length; i++) {
           head(
-            [w(i == 0 ? 'если' : 'иначе если'), arg(i, cond), if (i == 0) small('то')],
+            code
+                ? [w(i == 0 ? 'if (' : 'else if ('), arg(i, cond), w(')')]
+                : [w(i == 0 ? 'если' : 'иначе если'), arg(i, cond), if (i == 0) small('то')],
             i == 0 ? _before(path) : endOf(i - 1),
             _Pos(path, i, 0),
             first: i == 0,
@@ -56,20 +58,20 @@ extension _RenderContainerRender on _R {
         }
         if (n.hasElse) {
           final b = n.bodies.length - 1;
-          head([w('иначе')], endOf(b - 1), _Pos(path, b, 0));
+          head([w(say('иначе', 'else'))], endOf(b - 1), _Pos(path, b, 0));
           body(b);
         }
       case BK.repeat:
         head(
           n.args.isEmpty
-              ? [w('повторять всегда')]
+              ? [w(say('повторять всегда', 'repeat'))]
               : [
-                  w('повторить'),
+                  w(say('повторить', 'repeat (')),
                   arg(
                     0,
                     const PSpec('count', 'сколько раз; 0 — ни разу', kind: PK.number, def: '10'),
                   ),
-                  small('раз'),
+                  code ? w(')') : small('раз'),
                 ],
           _before(path),
           _Pos(path, 0, 0),
@@ -79,7 +81,7 @@ extension _RenderContainerRender on _R {
       case BK.withWin:
         head(
           [
-            w('в окне'),
+            w(say('в окне', 'with_window(')),
             if (n.args.isEmpty)
               small('?')
             else
@@ -93,7 +95,8 @@ extension _RenderContainerRender on _R {
                   def: '"Блокнот"',
                 ),
               ),
-            if (n.named['focus'] == 'false') small('(не выводить вперёд, ждать)'),
+            if (n.named['focus'] == 'false') small(say('(не выводить вперёд, ждать)', ', focus: false')),
+            if (code) w(')'),
           ],
           _before(path),
           _Pos(path, 0, 0),
@@ -101,17 +104,18 @@ extension _RenderContainerRender on _R {
         );
         body(0);
       case BK.whiles:
-        head([w('пока'), arg(0, cond)], _before(path), _Pos(path, 0, 0), first: true);
+        head(code ? [w('while ('), arg(0, cond), w(')')] : [w('пока'), arg(0, cond)], _before(path), _Pos(path, 0, 0),
+            first: true);
         body(0);
       case BK.doWhile:
-        head([w('делать')], _before(path), _Pos(path, 0, 0), first: true);
+        head([w(say('делать', 'do'))], _before(path), _Pos(path, 0, 0), first: true);
         body(0);
       case BK.forIn:
         head(
           [
-            w('для каждого'),
+            w(say('для каждого', 'for (')),
             _nameField(n, path, 'text', n.text, isIdentifier, look: _Look.variable),
-            small('из'),
+            code ? w('in') : small('из'),
             arg(
               0,
               const PSpec(
@@ -120,6 +124,7 @@ extension _RenderContainerRender on _R {
                 def: '1..10',
               ),
             ),
+            if (code) w(')'),
           ],
           _before(path),
           _Pos(path, 0, 0),
@@ -129,7 +134,7 @@ extension _RenderContainerRender on _R {
       case BK.forC:
         head(
           [
-            w('цикл for'),
+            w(say('цикл for', 'for (')),
             _nameField(
               n,
               path,
@@ -138,6 +143,7 @@ extension _RenderContainerRender on _R {
               (s) => codeError('for ($s) {}') == null,
               look: _Look.code,
             ),
+            if (code) w(')'),
           ],
           _before(path),
           _Pos(path, 0, 0),
@@ -147,9 +153,9 @@ extension _RenderContainerRender on _R {
       case BK.func:
         head(
           [
-            w('функция'),
+            w(say('функция', 'function')),
             _nameField(n, path, 'text', n.text, isIdentifier, look: _Look.name),
-            small('параметры'),
+            code ? w('(') : small('параметры'),
             _nameField(
               n,
               path,
@@ -157,8 +163,9 @@ extension _RenderContainerRender on _R {
               n.extra,
               (s) => s.trim().isEmpty || s.split(',').every((p) => isIdentifier(p.trim())),
               look: _Look.variable,
-              placeholder: 'нет',
+              placeholder: code ? '…' : 'нет',
             ),
+            if (code) w(')'),
           ],
           _before(path),
           _Pos(path, 0, 0),
@@ -166,14 +173,14 @@ extension _RenderContainerRender on _R {
         );
         body(0);
       case BK.tryc:
-        head([w('попробовать')], _before(path), _Pos(path, 0, 0), first: true);
+        head([w(say('попробовать', 'try'))], _before(path), _Pos(path, 0, 0), first: true);
         body(0);
         var b = 1;
         if (n.hasCatch) {
           head(
             [
-              w('при ошибке'),
-              small('текст ошибки в'),
+              w(say('при ошибке', 'catch (')),
+              if (!code) small('текст ошибки в'),
               _nameField(
                 n,
                 path,
@@ -183,6 +190,7 @@ extension _RenderContainerRender on _R {
                 look: _Look.variable,
                 placeholder: '—',
               ),
+              if (code) w(')'),
             ],
             endOf(b - 1),
             _Pos(path, b, 0),
@@ -190,14 +198,15 @@ extension _RenderContainerRender on _R {
           body(b++);
         }
         if (n.hasFinally) {
-          head([w('в конце (всегда)')], endOf(b - 1), _Pos(path, b, 0));
+          head([w(say('в конце (всегда)', 'finally'))], endOf(b - 1), _Pos(path, b, 0));
           body(b);
         }
       case BK.sw:
         head(
           [
-            w('выбрать по'),
+            w(say('выбрать по', 'switch (')),
             arg(0, const PSpec('value', 'значение, по которому выбирается вариант')),
+            if (code) w(')'),
           ],
           _before(path),
           _Pos(path, 0, 0),
@@ -207,8 +216,8 @@ extension _RenderContainerRender on _R {
           final test = b + 1 < n.args.length ? n.args[b + 1] : '';
           head(
             test.isEmpty
-                ? [w('иначе')]
-                : [w('вариант'), arg(b + 1, const PSpec('case', 'значение этого варианта'))],
+                ? [w(say('иначе', 'default'))]
+                : [w(say('вариант', 'case')), arg(b + 1, const PSpec('case', 'значение этого варианта'))],
             b == 0 ? _Pos(path, 0, 0) : endOf(b - 1),
             _Pos(path, b, 0),
           );
@@ -217,7 +226,9 @@ extension _RenderContainerRender on _R {
     }
     // Bottom of the block.
     final last = n.bodies.isEmpty ? null : n.bodies.length - 1;
-    final footerPieces = n.kind == BK.doWhile ? [w('пока'), arg(0, cond)] : <Widget>[];
+    final footerPieces = n.kind == BK.doWhile
+        ? (code ? [w('while ('), arg(0, cond), w(')')] : [w('пока'), arg(0, cond)])
+        : <Widget>[];
     final footer = footerPieces.isEmpty
         ? Container(
             width: 120,

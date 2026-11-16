@@ -10,6 +10,12 @@ extension AppControllerSettings on AppController {
     _changed();
   }
 
+  void setBlocksCode(bool code) {
+    settings.blocksCode = code;
+    saveSettingsQuiet();
+    _changed();
+  }
+
   void setBlocksPalette(bool open) {
     settings.blocksPalette = open;
     saveSettingsQuiet();

@@ -88,7 +88,7 @@ extension _RenderSlotRender on _R {
     } else if (!editing && spec?.kind == PK.choice && spec!.options.containsKey(src.trim())) {
       body = _choice(spec.options, src.trim(), set);
     } else if (!editing && shape is XBool) {
-      body = _choice(const {'true': 'да', 'false': 'нет'}, src.trim(), set);
+      body = _choice(code ? const {'true': 'true', 'false': 'false'} : const {'true': 'да', 'false': 'нет'}, src.trim(), set);
     } else {
       body = _field(src, shape, id, spec, set);
     }
@@ -234,9 +234,30 @@ extension _RenderSlotRender on _R {
             args[i] = v;
             set(buildCall(c.name, args, c.named));
           };
-    Widget word(String t) => Text(t, style: _wordStyle);
+    Widget word(String t) => Text(t, style: _ws);
     final pieces = <Widget>[];
-    if (spec == null) {
+    if (code) {
+      pieces.addAll(codePieces(
+        c.name,
+        spec,
+        c.args,
+        word,
+        (i, p) => slot(i < c.args.length ? c.args[i] : '', spec: p, id: '$id/$i', set: setArg(i)),
+        [
+          for (final e in c.named.entries)
+            (
+              e.key,
+              slot(
+                e.value,
+                spec: namedSpec(e.key),
+                id: '$id/n:${e.key}',
+                set: set == null ? null : (v) => set(buildCall(c.name, c.args, {...c.named, e.key: v})),
+              ),
+            ),
+        ],
+        user: user,
+      ));
+    } else if (spec == null) {
       pieces.add(word(c.name));
       for (var i = 0; i < c.args.length; i++) {
         pieces.add(
@@ -258,7 +279,7 @@ extension _RenderSlotRender on _R {
         }),
       );
     }
-    for (final e in c.named.entries) {
+    for (final e in code ? const <MapEntry<String, String>>[] : c.named.entries) {
       final p = namedSpec(e.key);
       pieces.add(small(p.label.isEmpty ? e.key : p.label));
       pieces.add(
@@ -281,11 +302,12 @@ extension _RenderSlotRender on _R {
 
   Widget _opBlock(XOp o, String id, ValueChanged<String>? set) {
     final group = _opGroups.firstWhere((g) => g.contains(o.op), orElse: () => [o.op]);
+    String shown(String op) => code ? op : _opLabel(op);
     final opWidget = set == null || !live || group.length < 2
-        ? Text(_opLabel(o.op), style: _wordStyle)
-        : _menuWord(_opLabel(o.op), () async {
+        ? Text(shown(o.op), style: _ws)
+        : _menuWord(shown(o.op), style: _ws, () async {
             final v = await ed._menu<String>(_R._lastTap, [
-              for (final op in group) ed._item(op, _opLabel(op), keys: op),
+              for (final op in group) ed._item(op, shown(op), keys: code ? _opLabel(op) : op),
             ]);
             if (v != null) set(buildOp(v, o.left, o.right));
           });
@@ -323,7 +345,7 @@ extension _RenderSlotRender on _R {
   Widget _notBlock(XNot x, String id, ValueChanged<String>? set) => _pill(
     _catColor('ops'),
     [
-      Text('не', style: _wordStyle),
+      Text(say('не', '!'), style: _ws),
       slot(
         x.operand,
         spec: const PSpec('condition', 'условие, которое переворачивается'),

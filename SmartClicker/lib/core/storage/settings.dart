@@ -27,7 +27,7 @@ const settingsGroups = <String, List<String>>{
   'logs': ['saveLogs', 'saveReports', 'historySize', 'historyKeepSource', 'toastSec'],
   'layout': [
     'dryRun', 'logHeight', 'logCollapsed', 'helpCollapsed', 'bottomTab', //
-    'editorView', 'blocksPalette', 'blocksSplitPct', 'miniX', 'miniY',
+    'editorView', 'blocksPalette', 'blocksCode', 'blocksSplitPct', 'miniX', 'miniY',
   ],
 };
 
@@ -190,6 +190,10 @@ class Settings {
   /// side); the palette of blocks is open; share of the blocks in 'split', %.
   String editorView = 'code';
   bool blocksPalette = true;
+
+  /// Blocks are labelled with the commands of the language (click(x, y))
+  /// instead of phrases (нажать в x y).
+  bool blocksCode = false;
   int blocksSplitPct = 55;
 
   /// Text recognition of scripts: 'windows' (fast) or 'paddle' (accurate).
@@ -304,6 +308,7 @@ class Settings {
     s.editorView = get('editorView', s.editorView);
     if (!const {'code', 'blocks', 'split'}.contains(s.editorView)) s.editorView = 'code';
     s.blocksPalette = get('blocksPalette', s.blocksPalette);
+    s.blocksCode = get('blocksCode', s.blocksCode);
     s.blocksSplitPct = get('blocksSplitPct', s.blocksSplitPct).clamp(15, 85);
     s.ocrChosen = get('ocrChosen', false);
     if (s.ocrChosen) s.ocrEngine = get('ocrEngine', s.ocrEngine);
@@ -384,6 +389,7 @@ class Settings {
         'bottomTab': bottomTab,
         'editorView': editorView,
         'blocksPalette': blocksPalette,
+        'blocksCode': blocksCode,
         'blocksSplitPct': blocksSplitPct,
         'ocrEngine': ocrEngine,
         'ocrChosen': ocrChosen,

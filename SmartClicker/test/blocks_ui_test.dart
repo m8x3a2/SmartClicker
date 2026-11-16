@@ -6,7 +6,7 @@ import 'package:smart_clicker/app/ui/blocks/blocks_editor.dart';
 
 void main() {
   Future<TextEditingController> pump(WidgetTester tester, String code,
-      {BlocksHost host = const BlocksHost(), double width = 1200}) async {
+      {BlocksHost host = const BlocksHost(), double width = 1200, bool asCode = false}) async {
     tester.view.physicalSize = Size(width, 800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -26,6 +26,7 @@ void main() {
             breaks.value = s;
           },
           host: host,
+          asCode: asCode,
         ),
       ),
     ));
@@ -44,6 +45,24 @@ void main() {
     // Values are editable fields.
     expect(find.widgetWithText(TextField, '5'), findsOneWidget);
     expect(find.widgetWithText(TextField, 'Готово'), findsOneWidget);
+  });
+
+  testWidgets('блоки «как код»: те же блоки и поля, подписи — команды языка', (tester) async {
+    final c = await pump(
+        tester,
+        'repeat (5) {\n    click(50%, 50%, button: "right")\n    if (x > 1 && !done) { break }\n}\n'
+        'let n = 0\nn += 2\nfunction f(a, b) {\n    return a\n}\n',
+        asCode: true);
+    for (final t in ['repeat (', 'click(', ')', 'if (', 'break', 'let', '+=', 'function', 'return', '&&', '!']) {
+      expect(find.text(t), findsWidgets, reason: t);
+    }
+    expect(find.text('button:'), findsOneWidget);
+    expect(find.text('повторить'), findsNothing);
+    expect(find.text('кликнуть'), findsNothing);
+    // the values are the same editable fields
+    await tester.enterText(find.widgetWithText(TextField, '5'), '7');
+    await tester.pump();
+    expect(c.text, startsWith('repeat (7) {'));
   });
 
   testWidgets('правка числа в блоке меняет код', (tester) async {
