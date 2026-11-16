@@ -5,6 +5,7 @@ export 'language_reference.dart';
 export 'common_mistakes.dart';
 export 'beginner_guide.dart';
 export 'image_guide.dart';
+export 'ocr_guide.dart';
 export 'blocks_guide.dart';
 export 'features_guide.dart';
 export 'usage_guide.dart';
