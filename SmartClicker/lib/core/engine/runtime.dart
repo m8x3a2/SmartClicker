@@ -31,6 +31,7 @@ part 'builtins/screen.dart';
 part 'builtins/windows.dart';
 part 'builtins/system.dart';
 part 'builtins/files.dart';
+part 'builtins/clip.dart';
 part 'builtins/util.dart';
 
 typedef Emit = void Function(Map<String, Object?> event);
@@ -87,6 +88,9 @@ class ScriptRuntime implements Host {
   /// often it ran, and [calls, µs] per built-in function.
   final Map<int, int> _lineUs = {}, _lineHits = {};
   final Map<String, List<int>> _callStats = {};
+
+  /// The script's own stack of things to paste (clip_add, paste_next).
+  final List<_StackItem> _clipStack = [];
   int _profLine = 0;
   final Stopwatch _profSw = Stopwatch()..start();
   final Stopwatch _profClock = Stopwatch()..start();
@@ -426,6 +430,7 @@ class ScriptRuntime implements Host {
     _registerWindows();
     _registerSystem();
     _registerFiles();
+    _registerClip();
     _registerUtil();
   }
 }

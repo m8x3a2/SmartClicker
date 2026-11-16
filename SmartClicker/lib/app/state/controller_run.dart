@@ -121,6 +121,7 @@ extension AppControllerRun on AppController {
     'maxLoops': settings.maxLoops,
     'dataFile': paths.dataFile,
     'filesDir': paths.files,
+    'clipDir': paths.clipboard,
     'ocrEngine': settings.ocrEngine,
     'ocrDir': paths.ocr,
   };
