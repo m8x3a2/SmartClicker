@@ -153,7 +153,7 @@ extension _CodeEditorStateEditorHints on _CodeEditorState {
         if (param != null && rest.startsWith(':')) {
           hint = Completion(name, '$name:', param);
         } else if (rest.startsWith('(')) {
-          hint = completionFor(name, scriptFunctions(text));
+          hint = completionFor(name, [...scriptFunctions(text), ...usedFunctions(text, widget.scriptSource)]);
         }
         start = m.start;
         break;
@@ -212,7 +212,7 @@ extension _CodeEditorStateEditorHints on _CodeEditorState {
     final line = text.substring(lineStart, caret);
     final inside = _lineContext(line);
     if (inside == _Inside.comment) return _hideAssist();
-    final own = scriptFunctions(text);
+    final own = [...scriptFunctions(text), ...usedFunctions(text, widget.scriptSource)];
 
     // 1. An identifier is being typed: list of names.
     final word = inside == _Inside.code ? _CodeEditorState._wordAtEnd.firstMatch(line) : null;

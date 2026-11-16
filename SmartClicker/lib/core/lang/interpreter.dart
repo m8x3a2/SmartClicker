@@ -13,12 +13,32 @@ abstract class Host {
 
   /// Called once per loop iteration (for the global loop limiter).
   void loopTick(int line);
+
+  /// A function of another script (connected with use) starts: [script] —
+  /// its name, null — the main script. Lines and errors belong to it until
+  /// [leaveScript].
+  void enterScript(String? script);
+  void leaveScript();
+
+  /// The script whose code runs now (null — the main one).
+  String? get currentScript;
 }
 
 class Env {
   final Map<String, Object?> vars = {};
   final Env? parent;
-  Env(this.parent);
+
+  /// The scope of a script connected with use("…"): its name.
+  final String? script;
+  Env(this.parent, {this.script});
+
+  /// The connected script this scope belongs to (null — the main one).
+  String? get owner {
+    for (Env? e = this; e != null; e = e.parent) {
+      if (e.script != null) return e.script;
+    }
+    return null;
+  }
 
   Env? _find(String name) {
     for (Env? e = this; e != null; e = e.parent) {
@@ -35,7 +55,10 @@ class Env {
 class UserFn {
   final FuncE def;
   final Env closure;
-  const UserFn(this.def, this.closure);
+  UserFn(this.def, this.closure);
+
+  /// The connected script (use) the function is written in; null — the main one.
+  late final String? script = closure.owner;
   @override
   String toString() => '<функция ${def.name ?? ''}>';
 }
@@ -87,6 +110,19 @@ class Interpreter {
   }
 
   Future<void> exec(Stmt s, Env env) async {
+    try {
+      await _exec(s, env);
+    } on ScriptError catch (e) {
+      // the innermost statement knows whose line it is (use: another script)
+      if (!e.placed) {
+        e.placed = true;
+        e.script ??= host.currentScript;
+      }
+      rethrow;
+    }
+  }
+
+  Future<void> _exec(Stmt s, Env env) async {
     currentEnv = env;
     await host.checkpoint(s.line);
     switch (s) {
@@ -501,12 +537,17 @@ class Interpreter {
       }
       _depth++;
       frames.add(fn.def.name ?? 'функция');
+      // a function of a connected script (or the main script's function
+      // called back from it): its lines are counted for its own script
+      final other = fn.script != host.currentScript;
+      if (other) host.enterScript(fn.script);
       try {
         if (fn.def.exprBody != null) return await eval(fn.def.exprBody!, scope);
         await execBlock(fn.def.body!.body, scope);
       } on ReturnSignal catch (r) {
         return r.value;
       } finally {
+        if (other) host.leaveScript();
         _depth--;
         frames.removeLast();
       }

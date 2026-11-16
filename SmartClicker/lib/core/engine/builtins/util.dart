@@ -55,6 +55,39 @@ extension ScriptRuntimeBuiltinsUtil on ScriptRuntime {
       return null;
     });
 
+    // use("Общее/бой"): the functions of another script become available
+    // here; its other code (clicks, loops, a test at the end) does not run.
+    _def('use', (c) async {
+      final what = _s(c, c.arg(0), 'use');
+      final lib = _findScript(what);
+      if (lib == null) c.fail('use: скрипт "$what" не найден');
+      final main = cfg['main'] as String?;
+      if (lib.name == main) {
+        c.fail(_useTarget == null
+            ? 'use: скрипт не может подключить сам себя'
+            : 'use: подключаемый скрипт подключает основной «$main» — получается круг');
+      }
+      final target = _useTarget ?? interp.globals;
+      final env = _libraries[lib.name] ?? await _loadLibrary(lib.name, lib.source);
+      final mine = <String>[], kept = <String>[];
+      for (final MapEntry(:key, :value) in env.vars.entries) {
+        if (value is! UserFn || value.closure.owner != lib.name) continue;
+        final had = target.vars[key];
+        if (identical(had, value)) continue;
+        if (had != null || target.vars.containsKey(key)) {
+          kept.add(key);
+          continue;
+        }
+        target.define(key, value);
+        mine.add(key);
+      }
+      if (kept.isNotEmpty) {
+        log('use("${lib.name}"): ${kept.join(', ')} — такие имена здесь уже есть (своя функция или команда '
+            'программы), оставлены здешние', 'warn');
+      }
+      return mine.length;
+    });
+
     _def('set_option', (c) {
       final name = _s(c, c.arg(0), 'set_option');
       final v = c.arg(1);

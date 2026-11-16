@@ -131,7 +131,7 @@ List<AskSpec> findAsks(String source, [String? Function(String name)? scriptSour
         if (name == 'ask') {
           final a = askOfCall(n);
           if (a != null && seen.add(a.prompt)) asks.add(a);
-        } else if ((name == 'run_script' || name == 'runScript') && n.args.isNotEmpty) {
+        } else if ((name == 'run_script' || name == 'runScript' || name == 'use') && n.args.isNotEmpty) {
           if (n.args.first case Lit(value: final String other)) called.add(other);
         }
       });

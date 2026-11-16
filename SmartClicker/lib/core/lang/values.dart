@@ -24,6 +24,10 @@ class ScriptError implements Exception {
   final String message;
   final int line;
   String? script;
+
+  /// [script] is already set by the innermost statement (see
+  /// Interpreter.exec); outer statements of other scripts leave it.
+  bool placed = false;
   ScriptError(this.message, this.line, [this.script]);
   @override
   String toString() =>

@@ -31,7 +31,7 @@ Future<void> shareScriptDialog(BuildContext context, AppController app, String s
                 _row(
                   Icons.description_outlined,
                   s,
-                  s == script ? 'сам скрипт' : 'запускается через run_script',
+                  s == script ? 'сам скрипт' : 'нужен ему (run_script или use)',
                 ),
               for (final p in plan.pictures) _row(Icons.image_outlined, p, 'картинка'),
               for (final p in plan.missing)

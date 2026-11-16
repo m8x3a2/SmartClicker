@@ -1,9 +1,10 @@
-// Which scripts a script runs with run_script("name"): finding the script
-// by the name written in the code, the mentions, renaming them.
+// Which scripts a script runs with run_script("name") or connects with
+// use("name"): finding the script by the name written in the code, the
+// mentions, renaming them.
 
 import 'lexer.dart';
 
-const _runScript = {'run_script', 'runScript'};
+const _runScript = {'run_script', 'runScript', 'use'};
 
 /// The script [ref] (as written in run_script) among [names]: the full
 /// name first ("Папка/Имя"), then the last part only ("Имя"). Case and a
@@ -23,7 +24,8 @@ String? resolveScriptName(String ref, Iterable<String> names) {
 /// included, and the name itself.
 typedef ScriptRef = ({int start, int end, String name});
 
-/// Every run_script("name") of [source] written with a plain quoted name.
+/// Every run_script("name") and use("name") of [source] written with a
+/// plain quoted name.
 List<ScriptRef> findScriptRefs(String source) {
   final List<Token> tokens;
   try {

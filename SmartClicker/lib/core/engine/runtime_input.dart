@@ -91,7 +91,7 @@ extension ScriptRuntimeRuntimeInput on ScriptRuntime {
       'k': kind,
       'x': ?at?.x,
       'y': ?at?.y,
-      if (_nested > 0) 'other': true, // a line of a script from run_script
+      if (_foreign) 'other': true, // a line of another script (run_script, use)
     });
   }
 

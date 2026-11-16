@@ -7,7 +7,7 @@ extension _RuntimeProfile on ScriptRuntime {
   /// A new line of the main script starts: the time since the previous one
   /// goes to that previous line.
   void _profileLine(int line) {
-    if (_nested != 0) return;
+    if (_foreign) return;
     if (_profLine > 0) _lineUs[_profLine] = (_lineUs[_profLine] ?? 0) + _profSw.elapsedMicroseconds;
     _lineHits[line] = (_lineHits[line] ?? 0) + 1;
     _profLine = line;

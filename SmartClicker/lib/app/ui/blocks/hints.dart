@@ -178,7 +178,7 @@ extension _BlocksEditorStateHints on _BlocksEditorState {
             text: user != null
                 ? 'Своя функция из этого скрипта${user.isEmpty ? '' : '; параметры: ${user.join(', ')}'}'
                 : 'Такой команды нет в справочнике: она может быть из скрипта, '
-                      'подключённого run_script, — или это опечатка.',
+                      'подключённого use("…") или run_script, — или это опечатка.',
           ),
           TextSpan(text: '\n$shown', style: _BlocksEditorState._hCode),
         ],

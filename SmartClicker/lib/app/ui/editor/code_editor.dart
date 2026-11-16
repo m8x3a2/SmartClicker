@@ -66,6 +66,10 @@ class CodeEditor extends StatefulWidget {
   /// picture is shown when the mouse is over its name.
   final String Function(String name)? imagePath;
 
+  /// The text of another script by the name written in use("…"): its
+  /// functions are offered while typing.
+  final String? Function(String name)? scriptSource;
+
   /// A line to show (puts the cursor there); the editor sets it back to 0.
   final ValueNotifier<int>? revealLine;
 
@@ -85,6 +89,7 @@ class CodeEditor extends StatefulWidget {
     this.breakpoints,
     this.onBreakpoint,
     this.imagePath,
+    this.scriptSource,
     this.revealLine,
     this.onUndo,
     this.onRedo,

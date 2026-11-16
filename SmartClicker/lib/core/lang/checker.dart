@@ -130,10 +130,37 @@ class _Checker {
                 // That script's own errors are shown when it is checked.
               }
             }
+            if (name == 'use') _useFunctions(arg);
           default:
             break;
         }
       });
+    }
+  }
+
+  /// use("…") gives only the functions written at the top level of that
+  /// script (not what it connects itself).
+  void _useFunctions(String script) {
+    final src = ctx.scriptSource(script);
+    if (src == null) return;
+    try {
+      for (final s in parseProgram(src)) {
+        if (s is FuncDecl && s.fn.name != null) {
+          known.add(s.fn.name!);
+          functions.add(s.fn.name!);
+        }
+        if (s is VarS) {
+          // let f = (x) => … at the top: a function too
+          for (final d in s.decls) {
+            if (d.value is FuncE) {
+              known.add(d.key);
+              functions.add(d.key);
+            }
+          }
+        }
+      }
+    } on ScriptError {
+      // shown when that script itself is checked
     }
   }
 
@@ -209,17 +236,17 @@ class _Checker {
           'картинки "$arg" нет в папке files — вырежьте её (Инструменты → Выделить область) '
           'и сохраните под этим именем'));
     }
-    if (name == 'run_script' && ctx.scriptSource(arg) == null) {
+    if ((name == 'run_script' || name == 'use') && ctx.scriptSource(arg) == null) {
       issues.add(Issue(n.line, 'скрипта "$arg" нет'));
-    } else if (name == 'run_script') {
+    } else if (name == 'run_script' || name == 'use') {
       final same = ambiguousScriptName(arg, ctx.scriptNames);
       if (same.isNotEmpty) {
         final runs = resolveScriptName(arg, ctx.scriptNames);
         issues.add(Issue(
             n.line,
-            'run_script("$arg"): так называются несколько скриптов — '
-            '${same.map((s) => '"$s"').join(', ')}; будет запущен "$runs". '
-            'Напишите путь полностью: run_script("$runs")',
+            '$name("$arg"): так называются несколько скриптов — '
+            '${same.map((s) => '"$s"').join(', ')}; будет ${name == 'use' ? 'подключён' : 'запущен'} "$runs". '
+            'Напишите путь полностью: $name("$runs")',
             error: false));
       }
     }

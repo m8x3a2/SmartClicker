@@ -7,6 +7,7 @@ import 'dart:io';
 import 'dart:math' as math;
 
 import '../lang/ask_scan.dart';
+import '../lang/ast.dart';
 import '../lang/interpreter.dart';
 import '../lang/parser.dart';
 import '../lang/script_refs.dart';
@@ -26,6 +27,7 @@ part 'runtime_input.dart';
 part 'runtime_safety.dart';
 part 'runtime_profile.dart';
 part 'runtime_reactions.dart';
+part 'runtime_use.dart';
 part 'builtins/mouse.dart';
 part 'builtins/keyboard.dart';
 part 'builtins/time.dart';
@@ -113,6 +115,27 @@ class ScriptRuntime implements Host {
   int _line = 0;
   int _sentLine = -1;
   int _nested = 0;
+
+  /// use("…"): scripts whose functions run now (null — the main script),
+  /// the connected scripts by name and where use() puts the functions.
+  final List<String?> _scripts = [];
+  final Map<String, Env> _libraries = {};
+  Env? _useTarget;
+
+  /// The code that runs now is not the main script's (run_script, or a
+  /// function of a script connected with use): its lines are not shown,
+  /// breakpoints and the slow mode do not apply.
+  bool get _foreign => _nested > 0 || (_scripts.isNotEmpty && _scripts.last != null);
+
+  @override
+  void enterScript(String? script) => _scripts.add(script);
+  @override
+  void leaveScript() {
+    if (_scripts.isNotEmpty) _scripts.removeLast();
+  }
+
+  @override
+  String? get currentScript => _scripts.isEmpty ? null : _scripts.last;
 
   final Set<String> _heldKeys = {};
   final Set<String> _heldButtons = {};
@@ -263,11 +286,14 @@ class ScriptRuntime implements Host {
   }
 
   /// Finds a script by full path ("Папка/Имя") or just by its name.
-  String? _scriptSource(String name) {
+  String? _scriptSource(String name) => _findScript(name)?.source;
+
+  /// The full name and the text of a script written as [name].
+  ({String name, String source})? _findScript(String name) {
     final scripts = cfg['scripts'];
     if (scripts is! Map) return null;
     final found = resolveScriptName(name, scripts.keys.map((k) => '$k'));
-    return found == null ? null : '${scripts[found]}';
+    return found == null ? null : (name: found, source: '${scripts[found]}');
   }
 
   void _checkLimits() {
@@ -315,7 +341,7 @@ class ScriptRuntime implements Host {
   }
 
   void _emitLine() {
-    if (_nested == 0 && _line != _sentLine) {
+    if (!_foreign && _line != _sentLine) {
       _sentLine = _line;
       emit({'t': 'line', 'l': _line});
       _lineSw.reset();
@@ -338,7 +364,7 @@ class ScriptRuntime implements Host {
       _checkLimits();
     }
     if ((stepping || breakpoints.contains(line)) &&
-        _nested == 0 &&
+        !_foreign &&
         line != _stepLine) {
       _stepLine = line;
       paused = true;
@@ -359,7 +385,7 @@ class ScriptRuntime implements Host {
       _actionDone = false;
       if (actionDelay > 0) await sleep(actionDelay, jitter: false);
     }
-    if (slowMs > 0 && _nested == 0 && line != _slowLine) {
+    if (slowMs > 0 && !_foreign && line != _slowLine) {
       _slowLine = line;
       _emitLine();
       await sleep(slowMs, jitter: false);

@@ -182,6 +182,8 @@ const completions = <Completion>[
   Completion('exit', 'exit()', 'завершить скрипт'),
   Completion('run_script', 'run_script("Имя скрипта")',
       'выполнить другой скрипт; его функции остаются доступны'),
+  Completion('use', 'use("Общее/бой")',
+      'подключить функции другого скрипта: его функции работают здесь, остальной его код (клики, проверки) не выполняется'),
   Completion('set_option', 'set_option("human", true)',
       'настройки: "human", "click_offset", "time_jitter"'),
   Completion('random', 'random(1, 10)', 'случайное число от 1 до 10'),
@@ -264,6 +266,28 @@ List<Completion> scriptFunctions(String source) => [
       for (final m in _functionDecl.allMatches(source))
         Completion(m[1]!, '${m[1]}(${m[2]!.trim()})', 'функция из этого скрипта'),
     ];
+
+/// Functions of the scripts connected with use("…") in [source]
+/// ([scriptSource] gives their text): offered like the script's own. Only
+/// functions written from the start of a line (top level) are given by use.
+List<Completion> usedFunctions(String source, String? Function(String name)? scriptSource) {
+  if (scriptSource == null) return const [];
+  final out = <Completion>[];
+  final seen = <String>{};
+  for (final m in _useCall.allMatches(source)) {
+    final name = m[2]!;
+    if (!seen.add(name.toLowerCase())) continue;
+    final src = scriptSource(name);
+    if (src == null) continue;
+    for (final f in _topFunction.allMatches(src)) {
+      out.add(Completion(f[1]!, '${f[1]}(${f[2]!.trim()})', 'функция из «$name» (подключена use)'));
+    }
+  }
+  return out;
+}
+
+final _useCall = RegExp(r'''\buse\s*\(\s*(["'])([^"'\n]+)\1''');
+final _topFunction = RegExp(r'^function\s+([A-Za-z_]\w*)\s*\(([^)\n]*)\)', multiLine: true);
 
 final _camelHump = RegExp('[A-Z]');
 

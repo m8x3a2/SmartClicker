@@ -31,7 +31,7 @@ class _FixDialogState extends State<_FixDialog> {
     final scripts = {for (final f in widget.fixes) f.script};
     final broken = widget.fixes.where((f) => f.change.broken).length;
     return AlertDialog(
-      title: const Text('Исправить вызовы run_script?'),
+      title: const Text('Исправить run_script и use?'),
       content: SizedBox(
         width: 620,
         child: Column(
@@ -39,7 +39,7 @@ class _FixDialogState extends State<_FixDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Переименованный скрипт вызывается в других скриптах. Отмеченные вызовы '
+              'Переименованный скрипт нужен другим скриптам (run_script, use). Отмеченные вызовы '
               'получат полный новый путь — тогда они не переключатся на другой скрипт '
               'с таким же коротким именем.'
               '${broken > 0 ? '\nБез исправления не найдут скрипт: $broken (помечены ⚠).' : ''}',

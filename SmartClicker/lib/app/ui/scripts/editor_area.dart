@@ -27,6 +27,7 @@ class EditorArea extends StatelessWidget {
           breakpoints: app.breaks,
           onBreakpoint: app.toggleBreakpoint,
           imagePath: app.imagePath,
+          scriptSource: app.scriptSourceOf,
           revealLine: app.revealLine,
           onUndo: app.undoEdit,
           onRedo: app.redoEdit,

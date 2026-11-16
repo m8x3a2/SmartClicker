@@ -460,6 +460,10 @@ const functionSpecs = <FSpec>[
   FSpec('run_script', 'control', 'выполнить скрипт {name}', [
     PSpec('name', 'имя скрипта, как в списке слева ("Папка/Имя")', kind: PK.script, def: '"Имя"'),
   ], 'run_script("Имя")'),
+  FSpec('use', 'control', 'подключить функции скрипта {name}', [
+    PSpec('name', 'скрипт с общими функциями ("Общее/бой"): его функции станут доступны здесь, остальной его код не выполняется',
+        kind: PK.script, def: '"Общее/бой"'),
+  ], 'use("Общее/бой")'),
   FSpec('set_option', 'control', 'настройка {name} = {value}', [
     PSpec('name', 'какая настройка', kind: PK.choice, def: '"human"', options: {
       '"human"': 'человеческие движения (true/false)',

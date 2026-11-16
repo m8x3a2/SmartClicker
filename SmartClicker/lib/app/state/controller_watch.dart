@@ -127,6 +127,13 @@ extension AppControllerOldText on AppController {
 
   void clearVersions(String script) => store.versions?.clear(script);
 
+  /// The text of the script written as [ref] in run_script / use ("Имя" or
+  /// "Папка/Имя"), with unsaved edits; null — no such script.
+  String? scriptSourceOf(String ref) {
+    final name = resolveScriptName(ref, scripts);
+    return name == null ? null : textOf(name);
+  }
+
   /// The text of [script] as the user sees it now (with unsaved edits).
   String textOf(String script) =>
       script == current ? editor.text : (buffers[script] ?? store.read(script));

@@ -194,7 +194,7 @@ extension AppControllerScripts on AppController {
       }
       changed.add('«$s» (стр. ${(lines.toList()..sort()).join(', ')})');
     }
-    notify('run_script исправлен', 'Вызовы run_script обновлены: ${changed.join('; ')}',
+    notify('Ссылки исправлены', 'run_script и use обновлены: ${changed.join('; ')}',
         level: 'ok');
     _changed();
   }
