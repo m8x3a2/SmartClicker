@@ -33,7 +33,7 @@ lib/
                  builtins/ — встроенные функции по темам (mouse, keyboard, time,
                  screen, windows, system, files — JSON-файлы для других программ, util); runner — изолят; human — «как человек»
     vision/      bitmap, png (свой кодек), image_search (поиск картинки),
-                 paddle_ocr, ocr (выбор способа распознавания),
+                 paddle_ocr, ocr (выбор способа распознавания), frame_diff (изменение области),
                  text_match (нестрогое сравнение текста: similar, errors:)
     blocks/      конструктор блоков: blocks (код ↔ блоки), expr, catalog
     recorder/    запись действий в код

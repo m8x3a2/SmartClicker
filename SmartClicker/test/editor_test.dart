@@ -24,7 +24,7 @@ void main() {
 
   test('подбор подсказок', () {
     expect(suggest('cl').map((c) => c.name), containsAll(['click', 'clock']));
-    expect(suggest('wait').map((c) => c.name), ['wait_until', 'wait_pixel', 'wait_text', 'wait_image', 'wait_file']);
+    expect(suggest('wait').map((c) => c.name), ['wait_until', 'wait_pixel', 'wait_text', 'wait_change', 'wait_still', 'wait_image', 'wait_file']);
     expect(suggest('pixel').map((c) => c.name).first, 'pixel_is');
     expect(suggest('zz'), isEmpty);
     final own = scriptFunctions('function farm(n, speed) { }');

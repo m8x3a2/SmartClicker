@@ -66,6 +66,15 @@ extension ScriptRuntimeRuntimeArgs on ScriptRuntime {
     );
   }
 
+  /// timeout: (30 s), interval: (200 ms), percent: (how much of the area
+  /// must differ, 1 %), tolerance: (per pixel, 30) of wait_change / wait_still.
+  ({int timeout, int interval, double percent, int tolerance}) _changeOptions(CallCtx c, String fn) => (
+        timeout: _nOr(c, c.opt('timeout'), 30000, 'timeout').round(),
+        interval: math.max(50, _nOr(c, c.opt('interval'), 200, 'interval').round()),
+        percent: _nOr(c, c.opt('percent'), 1, 'percent').toDouble().clamp(0.01, 100),
+        tolerance: _nOr(c, c.opt('tolerance'), 30, 'tolerance').round().clamp(0, 765),
+      );
+
   /// Rectangle given as x, y, w, h starting at argument [i]; the whole
   /// area (screen or bound window) when the arguments are missing.
   Rect4 _region(CallCtx c, int i, String what) {

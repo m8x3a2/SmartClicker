@@ -18,6 +18,7 @@ import '../vision/image.dart';
 import '../vision/paddle_ocr.dart';
 import '../vision/ocr.dart';
 import '../vision/text_match.dart';
+import '../vision/frame_diff.dart';
 import '../system/safety.dart';
 
 part 'runtime_args.dart';

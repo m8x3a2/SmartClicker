@@ -34,6 +34,40 @@ extension ScriptRuntimeBuiltinsScreen on ScriptRuntime {
       }
     });
 
+    // Waits until the area changes against how it was at the start (a page
+    // loaded, a window or text appeared). true — changed, false — timeout.
+    _def('wait_change', (c) async {
+      final r = _region(c, 0, 'wait_change');
+      final o = _changeOptions(c, 'wait_change');
+      final start = backend.capture(r.x, r.y, r.w, r.h);
+      final sw = Stopwatch()..start();
+      while (true) {
+        await this.sleep(o.interval, jitter: false, react: true);
+        final now = backend.capture(r.x, r.y, r.w, r.h);
+        if (changedShare(start, now, r.w, r.h, tolerance: o.tolerance) * 100 >= o.percent) return true;
+        if (o.timeout > 0 && sw.elapsedMilliseconds >= o.timeout) return false;
+      }
+    });
+
+    // Waits until the area stops changing for still: (1 s by default): an
+    // animation ended, a neural network finished typing its answer.
+    _def('wait_still', (c) async {
+      final r = _region(c, 0, 'wait_still');
+      final o = _changeOptions(c, 'wait_still');
+      final still = _nOr(c, c.opt('still'), 1000, 'still').round();
+      var prev = backend.capture(r.x, r.y, r.w, r.h);
+      final sw = Stopwatch()..start();
+      final calm = Stopwatch()..start();
+      while (true) {
+        await this.sleep(o.interval, jitter: false, react: true);
+        final now = backend.capture(r.x, r.y, r.w, r.h);
+        if (changedShare(prev, now, r.w, r.h, tolerance: o.tolerance) * 100 >= o.percent) calm.reset();
+        prev = now;
+        if (calm.elapsedMilliseconds >= still) return true;
+        if (o.timeout > 0 && sw.elapsedMilliseconds >= o.timeout) return false;
+      }
+    });
+
     _def('color_diff', (c) => ScriptRuntime.colorDiff(_color(c, c.arg(0)), _color(c, c.arg(1))));
 
     _def('avg_color', (c) {
