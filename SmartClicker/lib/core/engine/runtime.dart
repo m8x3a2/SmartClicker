@@ -28,6 +28,7 @@ part 'runtime_safety.dart';
 part 'runtime_profile.dart';
 part 'runtime_reactions.dart';
 part 'runtime_use.dart';
+part 'runtime_show.dart';
 part 'builtins/mouse.dart';
 part 'builtins/keyboard.dart';
 part 'builtins/time.dart';
@@ -65,6 +66,13 @@ class ScriptRuntime implements Host {
   /// Send the values of variables while running (the panel is open).
   late bool watch = cfg['watch'] == true;
   final Stopwatch _varsSw = Stopwatch()..start();
+
+  /// show(): what is shown now; variables pinned in the «Переменные» tab.
+  final Map<String, String> _shown = {};
+  late final List<String> pinnedVars = [
+    ...((cfg['pin'] as List?) ?? const []).map((e) => '$e'),
+  ];
+  final Stopwatch _pinSw = Stopwatch()..start();
   String _sentVars = '';
   Set<String> _engineNames = const {};
   late final bool showClicks = cfg['showClicks'] == true;
@@ -260,6 +268,7 @@ class ScriptRuntime implements Host {
     // view and the error report.
     try {
       sendVariables(force: true);
+      _sendPinned(); // the last values of the pinned variables stay seen
     } catch (_) {}
     return {
       't': 'done',
@@ -382,6 +391,10 @@ class ScriptRuntime implements Host {
       _varsSw.reset();
       sendVariables();
     }
+    if (pinnedVars.isNotEmpty && _pinSw.elapsedMilliseconds >= 500) {
+      _pinSw.reset();
+      _sendPinned();
+    }
     if (paused) {
       _emitLine();
       await _waitWhilePaused();
@@ -483,6 +496,7 @@ class ScriptRuntime implements Host {
     _registerFiles();
     _registerClip();
     _registerReactions();
+    _registerShow();
     _registerUtil();
   }
 }

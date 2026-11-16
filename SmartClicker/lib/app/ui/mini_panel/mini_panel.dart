@@ -193,7 +193,21 @@ class _MiniPanelState extends State<MiniPanel> {
                 const Spacer(),
                 Padding(
                   padding: const EdgeInsets.only(left: 6),
-                  child: ValueListenableBuilder<CursorInfo?>(
+                  child: ValueListenableBuilder<Map<String, String>>(
+                    valueListenable: app.shown,
+                    builder: (_, shown, cursorRow) => shown.isEmpty || app.state == RunState.idle
+                        ? cursorRow!
+                        : Tooltip(
+                            message: 'Значения из show("…", …) и переменные, отмеченные во вкладке «Переменные»',
+                            child: Text(
+                              shown.entries.map((e) => '${e.key}: ${e.value}').join('  ·  '),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: codeStyle.copyWith(
+                                  fontSize: 13, height: 1.3, color: const Color(0xFF6CB6FF), fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                    child: ValueListenableBuilder<CursorInfo?>(
                     valueListenable: app.cursor,
                     builder: (_, c, _) => Row(
                       children: [
@@ -219,6 +233,7 @@ class _MiniPanelState extends State<MiniPanel> {
                         ],
                       ],
                     ),
+                  ),
                   ),
                 ),
                 const SizedBox(height: 3),

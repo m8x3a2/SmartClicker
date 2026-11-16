@@ -22,6 +22,28 @@ extension AppControllerDebug on AppController {
     if (isRunning && _runScript == current) _runner.setBreakpoints(set);
   }
 
+  /// Variables of the open script shown on the mini panel.
+  List<String> get pinned => settings.pinnedVars[current] ?? const [];
+
+  /// Shows a variable of the open script on the mini panel, or stops showing it.
+  void togglePinned(String name) {
+    final script = current;
+    if (script == null) return;
+    final list = [...pinned];
+    if (!list.remove(name)) list.add(name);
+    if (list.isEmpty) {
+      settings.pinnedVars.remove(script);
+    } else {
+      settings.pinnedVars[script] = list;
+    }
+    saveSettingsQuiet();
+    if (isRunning && _runScript == script) {
+      _runner.setPinned(list);
+      if (!list.contains(name)) shown.value = {...shown.value}..remove(name);
+    }
+    _changed();
+  }
+
   /// Lines were added or removed while editing: breakpoints below the
   /// cursor move with their lines; the ones on removed lines go away.
   void _shiftBreaks(int delta) {

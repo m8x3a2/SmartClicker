@@ -62,6 +62,7 @@ extension AppControllerRun on AppController {
   Future<void> _start(String name, String source, Map<String, Object?> answers) async {
     _runScript = name;
     _armGuards(name);
+    shown.value = const {};
     _runSource = source;
     _runDry = settings.dryRun || _forceDry;
     _runAnswers = answers;
@@ -103,6 +104,7 @@ extension AppControllerRun on AppController {
     'slowMs': _slowStart ? settings.slowRunMs : 0,
     'answers': answers,
     'breaks': name == current ? breaks.value.toList() : const <int>[],
+    'pin': settings.pinnedVars[name] ?? const <String>[],
     'watch': settings.bottomTab == 'vars' || settings.stateFile,
     'showClicks': settings.showClicks,
     'allowPower': settings.allowPower,

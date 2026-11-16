@@ -97,14 +97,33 @@ class _LogPanelState extends State<LogPanel> {
           itemBuilder: (_, i) {
             final r = rows[i];
             final changed = app.changedVars.contains('${r.scope}|${r.name}');
+            final pinned = r.scope.isEmpty && app.pinned.contains(r.name);
             final style = codeStyle.copyWith(fontSize: 12.5, height: 1.4);
             return Tooltip(
-              message: '${r.name}: ${r.type}'
+              message: '${r.scope.isEmpty ? 'Правая кнопка — показывать на мини-панели\n' : ''}${r.name}: ${r.type}'
                   '${r.scope.isEmpty ? ', переменная скрипта' : ', внутри ${r.scope == 'блок' ? 'блока' : 'функции ${r.scope}'}'}'
                   '\n${r.value}',
               waitDuration: const Duration(milliseconds: 600),
-              child: Text.rich(
+              child: GestureDetector(
+                onSecondaryTapDown: r.scope.isNotEmpty || app.current == null
+                    ? null
+                    : (d) async {
+                        final v = await showMenu<bool>(
+                          context: context,
+                          position: RelativeRect.fromLTRB(
+                              d.globalPosition.dx, d.globalPosition.dy, d.globalPosition.dx, d.globalPosition.dy),
+                          items: [
+                            PopupMenuItem(
+                              value: true,
+                              child: Text(pinned ? 'Не показывать на мини-панели' : 'Показывать на мини-панели'),
+                            ),
+                          ],
+                        );
+                        if (v == true) app.togglePinned(r.name);
+                      },
+                child: Text.rich(
                 TextSpan(children: [
+                  if (pinned) TextSpan(text: '📌 ', style: style),
                   TextSpan(
                       text: r.name.padRight(nameW),
                       style: style.copyWith(
@@ -126,6 +145,7 @@ class _LogPanelState extends State<LogPanel> {
                 ]),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
+              ),
               ),
             );
           },

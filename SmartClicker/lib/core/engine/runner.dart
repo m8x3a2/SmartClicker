@@ -29,6 +29,11 @@ Future<void> _workerMain(List<Object?> init) async {
     if (m case ['breaks', List lines]) {
       rt.breakpoints = lines.whereType<int>().toSet();
     }
+    if (m case ['pin', List names]) {
+      rt.pinnedVars
+        ..clear()
+        ..addAll(names.map((e) => '$e'));
+    }
     if (m case ['watch', bool on]) {
       rt.watch = on;
       if (on) rt.sendVariables(force: true);
@@ -90,6 +95,9 @@ class ScriptRunner {
   /// New breakpoints of the main script (line numbers).
   void setBreakpoints(Iterable<int> lines) =>
       _toWorker?.send(['breaks', lines.toList()]);
+
+  /// Variables shown on the mini panel (pinned in the «Переменные» tab).
+  void setPinned(Iterable<String> names) => _toWorker?.send(['pin', names.toList()]);
 
   /// Turns sending the values of variables on and off.
   void setWatch(bool on) => _toWorker?.send(['watch', on]);

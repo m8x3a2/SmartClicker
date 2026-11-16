@@ -457,6 +457,10 @@ const functionSpecs = <FSpec>[
 
   // Control
   FSpec('exit', 'control', 'завершить скрипт', [], 'exit()'),
+  FSpec('show', 'vars', 'показать на панели {label} {value}', [
+    PSpec('label', 'подпись: «Убито», «Золото»', kind: PK.text, def: '"Убито"'),
+    PSpec('value', 'что показать: переменная или число; без значения — убрать подпись', def: 'kills', optional: true),
+  ], 'show("Убито", kills)'),
   FSpec('run_script', 'control', 'выполнить скрипт {name}', [
     PSpec('name', 'имя скрипта, как в списке слева ("Папка/Имя")', kind: PK.script, def: '"Имя"'),
   ], 'run_script("Имя")'),

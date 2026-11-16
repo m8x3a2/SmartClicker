@@ -211,6 +211,9 @@ extension AppControllerFiles on AppController {
         _changed();
       case 'vars':
         _onVars(e['rows'] as List? ?? const []);
+      case 'show':
+        final k = '${e['k']}', v = e['v'];
+        shown.value = v == null ? ({...shown.value}..remove(k)) : {...shown.value, k: '$v'};
       case 'act':
         _onMapAction(e);
       case 'mark':

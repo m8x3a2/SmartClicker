@@ -183,6 +183,10 @@ class Settings {
   /// Breakpoints: script name -> line numbers.
   Map<String, List<int>> breakpoints = {};
 
+  /// Variables of a script shown on the mini panel while it works (the
+  /// «Переменные» tab → right button), by script.
+  Map<String, List<String>> pinnedVars = {};
+
   /// Under the editor: 'log' or 'vars' (values of variables).
   String bottomTab = 'log';
 
@@ -304,6 +308,13 @@ class Settings {
           if (e.value is List) '${e.key}': (e.value as List).whereType<int>().toList()
       };
     }
+    final pv = json['pinnedVars'];
+    if (pv is Map) {
+      s.pinnedVars = {
+        for (final e in pv.entries)
+          if (e.value is List) '${e.key}': (e.value as List).map((v) => '$v').toList()
+      };
+    }
     s.bottomTab = get('bottomTab', s.bottomTab);
     s.editorView = get('editorView', s.editorView);
     if (!const {'code', 'blocks', 'split'}.contains(s.editorView)) s.editorView = 'code';
@@ -386,6 +397,7 @@ class Settings {
         'hintTyping': hintTyping,
         'hintHover': hintHover,
         'breakpoints': breakpoints,
+        'pinnedVars': pinnedVars,
         'bottomTab': bottomTab,
         'editorView': editorView,
         'blocksPalette': blocksPalette,

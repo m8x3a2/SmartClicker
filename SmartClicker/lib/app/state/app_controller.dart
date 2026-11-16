@@ -558,6 +558,10 @@ class AppController extends ChangeNotifier {
   final Set<GuardRule> _guardArmed = Set.identity();
   final Set<GuardRule> _guardStopping = Set.identity();
 
+  /// show("Убито", kills) and pinned variables of the running script: label →
+  /// value (on the mini panel and over the editor). Kept after the run.
+  final ValueNotifier<Map<String, String>> shown = ValueNotifier(const {});
+
   /// A file rule asks "run?" (the strip above the pages) and since when.
   (FileRule, DateTime)? fileAsk;
 

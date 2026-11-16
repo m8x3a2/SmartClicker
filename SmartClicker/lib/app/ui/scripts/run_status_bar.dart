@@ -38,8 +38,16 @@ class RunStatusBar extends StatelessWidget {
         ),
       _ => (
           const Color(0xFF3FB950),
-          Text('▶ Скрипт выполняется${s.dryRun ? ' (тестовый режим)' : ''}. '
-              'Пауза: ${s.pauseKey.toUpperCase()}, стоп: ${s.stopKeysLabel}')
+          ValueListenableBuilder<Map<String, String>>(
+            valueListenable: app.shown,
+            builder: (_, shown, _) => Text(
+              '▶ Скрипт выполняется${s.dryRun ? ' (тестовый режим)' : ''}. '
+              'Пауза: ${s.pauseKey.toUpperCase()}, стоп: ${s.stopKeysLabel}'
+              '${shown.isEmpty ? '' : '      ${shown.entries.map((e) => '${e.key}: ${e.value}').join('  ·  ')}'}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ) as Widget
         ),
     };
     return Container(

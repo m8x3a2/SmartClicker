@@ -124,6 +124,8 @@ extension AppControllerScripts on AppController {
     if (h != null) _histories[name] = h;
     final key = settings.scriptKeys.remove(old);
     if (key != null) settings.scriptKeys[name] = key;
+    final pins = settings.pinnedVars.remove(old);
+    if (pins != null) settings.pinnedVars[name] = pins;
     for (final t in schedule.where((t) => t.script == old)) {
       t.script = name;
     }
