@@ -21,6 +21,9 @@ final _cyr = RegExp('[А-Яа-яЁё]');
 final _bullet = RegExp(r'^(•|-|\*|\d+[.)])\s+');
 final _separator = RegExp(r'^\s*([-=─_]{3,})\s*$');
 
+/// A line of the reference: begins with a command ("find_image(", "Math.floor(").
+final _entry = RegExp(r'^[A-Za-z_][\w.]*\s*\(');
+
 int _indent(String l) => l.length - l.trimLeft().length;
 
 /// A line of code: without the texts in quotes and the comment, no Russian
@@ -65,12 +68,16 @@ List<HelpItem> helpItems(String text) {
       i = j;
       continue;
     }
-    // text: the line and its wrapped lines (indented deeper, not code)
+    // text: the line and its wrapped lines (indented deeper, not code); a
+    // plain paragraph also goes on at the same indent — but a line of the
+    // reference ("click(x, y)  …") always starts its own item
     final ind = _indent(l);
+    final paragraph = !_bullet.hasMatch(l.trim()) && !_entry.hasMatch(l.trim());
     var j = i + 1;
     while (j < lines.length &&
         lines[j].trim().isNotEmpty &&
-        _indent(lines[j]) > ind &&
+        (_indent(lines[j]) > ind || paragraph && _indent(lines[j]) == ind && !_entry.hasMatch(lines[j].trim())) &&
+        !_heading(lines, j) &&
         !isCodeLine(lines[j]) &&
         !_bullet.hasMatch(lines[j].trim())) {
       j++;
