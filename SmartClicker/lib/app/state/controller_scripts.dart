@@ -114,6 +114,7 @@ extension AppControllerScripts on AppController {
 
   /// Moves everything that refers to script [old] over to [name].
   void _retarget(String old, String name) {
+    store.versions?.rename(old, name);
     final buf = buffers.remove(old);
     if (buf != null) buffers[name] = buf;
     final h = _histories.remove(old);

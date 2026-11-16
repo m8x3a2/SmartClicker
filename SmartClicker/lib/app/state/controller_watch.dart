@@ -18,6 +18,8 @@ extension AppControllerWatch on AppController {
       if (name == null || !store.exists(name)) return;
       final disk = store.read(name);
       if (disk == _savedText || disk == externalText) return;
+      // the text before the other program's edit: not lost (Прошлые версии)
+      store.versions?.put(name, _savedText, DateTime.now());
       if (!dirty) {
         _savedText = disk;
         _setEditor(disk);
@@ -120,6 +122,15 @@ extension AppControllerLinkedFiles on AppController {
 }
 
 extension AppControllerOldText on AppController {
+  /// Past versions of [script], newest first (see ScriptVersions).
+  List<ScriptVersion> versionsOf(String script) => store.versions?.of(script) ?? [];
+
+  void clearVersions(String script) => store.versions?.clear(script);
+
+  /// The text of [script] as the user sees it now (with unsaved edits).
+  String textOf(String script) =>
+      script == current ? editor.text : (buffers[script] ?? store.read(script));
+
   /// The text of [script] from the history of runs goes into the editor as
   /// unsaved edits: Ctrl+S keeps it, Ctrl+Z gives back the current one.
   void loadOldText(String script, String text) {

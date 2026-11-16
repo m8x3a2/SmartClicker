@@ -10,6 +10,7 @@ import 'ask_dialog.dart';
 import '../history/script_stats_view.dart';
 import 'trash_dialog.dart';
 import 'search_dialog.dart';
+import 'versions_dialog.dart';
 
 class _Folder {
   final String path;
@@ -165,6 +166,7 @@ class ScriptList extends StatelessWidget {
       PopupMenuItem(value: 'copy', child: Text('Создать копию')),
       PopupMenuItem(value: 'share', child: Text('Поделиться (ZIP с картинками)…')),
       PopupMenuItem(value: 'answers', child: Text('Ответы на вопросы (ask)…')),
+      PopupMenuItem(value: 'versions', child: Text('Прошлые версии…')),
       PopupMenuItem(value: 'stats', child: Text('Статистика запусков…')),
       PopupMenuDivider(),
       PopupMenuItem(value: 'delete', child: Text('Удалить…')),
@@ -194,6 +196,8 @@ class ScriptList extends StatelessWidget {
         }
         final got = await showAskDialog(context, script, asks, initial, saveOnly: true);
         if (got != null) app.saveAnswers(script, got);
+      case 'versions':
+        await showVersions(context, app, script);
       case 'stats':
         await showScriptStats(context, app, script);
       case 'delete':

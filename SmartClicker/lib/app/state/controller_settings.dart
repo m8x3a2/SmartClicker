@@ -33,6 +33,12 @@ extension AppControllerSettings on AppController {
 
   void saveSettings() {
     writeJson(paths.settingsFile, settings.toJson());
+    final v = store.versions;
+    if (v != null && v.keep != settings.versionsKeep) {
+      final fewer = settings.versionsKeep < v.keep;
+      v.keep = settings.versionsKeep;
+      if (fewer) v.pruneAll();
+    }
     _recorder = _newRecorder();
     _syncTray();
     _changed();

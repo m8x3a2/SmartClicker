@@ -2,6 +2,8 @@
 
 import 'dart:io';
 
+import 'script_versions.dart';
+
 /// Scripts are plain `.cks` text files. A script name is its path relative
 /// to the scripts folder, with `/` separators: `Примеры/Пример 1`.
 class ScriptStore {
@@ -102,8 +104,21 @@ class ScriptStore {
     }
   }
 
+  /// Past versions: the old text of a script is put aside before it is
+  /// overwritten with another one (none — not kept).
+  ScriptVersions? versions;
+
   void write(String name, String source) {
     final f = _file(name);
+    final v = versions;
+    if (v != null && f.existsSync()) {
+      try {
+        final old = f.readAsStringSync();
+        if (old != source) v.put(name, old, f.lastModifiedSync());
+      } catch (_) {
+        // a version is a convenience: never stop the saving because of it
+      }
+    }
     f.parent.createSync(recursive: true);
     f.writeAsStringSync(source);
   }

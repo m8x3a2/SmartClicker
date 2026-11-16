@@ -12,7 +12,7 @@ const settingsGroups = <String, List<String>>{
   'tray': ['trayOnMinimize', 'trayOnClose'],
   'startup': ['autostartTray', 'autostartDelaySec'],
   'clipboard': ['clipHistory', 'clipMaxItems', 'clipMaxMb', 'clipKey', 'clipOneByOne'],
-  'data': ['resetWord', 'autoBackup', 'autoBackupKeep'],
+  'data': ['resetWord', 'autoBackup', 'autoBackupKeep', 'versionsKeep'],
   'hotkeys': ['stopKey', 'stopKey2', 'cornerStop', 'pauseKey', 'recordKey', 'pickKey', 'ghostKey', 'markKey', 'runKey', 'holdBackHotkeys'],
   'run': [
     'runDelaySec', 'maxRuntimeMin', 'maxLoops', 'checkBeforeRun', //
@@ -73,6 +73,9 @@ class Settings {
   /// (the last [autoBackupKeep] are kept).
   bool autoBackup = true;
   int autoBackupKeep = 7;
+
+  /// Past versions of every script kept before it is overwritten (0 — none).
+  int versionsKeep = 20;
 
   /// The history of runs keeps the text of the script as it was at the start.
   bool historyKeepSource = true;
@@ -233,6 +236,7 @@ class Settings {
     s.historyKeepSource = get('historyKeepSource', s.historyKeepSource);
     s.autoBackup = get('autoBackup', s.autoBackup);
     s.autoBackupKeep = get('autoBackupKeep', s.autoBackupKeep).clamp(1, 60);
+    s.versionsKeep = get('versionsKeep', s.versionsKeep).clamp(0, 200);
     s.markColor = get('markColor', s.markColor);
     s.markSize = get('markSize', s.markSize);
     s.runKey = get('runKey', s.runKey);
@@ -323,6 +327,7 @@ class Settings {
         'historyKeepSource': historyKeepSource,
         'autoBackup': autoBackup,
         'autoBackupKeep': autoBackupKeep,
+        'versionsKeep': versionsKeep,
         'markColor': markColor,
         'markSize': markSize,
         'runKey': runKey,

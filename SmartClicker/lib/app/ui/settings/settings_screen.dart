@@ -212,6 +212,10 @@ class SettingsPage extends StatelessWidget {
               '«Сбросить всё» эти копии не удаляет'),
       _row('Хранить ежедневных копий',
           _int(app.settings.autoBackupKeep, (v) => app.settings.autoBackupKeep = v, min: 1, max: 60)),
+      _row('Прошлых версий каждого скрипта',
+          _int(app.settings.versionsKeep, (v) => app.settings.versionsKeep = v, min: 0, max: 200),
+          hint: 'Перед каждым сохранением прежний текст скрипта откладывается (и когда скрипт изменила '
+              'другая программа). Меню скрипта → «Прошлые версии…»: посмотреть, сравнить и вернуть. 0 — не хранить'),
       _row('Сбросить всё (как после установки)',
           OutlinedButton(
               style: OutlinedButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),

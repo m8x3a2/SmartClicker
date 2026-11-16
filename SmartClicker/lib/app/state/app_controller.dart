@@ -35,6 +35,7 @@ import '../../core/storage/backup.dart';
 import '../../core/storage/auto_backup.dart';
 import '../../core/storage/clip_history.dart';
 import '../../core/storage/trash.dart';
+import '../../core/storage/script_versions.dart';
 import '../../core/storage/share_pack.dart';
 import '../../core/storage/zip.dart';
 import 'click_map.dart';
@@ -366,6 +367,7 @@ class AppController extends ChangeNotifier {
     ErrorJournal.onRecord = _onAppError;
     final firstStart = !File(paths.settingsFile).existsSync();
     settings = Settings.fromJson(readJson(paths.settingsFile));
+    store.versions = ScriptVersions(paths.versions, keep: settings.versionsKeep);
     final h = readJson(paths.historyFile);
     if (h is List) {
       history.addAll(h.whereType<Map>().map(RunRecord.fromJson));

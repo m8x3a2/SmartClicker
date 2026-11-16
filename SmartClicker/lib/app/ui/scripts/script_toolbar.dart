@@ -7,6 +7,7 @@ import '../widgets/hotkey_dialog.dart';
 import '../settings/quick_settings.dart';
 import '../widgets/name_dialog.dart';
 import 'share_dialogs.dart';
+import 'versions_dialog.dart';
 
 class ScriptToolbar extends StatelessWidget {
   final AppController app;
@@ -241,6 +242,8 @@ class ScriptToolbar extends StatelessWidget {
                       level: 'ok');
                 case 'share':
                   shareScriptDialog(context, app, app.current!);
+                case 'versions':
+                  showVersions(context, app, app.current!);
                 case 'delete':
                   _delete(context);
               }
@@ -274,6 +277,8 @@ class ScriptToolbar extends StatelessWidget {
                   value: 'copy', child: Text('Скопировать код в буфер')),
               const PopupMenuItem(
                   value: 'share', child: Text('Поделиться (ZIP с картинками)…')),
+              const PopupMenuItem(
+                  value: 'versions', child: Text('Прошлые версии (что было до сохранений)…')),
               PopupMenuItem(
                   value: 'delete',
                   enabled: idle,

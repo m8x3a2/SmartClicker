@@ -10,6 +10,7 @@ import '../scripts/profile_dialog.dart';
 import '../scripts/search_dialog.dart';
 import '../scripts/share_dialogs.dart' show importFromZip;
 import '../scripts/trash_dialog.dart';
+import '../scripts/versions_dialog.dart';
 import '../settings/quick_settings.dart';
 import '../widgets/page_parts.dart';
 
@@ -86,6 +87,9 @@ List<PaletteCommand> paletteCommands(BuildContext context, AppController app, vo
         keywords: 'найти ctrl+shift+f'),
     PaletteCommand('Корзина…', Icons.restore_from_trash_outlined, () => showTrash(context, app),
         keywords: 'удалённые вернуть восстановить'),
+    if (app.current != null)
+      PaletteCommand('Прошлые версии скрипта…', Icons.history_edu_outlined, () => showVersions(context, app, app.current!),
+          keywords: 'история сохранения вернуть откатить старый текст'),
     PaletteCommand('Экспорт всех скриптов в ZIP…', Icons.archive_outlined, app.exportScripts),
     PaletteCommand('Импорт из ZIP…', Icons.unarchive_outlined, () => importFromZip(context, app)),
     PaletteCommand('Восстановить примеры', Icons.auto_awesome_outlined, app.restoreExamples),

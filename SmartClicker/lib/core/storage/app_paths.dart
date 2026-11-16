@@ -48,6 +48,8 @@ class AppPaths {
   String get clipboard => _p('clipboard');
   /// Deleted scripts, folders and pictures (kept for 30 days).
   String get trash => _p('trash');
+  /// Past versions of scripts (the last ones before each overwrite).
+  String get versions => _p('versions');
   /// Daily automatic backups (SmartClicker-2026-11-15.zip).
   String get autoBackups => _p('backups');
   String get notificationsFile => _p('notifications.json');
