@@ -25,6 +25,21 @@ extension AppControllerGuard on AppController {
     saveGuardRules();
   }
 
+  /// The guard is stopping this script itself (the program crashed or hung).
+  bool _stoppedByGuard(String script) => _guardStopping.any((r) => r.script == script);
+
+  /// The script failed, and its guard will bring the program and the script
+  /// back: it restarts the program now, or the program is gone or hung.
+  bool _guardWillRestart(String script) {
+    for (final r in guardRules) {
+      if (!r.enabled || r.script != script || !_guardArmed.contains(r)) continue;
+      if (_guardWatch.busy(r)) return true;
+      final seen = _guardSeen(r);
+      if (!seen.running || seen.hung) return true;
+    }
+    return false;
+  }
+
   /// The rule watches its program now.
   bool guardWatching(GuardRule r) => _guardArmed.contains(r);
 

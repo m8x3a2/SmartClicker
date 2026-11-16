@@ -260,6 +260,7 @@ const statusLabels = {
   'limit': 'остановлен по лимиту',
   'error': 'ошибка',
   'closed': 'прерван: программа закрыта',
+  'guard': 'остановлен сторожем (программа вылетела или зависла)',
 };
 
 class AppController extends ChangeNotifier {

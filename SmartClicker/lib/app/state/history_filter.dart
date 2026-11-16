@@ -27,7 +27,7 @@ const historyResultLabels = {
   'ok': 'успешно',
   'error': 'с ошибкой',
   'stopped': 'остановлен',
-  'other': 'прерван, лимит, не отвечал',
+  'other': 'прерван, лимит, не отвечал, сторож',
 };
 
 String historyResultOf(String status) =>

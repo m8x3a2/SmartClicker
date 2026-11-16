@@ -268,6 +268,12 @@ extension AppControllerRun on AppController {
         }
       }
       state = RunState.idle;
+      if (_guardWillRestart(name)) {
+        // the program crashed during the countdown: the guard starts the script itself
+        _log('system', '↻ Перезапуск отменён: программа скрипта закрыта или зависла — его запустит сторож');
+        _changed();
+        return;
+      }
       errorLine.value = 0;
       _stepStart = false;
       _slowStart = false;
@@ -315,8 +321,13 @@ extension AppControllerRun on AppController {
   void _onDone(Map<String, Object?> e) {
     backend.releaseAll();
     backend.hideMarker();
-    final status = _closing ? 'closed' : '${e['status']}';
     final name = _runScript ?? '?';
+    final engineStatus = '${e['status']}';
+    final status = _closing
+        ? 'closed'
+        : (engineStatus == 'stopped' || engineStatus == 'killed') && _stoppedByGuard(name)
+            ? 'guard'
+            : engineStatus;
     final ms = (e['ms'] as num?)?.toInt() ?? 0;
     final err = e['error'] as String?;
     final line = (e['line'] as num?)?.toInt() ?? 0;
@@ -337,6 +348,8 @@ extension AppControllerRun on AppController {
         notify('Скрипт завершён', '"$name" отработал за $secs с', level: 'ok');
       case 'stopped':
         _log('system', '⏹ Остановлен в ${_clockText(ended)} — работал ${_duration(ms)}');
+      case 'guard':
+        _log('warn', '🛡 Остановлен сторожем в ${_clockText(ended)} — работал ${_duration(ms)}');
       case 'closed':
         _log('warn', '⏹ Прерван в ${_clockText(ended)}: программа закрыта — работал ${_duration(ms)}');
       case 'killed':
@@ -399,13 +412,20 @@ extension AppControllerRun on AppController {
     state = RunState.idle;
     final restart = status == 'error' || status == 'killed';
     if (status == 'ok' || status == 'stopped') _restarts = 0;
-    final willRestart = restart && _restarts < settings.restartOnError;
+    final willRestart = restart && (_restarts < settings.restartOnError || _guardWillRestart(name));
     if (_autoCompact && !willRestart) {
       setCompact(false, activate: false);
     } else {
       _changed();
     }
-    if (restart) _maybeRestart(name, _runSource);
+    if (restart) {
+      if (_guardWillRestart(name)) {
+        _log('system', '↻ Перезапуска после ошибки не будет: программа скрипта закрыта или зависла — '
+            'сторож поднимет её и запустит скрипт сам');
+      } else {
+        _maybeRestart(name, _runSource);
+      }
+    }
   }
 
   String? _saveLogFile(String name) {

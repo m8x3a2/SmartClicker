@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/lang/completions.dart';
+import '../../help/help_items.dart';
 import '../../../core/lang/picture_refs.dart';
 
 part 'code_controller.dart';
@@ -62,6 +63,10 @@ class CodeEditor extends StatefulWidget {
   final ValueListenable<Set<int>>? breakpoints;
   final void Function(int line)? onBreakpoint;
 
+  /// Viewer: items that get a copy button at their first line (help).
+  final List<HelpItem>? copyItems;
+  final ValueChanged<HelpItem>? onCopy;
+
   /// Full path of a picture by its name in the script; with it, the
   /// picture is shown when the mouse is over its name.
   final String Function(String name)? imagePath;
@@ -89,6 +94,8 @@ class CodeEditor extends StatefulWidget {
     this.breakpoints,
     this.onBreakpoint,
     this.imagePath,
+    this.copyItems,
+    this.onCopy,
     this.scriptSource,
     this.revealLine,
     this.onUndo,
@@ -414,6 +421,40 @@ class _CodeEditorState extends State<CodeEditor> {
 
   static final _noBreaks = ValueNotifier<Set<int>>(const {});
 
+  /// Help: a faint copy button at the first line of every item.
+  Widget _copyGutter() {
+    final items = widget.copyItems!;
+    final last = items.isEmpty ? 0 : items.last.line + items.last.lines;
+    return SizedBox(
+      width: 30,
+      height: last * _lineHeight,
+      child: Stack(children: [
+        for (final it in items)
+          Positioned(
+            left: 6,
+            top: it.line * _lineHeight + (_lineHeight - 20) / 2,
+            child: Tooltip(
+              message: it.code ? 'Копировать пример кода' : 'Копировать этот пункт',
+              waitDuration: const Duration(milliseconds: 400),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(4),
+                onTap: () {
+                  Clipboard.setData(ClipboardData(text: it.text));
+                  widget.onCopy?.call(it);
+                },
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: Icon(Icons.content_copy, size: 13,
+                      color: it.code ? const Color(0x996CB6FF) : const Color(0x55FFFFFF)),
+                ),
+              ),
+            ),
+          ),
+      ]),
+    );
+  }
+
   /// Line numbers; a click on one sets or removes a breakpoint.
   Widget _gutter() {
     final click = widget.onBreakpoint;
@@ -480,7 +521,7 @@ class _CodeEditorState extends State<CodeEditor> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (!widget.viewer) _gutter(),
-            const SizedBox(width: 14),
+            if (widget.viewer && widget.copyItems != null) _copyGutter() else const SizedBox(width: 14),
             Expanded(
               child: SingleChildScrollView(
                 controller: _h,
