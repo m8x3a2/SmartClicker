@@ -30,7 +30,7 @@ extension ScriptRuntimeBuiltinsScreen on ScriptRuntime {
       while (true) {
         if (ScriptRuntime.colorDiff(backend.pixel(p.x, p.y), want) <= tol) return true;
         if (timeout > 0 && sw.elapsedMilliseconds >= timeout) return false;
-        await this.sleep(math.max(interval, 10), jitter: false);
+        await this.sleep(math.max(interval, 10), jitter: false, react: true);
       }
     });
 
@@ -75,7 +75,7 @@ extension ScriptRuntimeBuiltinsScreen on ScriptRuntime {
       while (true) {
         if (_textFound(c, _ocr(c, _region(c, 0, 'wait_text')), want, 'wait_text')) return true;
         if (timeout > 0 && sw.elapsedMilliseconds >= timeout) return false;
-        await this.sleep(math.max(interval, 50), jitter: false);
+        await this.sleep(math.max(interval, 50), jitter: false, react: true);
       }
     });
 
@@ -110,7 +110,7 @@ extension ScriptRuntimeBuiltinsScreen on ScriptRuntime {
         final hit = _findImage(c, 1, 'wait_image');
         if (hit != null) return hit;
         if (timeout > 0 && sw.elapsedMilliseconds >= timeout) return null;
-        await this.sleep(math.max(interval, 50), jitter: false);
+        await this.sleep(math.max(interval, 50), jitter: false, react: true);
       }
     });
 
@@ -128,7 +128,7 @@ extension ScriptRuntimeBuiltinsScreen on ScriptRuntime {
           if (dryRun) _mapAction('картинка "${stringify(c.arg(0))}" не найдена — клика нет', null, 'miss');
           return false;
         }
-        await this.sleep(math.max(interval, 50), jitter: false);
+        await this.sleep(math.max(interval, 50), jitter: false, react: true);
       }
     });
 

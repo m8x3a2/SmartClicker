@@ -194,6 +194,7 @@ final namedParams = <String, PSpec>{
       label: 'регистр',
       options: const {'"ignore"': 'не важен', '"exact"': 'важен'}),
   'part': PSpec('part', paramHints['part']!, kind: PK.bool, def: 'false', label: 'часть текста'),
+  'area': PSpec('area', paramHints['area']!, def: '[0, 0, 50%, 50%]', label: 'где искать'),
   'separator': PSpec('separator', paramHints['separator']!, kind: PK.text, def: '", "', label: 'разделитель'),
   'key': PSpec('key', paramHints['key']!, kind: PK.text, def: '"ready"', label: 'ключ'),
   'value': PSpec('value', paramHints['value']!, def: 'true', label: 'значение'),
@@ -273,6 +274,21 @@ const functionSpecs = <FSpec>[
 
   // Waiting and time
   FSpec('wait', 'wait', 'ждать {ms}', [PSpec('ms', _hMs, kind: PK.ms, def: '1s')], 'wait(1s)'),
+  FSpec('on_key', 'control', 'когда нажата {key} — сделать {do}', [
+    PSpec('key', 'клавиша или сочетание, которое нажимаете вы: "f5", "ctrl+q"', kind: PK.key, def: '"f5"'),
+    PSpec('do', 'что сделать: () => { … } — пока это выполняется, основной код ждёт', def: '() => { log("нажато") }'),
+  ], 'on_key("f5", () => { log("нажато") })', returns: 'номер реакции (для off)', saveAs: 'reaction'),
+  FSpec('every', 'control', 'каждые {ms} — сделать {do}', [
+    PSpec('ms', 'как часто: 5m, 30s, 1000', kind: PK.ms, def: '5m'),
+    PSpec('do', 'что сделать: () => { … }', def: '() => { key("4") }'),
+  ], 'every(5m, () => { key("4") })', returns: 'номер реакции (для off)', saveAs: 'reaction'),
+  FSpec('on_image', 'control', 'когда появится картинка {name} — сделать {do}', [
+    _picture,
+    PSpec('do', 'что сделать: (p) => { … }, p — где картинка {x, y}', def: '(p) => { click(p) }'),
+  ], 'on_image("кнопка", (p) => { click(p) })',
+      named: ['interval', 'area', 'tolerance', 'scale'], returns: 'номер реакции (для off)', saveAs: 'reaction'),
+  FSpec('off', 'control', 'выключить реакцию {id}',
+      [PSpec('id', 'номер из on_key / every / on_image; без него — все', kind: PK.number, def: '1')], 'off(1)'),
   FSpec('wait_until', 'wait', 'ждать до {time}',
       [PSpec('time', 'время "чч:мм" или "чч:мм:сс"', kind: PK.text, def: '"14:30"')],
       'wait_until("14:30")'),

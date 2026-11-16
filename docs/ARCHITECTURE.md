@@ -29,6 +29,7 @@ lib/
                  runtime_args / runtime_input — разбор аргументов, ввод;
                  runtime_safety — защита от самоуничтожения внутри движка;
                  runtime_profile — профилировщик (время строк и функций);
+                 runtime_reactions — реакции on_key / every / on_image;
                  builtins/ — встроенные функции по темам (mouse, keyboard, time,
                  screen, windows, system, files — JSON-файлы для других программ, util); runner — изолят; human — «как человек»
     vision/      bitmap, png (свой кодек), image_search (поиск картинки),

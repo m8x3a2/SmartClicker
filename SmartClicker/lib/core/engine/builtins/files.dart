@@ -56,7 +56,7 @@ extension ScriptRuntimeBuiltinsFiles on ScriptRuntime {
           if (hasValue ? _sameJson(v, want) : truthy(v)) return true;
         }
         if (timeout > 0 && sw.elapsedMilliseconds >= timeout) return false;
-        await this.sleep(interval, jitter: false);
+        await this.sleep(interval, jitter: false, react: true);
       }
     }));
 

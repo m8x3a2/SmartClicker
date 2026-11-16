@@ -24,6 +24,7 @@ part 'runtime_args.dart';
 part 'runtime_input.dart';
 part 'runtime_safety.dart';
 part 'runtime_profile.dart';
+part 'runtime_reactions.dart';
 part 'builtins/mouse.dart';
 part 'builtins/keyboard.dart';
 part 'builtins/time.dart';
@@ -88,6 +89,11 @@ class ScriptRuntime implements Host {
   /// often it ran, and [calls, µs] per built-in function.
   final Map<int, int> _lineUs = {}, _lineHits = {};
   final Map<String, List<int>> _callStats = {};
+
+  /// Reactions (runtime_reactions.dart): on_key, every, on_image.
+  final List<_Reaction> _reactions = [];
+  int _reactionIds = 0;
+  bool _inReaction = false;
 
   /// The script's own stack of things to paste (clip_add, paste_next).
   final List<_StackItem> _clipStack = [];
@@ -320,6 +326,10 @@ class ScriptRuntime implements Host {
     _line = line;
     _profileLine(line);
     _checkLimits();
+    if (_reactions.isNotEmpty && !_inReaction) {
+      await _reactionsTick();
+      _line = line;
+    }
     if (_yield.elapsedMilliseconds >= 8) {
       // Let the isolate's event loop deliver pause/stop messages.
       await Future<void>.delayed(Duration.zero);
@@ -367,7 +377,9 @@ class ScriptRuntime implements Host {
   }
 
   /// Interruptible sleep; time spent on pause does not count.
-  Future<void> sleep(num ms, {bool jitter = true}) async {
+  /// [react] — a wait of the script itself (wait, wait_image…): reactions
+  /// may run in it; inner pauses of actions never let them in.
+  Future<void> sleep(num ms, {bool jitter = true, bool react = false}) async {
     if (jitter) ms = human.jitter(ms, timeJitter);
     var remaining = ms.round();
     if (remaining > 30) _emitLine();
@@ -380,6 +392,11 @@ class ScriptRuntime implements Host {
         await _waitWhilePaused();
         sw.reset();
         continue;
+      }
+      if (react && _reactions.isNotEmpty && !_inReaction) {
+        sw.stop(); // the main code waits for the reaction
+        await _reactionsTick();
+        sw.start();
       }
       final left = remaining - sw.elapsedMilliseconds;
       if (left <= 0) break;
@@ -431,6 +448,7 @@ class ScriptRuntime implements Host {
     _registerSystem();
     _registerFiles();
     _registerClip();
+    _registerReactions();
     _registerUtil();
   }
 }

@@ -8,9 +8,9 @@ extension ScriptRuntimeBuiltinsTime on ScriptRuntime {
       // A long planned pause is not a hang; short waits in a loop ("look,
       // wait 1 s, look again") are polling — they count for the watchdog.
       if (watchdogMs > 0 && ms >= watchdogMs) {
-        await _explicit(() => this.sleep(ms));
+        await _explicit(() => this.sleep(ms, react: true));
       } else {
-        await this.sleep(ms);
+        await this.sleep(ms, react: true);
       }
       return null;
     }, ['sleep', 'delay']);
@@ -55,7 +55,7 @@ extension ScriptRuntimeBuiltinsTime on ScriptRuntime {
         while (true) {
           final left = target.difference(DateTime.now()).inMilliseconds;
           if (left <= 0) break;
-          await this.sleep(math.min(left, 1000), jitter: false);
+          await this.sleep(math.min(left, 1000), jitter: false, react: true);
         }
       });
       log('Дождался $spec (сейчас ${two(DateTime.now().hour)}:${two(DateTime.now().minute)}:${two(DateTime.now().second)})');
