@@ -136,6 +136,10 @@ extension ScriptRuntimeBuiltinsScreen on ScriptRuntime {
 
     _def('find_image', (c) => _findImage(c, 1, 'find_image'));
 
+    // Every copy of the picture (coins, enemies, cells): a list of places
+    // in reading order, [] — none; max: 100.
+    _def('find_images', (c) => _findImages(c, 1, 'find_images'));
+
     _def('wait_image', (c) async {
       final timeout = _nOr(c, c.opt('timeout'), 10000, 'timeout');
       final interval = _nOr(c, c.opt('interval'), 300, 'interval');

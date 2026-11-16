@@ -58,10 +58,13 @@ wait(900)
       final b = StubBackend()..pixelColor = 0x3366AA;
       final (logs, r) = await _run('''
 screenshot("цель", 0, 0, 10, 10)
-on_image("цель", (p) => { log("вижу", p.w) }, interval: 100)
-wait(1200)
+on_image("цель", (p) => { log("вижу", p.w); move(1, 1) }, interval: 100)
+wait(1500)
 ''', backend: b, dir: dir.path, meanwhile: (b) async {
-        await Future<void>.delayed(const Duration(milliseconds: 50));
+        // the first reaction moves the mouse; only then the picture goes away
+        while (!b.calls.contains('move 1,1')) {
+          await Future<void>.delayed(const Duration(milliseconds: 10));
+        }
         b.pixelColor = 0x000000; // gone
         await Future<void>.delayed(const Duration(milliseconds: 400));
         b.pixelColor = 0x3366AA; // appeared

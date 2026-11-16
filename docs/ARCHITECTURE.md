@@ -32,7 +32,7 @@ lib/
                  runtime_reactions — реакции on_key / every / on_image;
                  builtins/ — встроенные функции по темам (mouse, keyboard, time,
                  screen, windows, system, files — JSON-файлы для других программ, util); runner — изолят; human — «как человек»
-    vision/      bitmap, png (свой кодек), image_search (поиск картинки),
+    vision/      bitmap, png (свой кодек), image_search (поиск картинки; image_search_all — все места, find_images),
                  paddle_ocr, ocr (выбор способа распознавания), frame_diff (изменение области),
                  text_match (нестрогое сравнение текста: similar, errors:)
     blocks/      конструктор блоков: blocks (код ↔ блоки), expr, catalog

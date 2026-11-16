@@ -143,23 +143,51 @@ extension ScriptRuntimeRuntimeArgs on ScriptRuntime {
 
   /// Centre of the found image, relative to the current area, or null.
   Map<String, Object?>? _findImage(CallCtx c, int i, String what) {
+    final s = _imageSearch(c, i, what);
+    ScaledHit? hit;
+    if (s.scale == null) {
+      final p = findBitmap(s.hay, s.img, tolerance: s.tol);
+      if (p != null) hit = (x: p.x, y: p.y, w: s.img.w, h: s.img.h, scale: 1.0);
+    } else {
+      hit = findBitmapScaled(s.hay, s.img,
+          tolerance: s.tol,
+          minScale: s.scale!.lo,
+          maxScale: s.scale!.hi,
+          center: s.scale!.center);
+    }
+    return hit == null ? null : _hitMap(s.r, hit);
+  }
+
+  /// Every place of the image (find_images), in reading order; max: 100.
+  List<Object?> _findImages(CallCtx c, int i, String what) {
+    final s = _imageSearch(c, i, what);
+    final max = _nOr(c, c.opt('max'), 100, 'max').round();
+    if (max < 1) c.fail('$what: max должен быть не меньше 1');
+    final hits = s.scale == null
+        ? findAllBitmap(s.hay, s.img, tolerance: s.tol, max: max)
+        : findAllBitmapScaled(s.hay, s.img,
+            tolerance: s.tol,
+            minScale: s.scale!.lo,
+            maxScale: s.scale!.hi,
+            center: s.scale!.center,
+            max: max);
+    return [for (final h in hits) _hitMap(s.r, h)];
+  }
+
+  /// The picture, the captured area and the search options of the image functions.
+  ({Bitmap img, Bitmap hay, Rect4 r, int tol, ({double lo, double hi, double? center})? scale})
+      _imageSearch(CallCtx c, int i, String what) {
     final img = _image(c, _s(c, c.arg(0, 'name'), what), what);
     final r = _region(c, i, what);
     final tol = _nOr(c, c.opt('tolerance'), 20, 'tolerance').round();
     final scale = _scaleRange(c, c.opt('scale'), what);
     final hay = Bitmap(r.w, r.h, backend.capture(r.x, r.y, r.w, r.h));
-    ({int x, int y, int w, int h, double scale})? hit;
-    if (scale == null) {
-      final p = findBitmap(hay, img, tolerance: tol);
-      if (p != null) hit = (x: p.x, y: p.y, w: img.w, h: img.h, scale: 1.0);
-    } else {
-      hit = findBitmapScaled(hay, img,
-          tolerance: tol,
-          minScale: scale.lo,
-          maxScale: scale.hi,
-          center: scale.center);
-    }
-    if (hit == null) return null;
+    return (img: img, hay: hay, r: r, tol: tol, scale: scale);
+  }
+
+  /// A found place as the script sees it: centre, corner and size relative
+  /// to the current area.
+  Map<String, Object?> _hitMap(Rect4 r, ScaledHit hit) {
     final a = _area();
     final left = r.x + hit.x - a.x, top = r.y + hit.y - a.y;
     return {

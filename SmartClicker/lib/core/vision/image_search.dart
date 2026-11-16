@@ -5,20 +5,37 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 import 'bitmap.dart';
 
+part 'image_search_all.dart';
+
 /// Finds [needle] inside [hay]. A pixel matches when every channel differs
 /// by at most [tolerance]; up to [badShare] of the pixels may differ.
-/// Transparent pixels of the needle match anything. Returns the top-left
-/// corner of the first match (rows top to bottom).
+/// Transparent pixels of the needle match anything. The brightness pattern
+/// has to match too (see [_PatternCheck]). Returns the top-left corner of
+/// the first match (rows top to bottom).
 ({int x, int y})? findBitmap(Bitmap hay, Bitmap needle,
     {int tolerance = 20, double badShare = 0.02, bool smoothProbes = false}) {
   final m = _Matcher.of(hay, needle, tolerance, badShare, smoothProbes);
   if (m == null) return null;
+  final pattern = _PatternCheck(hay, needle);
   for (var y = 0; y <= hay.h - needle.h; y++) {
     for (var x = 0; x <= hay.w - needle.w; x++) {
-      if (m.at(x, y)) return (x: x, y: y);
+      if (m.at(x, y) && pattern.ok(x, y)) return (x: x, y: y);
     }
   }
   return null;
+}
+
+/// A low-contrast picture (dark theme: a gap of 32 between buttons of 59)
+/// passes the colour check with tolerance 20 on any plain place of a middle
+/// brightness: every pixel differs by less than 20. Such a place has no
+/// pattern, so the brightness correlation tells it from the real one.
+class _PatternCheck {
+  final Bitmap hay;
+  final _NeedleLum needle;
+  late final _LumTable _lum = _LumTable.of(hay); // built on the first match
+  _PatternCheck(this.hay, Bitmap n) : needle = _NeedleLum(n);
+
+  bool ok(int x, int y) => needle.flat || _lum.correlation(needle, x, y) >= 0.7;
 }
 
 /// Checks one placement of a needle: a few spread-out probe pixels first,

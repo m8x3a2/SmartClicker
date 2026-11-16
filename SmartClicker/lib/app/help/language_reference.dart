@@ -137,6 +137,11 @@ wait_still(x, y, w, h, still: 1s, timeout: 30s) → true, когда облас�
 screenshot("имя", x, y, w, h) → сохраняет имя.png в папку files (без области — весь экран)
 find_image("имя", x, y, w, h, tolerance: 20, scale: "auto") → {x, y, w, h, scale} или null
    {x, y} — центр найденной картинки; без области — весь экран
+find_images("имя", x, y, w, h, max: 100) → список всех мест картинки ([] — нет ни одной)
+   сверху вниз, слева направо; tolerance: и scale: — как у find_image (с масштабом все
+   копии ищутся в размере самой похожей)
+       for (p in find_images("монета")) { click(p) }
+       log("врагов:", len(find_images("враг", 0, 0, 50%, 100%)))
 wait_image("имя", timeout: 10s) → {x, y} или null
 click_image("имя", timeout: 5s) → true, если картинка нашлась и клик сделан
    scale: "auto" — картинка могла стать крупнее или мельче (другое разрешение,

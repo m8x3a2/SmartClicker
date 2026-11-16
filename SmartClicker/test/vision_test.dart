@@ -120,6 +120,24 @@ void main() {
     expect(findBitmap(piece, screen), isNull);
   });
 
+  test('бледная картинка тёмной темы не находится на однотонном месте', () {
+    Bitmap fill(int w, int h, int v) =>
+        Bitmap(w, h, Uint8List.fromList([for (var i = 0; i < w * h; i++) ...[v, v, v, 255]]));
+    // a cross of gaps (32) between buttons (59), as between calculator keys
+    final cross = fill(26, 22, 59);
+    for (var y = 0; y < 22; y++) {
+      for (var x = 0; x < 26; x++) {
+        if ((x >= 11 && x < 15) || (y >= 10 && y < 14)) cross.bgra.fillRange((y * 26 + x) * 4, (y * 26 + x) * 4 + 3, 32);
+      }
+    }
+    final screen = fill(200, 120, 45); // plain, every pixel within 20 of the cross
+    expect(findBitmap(screen, cross), isNull);
+    expect(findAllBitmap(screen, cross), isEmpty);
+    paste(screen, cross, 70, 40);
+    expect(findBitmap(screen, cross), (x: 70, y: 40));
+    expect(findAllBitmap(screen, cross).length, 1);
+  });
+
   test('увеличение сохраняет цвета и размеры', () {
     final b = Bitmap(2, 1, Uint8List.fromList([0, 0, 0, 0, 200, 100, 50, 0]));
     final up = upscale(b, 3);
@@ -186,6 +204,63 @@ log(len(read_text(50%, 50%, 10%, 10%)))
     paste(same, needle, 40, 120);
     final hit = findBitmapScaled(same, needle)!;
     expect((hit.x, hit.y, hit.scale), (40, 120, 1.0));
+  });
+
+  test('все места картинки: без повторов, по порядку, max, масштаб', () {
+    final needle = button(24, 12);
+    final hay = scene(320, 200);
+    // two in a row (the second is a bit lower), one below, two side by side
+    for (final (x, y) in [(200, 40), (60, 42), (100, 150), (150, 100), (174, 100)]) {
+      paste(hay, needle, x, y);
+    }
+    List<(int, int)> xy(List<ScaledHit> h) => [for (final p in h) (p.x, p.y)];
+    expect(xy(findAllBitmap(hay, needle)),
+        [(60, 42), (200, 40), (150, 100), (174, 100), (100, 150)]);
+    expect(findAllBitmap(hay, needle, max: 2).length, 2);
+    expect(findAllBitmap(scene(320, 200), needle), isEmpty);
+
+    // a blurred copy matches around its place too — still one place
+    final soft = button(24, 12);
+    for (var i = 0; i < soft.bgra.length; i++) {
+      if (i % 4 != 3) soft.bgra[i] = (soft.bgra[i] + 8).clamp(0, 255);
+    }
+    final one = scene(320, 200);
+    paste(one, soft, 80, 80);
+    expect(findAllBitmap(one, needle, tolerance: 60).length, 1);
+
+    // another scale: all copies at the size of the best one
+    final big = resize(needle, 36, 18);
+    final scaled = scene(320, 200);
+    for (final (x, y) in [(40, 60), (120, 60), (220, 140)]) {
+      paste(scaled, big, x, y);
+    }
+    expect(findAllBitmap(scaled, needle), isEmpty);
+    final hits = findAllBitmapScaled(scaled, needle);
+    expect(hits.length, 3);
+    for (final (i, (x, y)) in [(40, 60), (120, 60), (220, 140)].indexed) {
+      expect((hits[i].x - x).abs() + (hits[i].y - y).abs(), lessThanOrEqualTo(2), reason: '$i');
+      expect(hits[i].scale, closeTo(1.5, 0.05));
+    }
+  });
+
+  test('find_images в скрипте', () async {
+    final dir = Directory.systemTemp.createTempSync('sc_vision');
+    try {
+      final (logs, result, _) = await run('''
+screenshot("кусок", 100, 100, 20, 10)
+let all = find_images("кусок")
+log(len(all) >= 1, all[0].w, all[0].h)
+log(find_images("кусок", 300, 200, 50, 50)[0].x)
+log(len(find_images("кусок", max: 1)))
+log(find_images("кусок", 0, 0, 5, 5))
+''', dir: dir.path);
+      expect(result['error'], isNull, reason: '$result');
+      expect(logs, ['true 20 10', '310', '1', '[]']);
+      final (_, bad, _) = await run('find_images("кусок", max: 0)', dir: dir.path);
+      expect('${bad['error']}', contains('max'));
+    } finally {
+      dir.deleteSync(recursive: true);
+    }
   });
 
   test('порядок масштабов: сначала ближайшие к центру', () {
