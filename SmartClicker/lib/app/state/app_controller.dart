@@ -28,6 +28,7 @@ import '../../core/system/startup.dart';
 import '../../core/system/safety.dart';
 import '../../core/automation/autorun.dart';
 import '../../core/automation/file_watch.dart';
+import '../../core/automation/game_guard.dart';
 import '../../core/recorder/recorder.dart';
 import '../../core/reports/report.dart';
 import '../../core/storage/storage.dart';
@@ -66,6 +67,7 @@ part 'controller_safety.dart';
 part 'controller_watch.dart';
 part 'controller_requests.dart';
 part 'controller_file_rules.dart';
+part 'controller_guard.dart';
 part 'controller_clipboard.dart';
 part 'controller_trash.dart';
 
@@ -212,6 +214,7 @@ const runViaLabels = {
   'file': 'по файлу',
   'external': 'извне (--run)',
   'restart': 'перезапуск после ошибки',
+  'guard': 'сторож (после вылета программы)',
 };
 
 /// One variable in the variables view.
@@ -398,6 +401,10 @@ class AppController extends ChangeNotifier {
     if (fr is List) {
       fileRules.addAll(fr.whereType<Map>().map(FileRule.fromJson));
     }
+    final gr = readJson(paths.guardRulesFile);
+    if (gr is List) {
+      guardRules.addAll(gr.whereType<Map>().map(GuardRule.fromJson));
+    }
     _refresh();
     editor.addListener(_onEdit);
     if (scripts.isNotEmpty) open(scripts.first);
@@ -543,6 +550,13 @@ class AppController extends ChangeNotifier {
 
   /// Started by a file rule and waiting to run (rule, how, since when).
   final List<(FileRule, FileRunMode, DateTime)> _fileQueue = [];
+
+  /// «Сторож»: programs restarted after a crash or a hang while their script
+  /// works; the rules that watch now and those whose script the guard stops.
+  final List<GuardRule> guardRules = [];
+  final GuardWatch _guardWatch = GuardWatch();
+  final Set<GuardRule> _guardArmed = Set.identity();
+  final Set<GuardRule> _guardStopping = Set.identity();
 
   /// A file rule asks "run?" (the strip above the pages) and since when.
   (FileRule, DateTime)? fileAsk;

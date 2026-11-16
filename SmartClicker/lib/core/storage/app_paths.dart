@@ -44,6 +44,8 @@ class AppPaths {
   String get autorunFile => _p('autorun.json');
   /// Scripts started when a file changes (Автозапуск → «По файлу»).
   String get fileRulesFile => _p('file_rules.json');
+  /// Programs restarted by the guard («Сторож»).
+  String get guardRulesFile => _p('guard_rules.json');
   /// Clipboard history: index.json and pictures (the «Буфер» page).
   String get clipboard => _p('clipboard');
   /// Deleted scripts, folders and pictures (kept for 30 days).

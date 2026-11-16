@@ -42,6 +42,7 @@ const historyViaLabels = {
   'file': 'по файлу',
   'external': 'извне (--run)',
   'restart': 'перезапуск после ошибки',
+  'guard': 'сторож (после вылета программы)',
 };
 
 String historyViaOf(String via) => const {'mini', 'tray'}.contains(via) ? 'manual' : via;

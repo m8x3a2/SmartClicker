@@ -110,6 +110,9 @@ abstract class PlatformBackend {
   /// Top-level window under a screen point.
   WindowInfo? windowAt(int x, int y);
   bool focusWindow(int handle);
+
+  /// The window does not respond (Windows shows «Не отвечает» in its title).
+  bool isHungWindow(int handle);
   bool setWindowBounds(int handle, int x, int y, int w, int h);
 
   /// Client area of a window in screen coordinates.

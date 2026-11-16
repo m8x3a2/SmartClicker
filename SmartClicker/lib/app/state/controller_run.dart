@@ -61,6 +61,7 @@ extension AppControllerRun on AppController {
 
   Future<void> _start(String name, String source, Map<String, Object?> answers) async {
     _runScript = name;
+    _armGuards(name);
     _runSource = source;
     _runDry = settings.dryRun || _forceDry;
     _runAnswers = answers;
@@ -324,6 +325,7 @@ extension AppControllerRun on AppController {
     final ended = began.add(Duration(milliseconds: ms));
 
     if (status == 'error') trayError = true;
+    _guardRunEnded(name, status);
     _finishMap(name, (e['acts'] as num?)?.toInt() ?? _mapActs.length);
     if (e['profile'] case final Map p) lastProfile = RunProfile.of(name, _runSource, ms, p);
     String? errText;

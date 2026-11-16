@@ -199,6 +199,11 @@ class StubBackend implements PlatformBackend {
     return null;
   }
 
+  /// Windows that «do not respond» (tests).
+  final Set<int> hungWindows = {};
+  @override
+  bool isHungWindow(int handle) => hungWindows.contains(handle);
+
   @override
   bool focusWindow(int handle) {
     calls.add('focus $handle');

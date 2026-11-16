@@ -357,6 +357,7 @@ extension AppControllerHotkeys on AppController {
     if (_tick % 40 == 30) {
       _checkRequests(); // --run / --stop from other programs
       _checkFileRules(); // scripts started when a file changes
+      _checkGuards(); // a program crashed or hung while its script works
       if (isRunning) _writeState();
     }
     // Countdown of the delayed automation in the banner (and turning it on).

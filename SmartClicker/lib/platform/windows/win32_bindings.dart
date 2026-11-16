@@ -58,6 +58,10 @@ final _GetWindow = _user32.lookupFunction<IntPtr Function(IntPtr, Uint32),
 final _IsWindowVisible = _user32
     .lookupFunction<Int32 Function(IntPtr), int Function(int)>('IsWindowVisible');
 
+/// The window has not answered messages for 5 s (Windows shows «Не отвечает»).
+final _IsHungAppWindow =
+    _user32.lookupFunction<Int32 Function(IntPtr), int Function(int)>('IsHungAppWindow');
+
 final _IsIconic =
     _user32.lookupFunction<Int32 Function(IntPtr), int Function(int)>('IsIconic');
 

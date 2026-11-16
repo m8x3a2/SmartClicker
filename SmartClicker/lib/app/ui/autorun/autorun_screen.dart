@@ -9,6 +9,7 @@ import '../../state/app_controller.dart';
 import '../../../core/storage/storage.dart';
 import '../widgets/page_parts.dart';
 import 'file_rules_tab.dart';
+import 'guard_tab.dart';
 
 class SchedulePage extends StatelessWidget {
   final AppController app;
@@ -394,7 +395,7 @@ class SchedulePage extends StatelessWidget {
     return ListenableBuilder(
       listenable: app,
       builder: (context, _) => DefaultTabController(
-        length: 3,
+        length: 4,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -404,11 +405,12 @@ class SchedulePage extends StatelessWidget {
                 Tab(text: 'По расписанию (${app.schedule.length})'),
                 Tab(text: 'По программе (${app.autoRules.length})'),
                 Tab(text: 'По файлу (${app.fileRules.length})'),
+                Tab(text: 'Сторож (${app.guardRules.length})'),
               ],
             ),
             Expanded(
               child: TabBarView(
-                children: [_timeTab(context), _programTab(context), FileRulesTab(app: app)],
+                children: [_timeTab(context), _programTab(context), FileRulesTab(app: app), GuardTab(app: app)],
               ),
             ),
           ],

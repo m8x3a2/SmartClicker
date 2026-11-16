@@ -123,6 +123,9 @@ mixin _SystemWindows implements PlatformBackend {
   }
 
   @override
+  bool isHungWindow(int handle) => _IsHungAppWindow(handle) != 0;
+
+  @override
   bool focusWindow(int handle) {
     if (_IsIconic(handle) != 0) _ShowWindow(handle, 9); // SW_RESTORE
     if (_GetForegroundWindow() == handle) return true;
