@@ -127,6 +127,35 @@ final scriptTemplates = <ScriptTemplate>[
         '}\n',
   ),
   ScriptTemplate(
+    'watch_area',
+    'Следить за областью',
+    'Изменилась или стала цветом — нажать',
+    Icons.visibility_outlined,
+    'Смотрит на область экрана и, когда она изменилась (или стала нужного цвета, светлее, '
+        'темнее, замерла), нажимает в точку. После срабатывания может отдохнуть, '
+        'чтобы не нажимать снова и снова. Остальное время скрипт просто ждёт.',
+    const [
+      _region,
+      TemplateParam('when', 'Когда сработать', ParamKind.text, 'изменилась',
+          help: 'изменилась · #FF0000 (стала цветом; цвет — пипеткой) · светлее 120 · темнее 80 · не меняется 10s'),
+      TemplateParam('every', 'Как часто смотреть, с', ParamKind.number, '5'),
+      TemplateParam('pause', 'Отдых после срабатывания, мин (0 — без отдыха)', ParamKind.number, '0'),
+      _point,
+    ],
+    (v) {
+      final every = (num.parse(_num(v['every']!)) * 1000).round().clamp(100, 86400000);
+      final pause = (num.parse(_num(v['pause']!)) * 60000).round();
+      return '${_header('Следить за областью', 'Область ${v['region']}: когда «${v['when']}» — клик в ${v['point']}.')}\n'
+          'use_screen()\n'
+          'watch(${v['region']}, (a) => {\n'
+          '    log("сработало, цвет области", a.color)\n'
+          '    click(${v['point']})          // что сделать — можно дописать здесь\n'
+          '}, when: ${q(v['when']!)}, every: $every${pause > 0 ? ', pause: $pause' : ''})\n'
+          '\n'
+          'while (true) { wait(1s) }   // основной код ждёт, watch работает сам\n';
+    },
+  ),
+  ScriptTemplate(
     'wait_click',
     'Дождаться кнопки и нажать',
     'Один раз, когда появится',

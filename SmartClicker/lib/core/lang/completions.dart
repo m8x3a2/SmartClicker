@@ -57,7 +57,10 @@ const completions = <Completion>[
       'реакция: каждые N времени выполнить код, где бы ни был основной цикл'),
   Completion('on_image', 'on_image("картинка", (p) => { … })',
       'реакция: картинка появилась на экране — выполнить код (p — где она); interval: 1s, area: [x, y, w, h]'),
-  Completion('off', 'off(id)', 'выключить реакцию (номер из on_key / every / on_image); off() — все'),
+  Completion('watch', 'watch(x, y, w, h, () => { … }, when: "изменилась")',
+      'реакция: следить за областью — изменилась, стала цветом "#FF0000", "светлее 120", "темнее 80", '
+      '"не меняется 10s"; every: 1s — как часто смотреть, pause: 10m — отдых после срабатывания'),
+  Completion('off', 'off(id)', 'выключить реакцию (номер из on_key / every / on_image / watch); off() — все'),
   Completion('now', 'now()', 'текущее время в миллисекундах (для замеров)'),
   Completion('elapsed', 'elapsed()', 'сколько миллисекунд работает скрипт'),
   Completion('time', 'time()', 'время строкой: "14:30:05"'),
@@ -70,7 +73,11 @@ const completions = <Completion>[
       'true, если цвет точки совпадает'),
   Completion('wait_pixel', 'wait_pixel(x, y, "#FF0000", timeout: 10s)',
       'ждать цвет в точке; true, если дождались; tolerance: 10'),
-  Completion('avg_color', 'avg_color(x, y, w, h)', 'средний цвет области'),
+  Completion('avg_color', 'avg_color(x, y, w, h)',
+      'цвет области "#RRGGBB"; mode: "median" — не сбивается курсором и всплывающим окном, "main" — основной цвет'),
+  Completion('hue', 'hue("#FF8800")', 'оттенок цвета, 0..359 градусов (красный 0, зелёный 120, синий 240)'),
+  Completion('brightness', 'brightness("#FF8800")', 'яркость цвета, 0..255 (как видит глаз)'),
+  Completion('saturation', 'saturation("#FF8800")', 'насыщенность цвета, 0..100 (0 — серый)'),
   Completion('find_color', 'find_color("#FF0000", x, y, w, h)',
       'найти цвет: {x, y} или null; без области — весь экран'),
   Completion('read_text', 'read_text(x, y, w, h)',
@@ -109,7 +116,7 @@ const completions = <Completion>[
   Completion('click_image', 'click_image("имя")',
       'кликнуть по картинке, если она есть; true/false; timeout: 5s — подождать её появления'),
   Completion('color_diff', 'color_diff("#FF0000", "#F00000")',
-      'разница цветов 0..255'),
+      'разница цветов 0..255; by: "hue" — по оттенку (0..180, свет и тень не мешают), "bright" — по яркости'),
   Completion('screen_size', 'screen_size()', 'размер экрана: {w, h}'),
   // Windows and processes
   Completion('active_window', 'active_window()',
@@ -266,6 +273,14 @@ const paramHints = <String, String>{
   'case': '"ignore" (по умолчанию) — заглавные и строчные буквы не различаются; "exact" — различаются',
   'part': 'true (по умолчанию) — образец может быть частью текста («Начать» в «Начать игру»); false — весь текст целиком',
   'area': 'on_image: где искать картинку — [x, y, ширина, высота] (по умолчанию весь экран)',
+  'mode': 'avg_color / watch: как считать цвет области — "avg" (среднее), "median" (медиана: курсор и '
+      'всплывающее окно не сбивают; по умолчанию у watch), "main" (основной цвет)',
+  'by': 'color_diff: "rgb" (по умолчанию, наибольшая разница канала), "hue" (по оттенку, 0..180 градусов — '
+      'тень и свет не мешают), "bright" (по яркости)',
+  'when': 'watch: когда сработать — "изменилась" (по умолчанию), "#FF0000" (стала этим цветом, tolerance: 20), '
+      '"светлее 120" / "темнее 80" (яркость 0..255), "не меняется 10s"',
+  'every': 'watch: как часто смотреть на область (по умолчанию 1s)',
+  'pause': 'watch: отдых после срабатывания — пропустить следующие проверки (pause: 10m)',
   'separator': 'paste_all: чем разделять тексты (по умолчанию перевод строки)',
   'key': 'wait_file: ключ в JSON-файле, значение которого ждать ("a.b" — внутрь)',
   'value': 'wait_file: какое значение ждать по key: (без value: — любое «да»: true, не 0, не пустое)',

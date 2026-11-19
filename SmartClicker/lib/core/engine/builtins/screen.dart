@@ -68,8 +68,13 @@ extension ScriptRuntimeBuiltinsScreen on ScriptRuntime {
       }
     });
 
-    _def('color_diff', (c) => ScriptRuntime.colorDiff(_color(c, c.arg(0)), _color(c, c.arg(1))));
+    // by: "rgb" (largest channel difference), "hue" (degrees, light and
+    // shadow do not change it), "bright" (brightness).
+    _def('color_diff', (c) => colorDistance(_color(c, c.arg(0)), _color(c, c.arg(1)),
+        by: _colorBy(c, 'color_diff')));
 
+    // mode: "avg" (default), "median" (a cursor or a popup over a part of the
+    // area does not shift it), "main" (the most common colour).
     _def('avg_color', (c) {
       final a = _area();
       final x = _coord(c, c.arg(0), true, a, 'avg_color');
@@ -77,16 +82,13 @@ extension ScriptRuntimeBuiltinsScreen on ScriptRuntime {
       final w = math.max(1, _size(c, c.arg(2, 'w'), true, a, 'avg_color'));
       final h = math.max(1, _size(c, c.arg(3, 'h'), false, a, 'avg_color'));
       final px = backend.capture(x, y, w, h);
-      var r = 0, g = 0, b = 0;
-      final n = px.length ~/ 4;
-      if (n == 0) return '#000000';
-      for (var i = 0; i < n; i++) {
-        b += px[i * 4];
-        g += px[i * 4 + 1];
-        r += px[i * 4 + 2];
-      }
-      return ScriptRuntime.hex(((r ~/ n) << 16) | ((g ~/ n) << 8) | (b ~/ n));
-    });
+      if (px.isEmpty) return '#000000';
+      return ScriptRuntime.hex(areaColor(px, mode: _colorMode(c, 'avg', 'avg_color')));
+    }, ['area_color']);
+
+    _def('hue', (c) => hueOf(_color(c, c.arg(0, 'color'))));
+    _def('brightness', (c) => brightnessOf(_color(c, c.arg(0, 'color'))));
+    _def('saturation', (c) => saturationOf(_color(c, c.arg(0, 'color'))));
 
     // Loose comparison of recognized text (core/vision/text_match.dart).
     _def('similar', (c) => textMatches(

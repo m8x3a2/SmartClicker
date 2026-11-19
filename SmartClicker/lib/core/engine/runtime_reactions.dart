@@ -1,13 +1,13 @@
 // Reactions: a piece of code that runs by itself when something happens —
 // a key is pressed (on_key), time has passed (every), a picture appeared
-// (on_image) — while the main code waits. Checked between statements and
+// (on_image), an area changed (watch) — while the main code waits. Checked between statements and
 // during waits (wait, wait_until, wait_image…), never in the middle of an
 // action; one reaction at a time, none inside another.
 part of 'runtime.dart';
 
 class _Reaction {
   final int id;
-  final String kind; // 'key' | 'every' | 'image'
+  final String kind; // 'key' | 'every' | 'image' | 'watch'
   final String what; // for the log: "f5", "5 мин", "враг"
   final Object? fn;
   final int line;
@@ -25,12 +25,25 @@ class _Reaction {
   final Map<String, Object?> imageNamed;
   bool seen = false;
 
+  // watch: the rule, its options and what it remembers; pauseMs — rest
+  // after the reaction ran.
+  final WatchRule? rule;
+  final WatchState watch = WatchState();
+  final int tolerance, pauseMs;
+  final num percent;
+  final String mode;
+
   _Reaction(this.id, this.kind, this.what, this.fn, this.line,
       {this.keys = const [],
       this.periodMs = 0,
       this.dueMs = 0,
       this.imageArgs = const [],
-      this.imageNamed = const {}});
+      this.imageNamed = const {},
+      this.rule,
+      this.tolerance = 20,
+      this.percent = 2,
+      this.mode = 'median',
+      this.pauseMs = 0});
 }
 
 extension ScriptRuntimeReactions on ScriptRuntime {
@@ -76,6 +89,39 @@ extension ScriptRuntimeReactions on ScriptRuntime {
       final every = _nOr(c, c.opt('interval'), 1000, 'interval').round().clamp(100, 3600000);
       final r = _Reaction(++_reactionIds, 'image', '$name', fn, c.line,
           periodMs: every, dueMs: 0, imageArgs: args, imageNamed: named);
+      _reactions.add(r);
+      return r.id;
+    });
+
+    // watch(x, y, w, h, () => {…}, when: "изменилась", every: 1s, pause: 0)
+    // — the area changed / became a colour / brighter / darker / still.
+    _def('watch', (c) {
+      final at = c.args.indexWhere((a) => a is UserFn);
+      final f = at >= 0 ? c.args[at] : c.opt('do');
+      if (f is! UserFn) {
+        c.fail('watch: нужна функция — watch(x, y, w, h, () => { … }, when: "изменилась")');
+      }
+      final area = at >= 0 ? c.args.sublist(0, at) : c.args;
+      if (area.isNotEmpty && area.length != 4) {
+        c.fail('watch: область задаётся четырьмя числами — x, y, ширина, высота (без области — весь экран)');
+      }
+      _region(CallCtx(area, const {}, c.line), 0, 'watch'); // checked now, not in the middle of the run
+      final whenText = c.opt('when');
+      final rule = parseWatchRule(whenText == null ? '' : _s(c, whenText, 'when'));
+      if (rule == null) {
+        c.fail('watch: when — "изменилась", "#FF0000" (стала цветом), "светлее 120", "темнее 80" '
+            'или "не меняется 10s"');
+      }
+      final every = _nOr(c, c.opt('every'), 1000, 'every').round().clamp(100, 86400000);
+      final r = _Reaction(++_reactionIds, 'watch', '$rule', f, c.line,
+          periodMs: every,
+          dueMs: 0,
+          imageArgs: area,
+          rule: rule,
+          tolerance: _nOr(c, c.opt('tolerance'), 20, 'tolerance').round(),
+          percent: _nOr(c, c.opt('percent'), 2, 'percent'),
+          mode: _colorMode(c, 'median', 'watch'),
+          pauseMs: math.max(0, _nOr(c, c.opt('pause'), 0, 'pause').round()));
       _reactions.add(r);
       return r.id;
     });
@@ -132,9 +178,31 @@ extension ScriptRuntimeReactions on ScriptRuntime {
             r.seen = hit != null;
             arg = hit;
           }
+        case 'watch':
+          if (now >= r.dueMs) {
+            r.dueMs = now + r.periodMs;
+            final a = _region(CallCtx(r.imageArgs, const {}, r.line), 0, 'watch');
+            final shot = backend.capture(a.x, a.y, a.w, a.h);
+            // a window of another size: start watching it anew
+            if (r.watch.ref != null && r.watch.ref!.length != shot.length) r.watch.ref = null;
+            if (r.watch.prev != null && r.watch.prev!.length != shot.length) r.watch.prev = null;
+            fire = watchStep(r.rule!, r.watch, shot, a.w, a.h, now,
+                tolerance: r.tolerance, percent: r.percent, mode: r.mode);
+            final color = r.watch.lastColor;
+            arg = <String, Object?>{
+              'color': ScriptRuntime.hex(color),
+              'brightness': brightnessOf(color),
+              'hue': hueOf(color),
+            };
+          }
       }
       if (!fire) continue;
-      final word = switch (r.kind) { 'key' => 'клавиша', 'every' => 'каждые', _ => 'картинка' };
+      final word = switch (r.kind) {
+        'key' => 'клавиша',
+        'every' => 'каждые',
+        'watch' => 'область',
+        _ => 'картинка',
+      };
       log('⚡ Реакция ($word ${r.what})');
       _inReaction = true;
       final line = _line;
@@ -145,7 +213,7 @@ extension ScriptRuntimeReactions on ScriptRuntime {
         _line = line;
         // The next time counts from the end: a reaction longer than its
         // period must not leave the main code without a turn.
-        if (r.kind != 'key') r.dueMs = _total.elapsedMilliseconds + r.periodMs;
+        if (r.kind != 'key') r.dueMs = _total.elapsedMilliseconds + math.max(r.periodMs, r.pauseMs);
       }
     }
   }

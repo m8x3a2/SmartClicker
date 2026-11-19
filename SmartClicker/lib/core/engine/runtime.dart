@@ -21,6 +21,8 @@ import '../vision/ocr.dart';
 import '../vision/text_match.dart';
 import '../vision/frame_diff.dart';
 import '../vision/picture_origin.dart';
+import '../vision/area_color.dart';
+import '../vision/area_watch.dart';
 import '../system/safety.dart';
 
 part 'runtime_args.dart';

@@ -141,6 +141,24 @@ extension ScriptRuntimeRuntimeArgs on ScriptRuntime {
     }
   }
 
+  /// `mode:` of the area colour functions.
+  String _colorMode(CallCtx c, String def, String what) {
+    final m = _s(c, c.opt('mode', def), 'mode').toLowerCase();
+    if (!const {'avg', 'median', 'main'}.contains(m)) {
+      c.fail('$what: mode — "avg" (среднее), "median" (медиана) или "main" (основной цвет)');
+    }
+    return m;
+  }
+
+  /// `by:` of color_diff.
+  String _colorBy(CallCtx c, String what) {
+    final b = _s(c, c.opt('by', 'rgb'), 'by').toLowerCase();
+    if (!const {'rgb', 'hue', 'bright'}.contains(b)) {
+      c.fail('$what: by — "rgb", "hue" (оттенок) или "bright" (яркость)');
+    }
+    return b;
+  }
+
   /// Centre of the found image, relative to the current area, or null.
   Map<String, Object?>? _findImage(CallCtx c, int i, String what) {
     final s = _imageSearch(c, i, what);
