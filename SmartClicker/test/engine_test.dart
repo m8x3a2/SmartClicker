@@ -215,6 +215,20 @@ console.log(await f())
       expect(r.backend.calls, isEmpty);
     });
 
+    test('призрак: клики и клавиши только показываются, остальное работает', () async {
+      final r = await run('click(5, 6)\nkey("enter")\nlet n = 2 + 2\nlog(n)',
+          setup: (rt) => rt.ghost = true);
+      expect(r.status, 'ok');
+      expect(r.backend.calls, isEmpty);
+      expect(r.logs, ['4']);
+      final acts = r.events.where((e) => e['lv'] == 'action').map((e) => '${e['m']}').toList();
+      expect(acts.every((m) => m.contains('призрак')), isTrue, reason: '$acts');
+      // the marker shows where the click would be, even with showClicks off
+      expect(r.events.where((e) => e['t'] == 'mark').map((e) => [e['x'], e['y']]), [
+        [5, 6]
+      ]);
+    });
+
     test('key нажимает и отпускает сочетание в правильном порядке', () async {
       final r = await run('key("ctrl+shift+a")');
       expect(r.backend.calls, [

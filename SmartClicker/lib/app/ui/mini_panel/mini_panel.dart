@@ -58,6 +58,34 @@ class _MiniPanelState extends State<MiniPanel> {
         onPressed: onPressed,
       );
 
+  /// The ghost of a run: the script's clicks are only shown.
+  Widget _ghostBtn() {
+    final on = app.runGhost;
+    final key = app.settings.ghostKey.isEmpty ? '' : ' (${app.settings.ghostKey.toUpperCase()})';
+    return Tooltip(
+      message: on
+          ? 'Призрак включён: клики скрипта не нажимаются. Выключить$key'
+          : 'Призрак$key: клики и клавиши скрипта только показываются, не нажимаются',
+      child: InkWell(
+        borderRadius: BorderRadius.circular(17),
+        onTap: () => app.setRunGhost(!on),
+        child: Container(
+          width: 34,
+          height: 34,
+          alignment: Alignment.center,
+          decoration: on
+              ? BoxDecoration(
+                  color: const Color(0x33E5484D),
+                  borderRadius: BorderRadius.circular(17),
+                  border: Border.all(color: const Color(0xFFE5484D)))
+              : null,
+          child: Text('👻',
+              style: TextStyle(fontSize: 17, color: on ? null : const Color(0x88FFFFFF))),
+        ),
+      ),
+    );
+  }
+
   List<Widget> _buttons() {
     final s = app.settings;
     const red = Color(0xFFE5484D), green = Color(0xFF3FB950);
@@ -87,10 +115,12 @@ class _MiniPanelState extends State<MiniPanel> {
             _btn(Icons.close, 'Отменить запуск ($stop)', app.stop),
           ],
         RunState.running => [
+            _ghostBtn(),
             _btn(Icons.pause, 'Пауза ($pause)', app.togglePause),
             _btn(Icons.stop, 'Стоп ($stop)', app.stop, color: red),
           ],
         RunState.paused => [
+            _ghostBtn(),
             _btn(Icons.play_arrow, 'Продолжить ($pause)', app.togglePause,
                 color: green),
             _btn(Icons.skip_next, 'Шаг: выполнить одну строку', app.step),
@@ -114,7 +144,7 @@ class _MiniPanelState extends State<MiniPanel> {
     final s = app.settings;
     final pause = s.pauseKey.toUpperCase(), stop = s.stopKey.toUpperCase();
     final at = line > 0 ? ' · строка $line' : '';
-    final outside = app.runFromOutside ? '⤴ извне · ' : '';
+    final outside = '${app.runFromOutside ? '⤴ извне · ' : ''}${app.runGhost ? '👻 призрак · ' : ''}';
     if (app.picking) {
       return (levelColor('info'), '${app.pickHint} · ${app.pickCancelHint}');
     }

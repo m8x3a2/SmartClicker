@@ -34,6 +34,12 @@ Future<void> _workerMain(List<Object?> init) async {
         ..clear()
         ..addAll(names.map((e) => '$e'));
     }
+    if (m case ['ghost', bool on]) {
+      // Keys and buttons held by the script are let go: their release would
+      // not reach the system while the ghost is on.
+      if (on) rt.releaseAll();
+      rt.ghost = on;
+    }
     if (m case ['watch', bool on]) {
       rt.watch = on;
       if (on) rt.sendVariables(force: true);
@@ -98,6 +104,9 @@ class ScriptRunner {
 
   /// Variables shown on the mini panel (pinned in the «Переменные» tab).
   void setPinned(Iterable<String> names) => _toWorker?.send(['pin', names.toList()]);
+
+  /// The ghost of a run on/off: the script's clicks and keys are only shown.
+  void setGhost(bool on) => _toWorker?.send(['ghost', on]);
 
   /// Turns sending the values of variables on and off.
   void setWatch(bool on) => _toWorker?.send(['watch', on]);

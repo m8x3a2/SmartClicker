@@ -105,6 +105,35 @@ extension AppControllerRecord on AppController {
     _changed();
   }
 
+  /// The ghost of a run: the same key as for a recording, while a script
+  /// works. Its clicks and keys reach no program, the marker shows where
+  /// they would go and the log says «призрак: не нажато» — to check a run
+  /// up to the important click without pressing it.
+  void setRunGhost(bool on) {
+    if (on == runGhost) return;
+    if (on && !isRunning) return;
+    runGhost = on;
+    _runner.setGhost(on);
+    try {
+      backend.beep(on ? 'warn' : 'info');
+    } catch (_) {}
+    if (on) {
+      final s = backend.screenSize();
+      backend.showFrame(3, 3, s.w - 6, s.h - 6); // drawn outside: along the edges
+      _log('system', '👻 Призрак включён: клики и клавиши скрипта не нажимаются');
+      notify(
+          '👻 Призрак включён',
+          'Скрипт работает дальше, но его клики и клавиши НЕ доходят до программ — '
+              'только показываются. Выключить — ${settings.ghostKey.toUpperCase()}',
+          level: 'warn');
+    } else {
+      backend.hideFrame();
+      if (isRunning) _log('system', '👻 Призрак выключен: клики снова настоящие');
+      notify('Призрак выключен', 'Клики и клавиши скрипта снова доходят до программ', level: 'ok');
+    }
+    _changed();
+  }
+
   void stopRecording() {
     if (state != RunState.recording) return;
     setGhost(false);

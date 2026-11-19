@@ -56,13 +56,14 @@ void main() {
 
     // Esc (second stop key) stops scripts only: during recording it is a
     // key to record and goes to the program.
-    expect(held(RunState.running), unorderedEquals(['f12', 'esc', 'f8', 'f6', 'f2', 'f7']));
-    expect(held(RunState.paused), unorderedEquals(['f12', 'esc', 'f8', 'f6', 'f2', 'f7']));
+    // F3: the ghost of a run.
+    expect(held(RunState.running), unorderedEquals(['f12', 'esc', 'f8', 'f3', 'f6', 'f2', 'f7']));
+    expect(held(RunState.paused), unorderedEquals(['f12', 'esc', 'f8', 'f3', 'f6', 'f2', 'f7']));
     expect(held(RunState.countdown), unorderedEquals(['f12', 'esc', 'f6', 'f2', 'f7']));
     expect(held(RunState.recording), unorderedEquals(['f12', 'f9', 'f6', 'f7', 'f3', 'f2']));
 
     s.stopKey2 = '';
-    expect(held(RunState.running), unorderedEquals(['f12', 'f8', 'f6', 'f2', 'f7']));
+    expect(held(RunState.running), unorderedEquals(['f12', 'f8', 'f3', 'f6', 'f2', 'f7']));
 
     s.miniKey = '';
     expect(held(RunState.running), isNot(contains('')));

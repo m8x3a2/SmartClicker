@@ -8,6 +8,7 @@ import 'script_toolbar.dart';
 import 'editor_area.dart';
 import 'run_status_bar.dart';
 import 'log_panel.dart';
+import 'welcome_pane.dart';
 
 class ScriptsPage extends StatelessWidget {
   final AppController app;
@@ -45,10 +46,7 @@ class ScriptsPage extends StatelessWidget {
                 const Divider(height: 1),
                 Expanded(
                   flex: 5,
-                  child: app.current == null
-                      ? const Center(
-                          child: Text('Создайте скрипт кнопкой «+» слева'))
-                      : EditorArea(app),
+                  child: app.current == null ? WelcomePane(app) : EditorArea(app),
                 ),
                 if (app.settings.logCollapsed)
                   const Divider(height: 1)

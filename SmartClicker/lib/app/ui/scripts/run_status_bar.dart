@@ -41,7 +41,7 @@ class RunStatusBar extends StatelessWidget {
           ValueListenableBuilder<Map<String, String>>(
             valueListenable: app.shown,
             builder: (_, shown, _) => Text(
-              '▶ Скрипт выполняется${s.dryRun ? ' (тестовый режим)' : ''}. '
+              '▶ Скрипт выполняется${s.dryRun ? ' (тестовый режим)' : ''}${app.runGhost ? ' — 👻 клики не нажимаются' : ''}. '
               'Пауза: ${s.pauseKey.toUpperCase()}, стоп: ${s.stopKeysLabel}'
               '${shown.isEmpty ? '' : '      ${shown.entries.map((e) => '${e.key}: ${e.value}').join('  ·  ')}'}',
               maxLines: 1,
@@ -50,13 +50,35 @@ class RunStatusBar extends StatelessWidget {
           ) as Widget
         ),
     };
+    final recording = app.state == RunState.recording;
+    final canGhost = recording || app.isRunning;
+    final ghostOn = recording ? app.ghost : app.runGhost;
+    final key = s.ghostKey.isEmpty ? '' : ' (${s.ghostKey.toUpperCase()})';
     return Container(
       width: double.infinity,
       color: color.withValues(alpha: 0.16),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      padding: EdgeInsets.fromLTRB(14, canGhost ? 0 : 6, canGhost ? 6 : 14, canGhost ? 0 : 6),
       child: DefaultTextStyle.merge(
           style: TextStyle(color: color, fontWeight: FontWeight.w600),
-          child: child),
+          child: Row(children: [
+            Expanded(child: child),
+            if (canGhost)
+              Tooltip(
+                message: recording
+                    ? 'Призрак: ваши клики и клавиши записываются, но не доходят до программ'
+                    : 'Призрак: скрипт работает дальше, но его клики и клавиши не нажимаются — '
+                        'только показываются. Включите перед важным нажатием, чтобы проверить скрипт',
+                child: TextButton.icon(
+                  style: TextButton.styleFrom(
+                    foregroundColor: ghostOn ? const Color(0xFFE5484D) : null,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  onPressed: () => recording ? app.setGhost(!app.ghost) : app.setRunGhost(!app.runGhost),
+                  icon: Text('👻', style: TextStyle(fontSize: 15, color: ghostOn ? null : const Color(0x99FFFFFF))),
+                  label: Text(ghostOn ? 'Призрак включён$key' : 'Призрак$key'),
+                ),
+              ),
+          ])),
     );
   }
 }

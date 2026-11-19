@@ -77,6 +77,11 @@ class ScriptRuntime implements Host {
   Set<String> _engineNames = const {};
   late final bool showClicks = cfg['showClicks'] == true;
 
+  /// The ghost of a run (the user's hotkey while the script works): clicks
+  /// and keys of the script reach no program — only the marker shows where
+  /// they would go. Everything else (waits, pictures, files) goes on.
+  bool ghost = false;
+
   // Options (changeable from the script through set_option).
   late bool dryRun = cfg['dryRun'] == true;
   late bool humanMode = cfg['human'] == true;

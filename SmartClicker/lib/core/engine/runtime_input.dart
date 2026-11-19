@@ -62,13 +62,17 @@ extension ScriptRuntimeRuntimeInput on ScriptRuntime {
         log('Окно "$_requiredWindow" снова активно, продолжаю');
       }
     }
-    if (showClicks && press && at != null) {
+    if ((showClicks || ghost) && press && at != null) {
       // Let the user see where the action is about to happen.
       emit({'t': 'mark', 'x': at.x, 'y': at.y});
       await this.sleep(400, jitter: false);
     }
     _actionDone = true;
     _alive();
+    if (ghost) {
+      log('👻 $description — призрак: не нажато', 'action');
+      return false;
+    }
     if (dryRun) {
       _mapAction(description, at, press ? 'press' : 'move');
       log('[тест] $description', 'action');

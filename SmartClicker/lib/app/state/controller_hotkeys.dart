@@ -79,6 +79,7 @@ extension AppControllerHotkeys on AppController {
       if (!idle) s.stopKey,
       if (running || state == RunState.countdown) s.stopKey2,
       if (running) s.pauseKey,
+      if (running) s.ghostKey,
       if ((idle && hasScript) || recording) s.recordKey,
       s.pickKey,
       s.markKey,
@@ -213,7 +214,10 @@ extension AppControllerHotkeys on AppController {
       if (_pressed(settings.pauseKey)) togglePause();
       if (_pressed(settings.recordKey)) toggleRecording();
       if (_pressed(settings.pickKey)) pickPoint();
-      if (_pressed(settings.ghostKey) && state == RunState.recording) setGhost(!ghost);
+      if (_pressed(settings.ghostKey)) {
+        if (state == RunState.recording) setGhost(!ghost);
+        if (isRunning) setRunGhost(!runGhost);
+      }
       if (_pressed(settings.markKey)) toggleLandmark();
       if (_pressed(settings.miniKey)) toggleCompact();
       if (_pressed(settings.clipKey) && settings.clipHistory) _onClipHotkey();

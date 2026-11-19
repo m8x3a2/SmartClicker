@@ -321,6 +321,10 @@ extension AppControllerRun on AppController {
   void _onDone(Map<String, Object?> e) {
     backend.releaseAll();
     backend.hideMarker();
+    if (runGhost) {
+      runGhost = false;
+      backend.hideFrame();
+    }
     final name = _runScript ?? '?';
     final engineStatus = '${e['status']}';
     final status = _closing
