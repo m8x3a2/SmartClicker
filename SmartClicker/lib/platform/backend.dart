@@ -195,8 +195,9 @@ abstract class PlatformBackend {
   /// Starts a new copy of the program (it waits until this one quits).
   bool restartSelf();
 
-  /// Shows a click-through red ring on the screen at a point (debugging).
-  void showMarker(int x, int y);
+  /// Shows the click-through mark of a click at a point: [shape] — 'dot',
+  /// 'ring' or 'cross' (platform/click_marker.dart), its colour and size.
+  void showMarker(int x, int y, {String shape = 'dot', int rgb = 0xE5484D, int size = 14});
   void hideMarker();
 
   /// Shows a click-through frame around a screen rectangle (region

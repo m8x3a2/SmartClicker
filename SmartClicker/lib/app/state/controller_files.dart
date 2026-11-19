@@ -217,7 +217,8 @@ extension AppControllerFiles on AppController {
       case 'act':
         _onMapAction(e);
       case 'mark':
-        backend.showMarker((e['x'] as num).toInt(), (e['y'] as num).toInt());
+        backend.showMarker((e['x'] as num).toInt(), (e['y'] as num).toInt(),
+            shape: settings.clickMarkShape, rgb: settings.clickMarkColor, size: settings.clickMarkSize);
         _markerTimer?.cancel();
         _markerTimer =
             Timer(const Duration(milliseconds: 550), backend.hideMarker);

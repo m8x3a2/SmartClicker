@@ -159,11 +159,11 @@ mixin _ProgramWindow implements PlatformBackend {
   // Helper windows exist only while shown: Flutter passes the close button
   // of the main window to the app (unsaved scripts, close to tray) only
   // when it is the process's single top-level window.
-  static const _markerSize = 72;
-
   int _markerWnd = 0;
-
   int _markerDc = 0;
+  int _markerBmp = 0;
+  int _markerSide = 0;
+  String _markerKey = '';
 
   /// A layered, click-through, always-on-top helper window.
   static int _overlayWindow(int w, int h) {
@@ -177,41 +177,31 @@ mixin _ProgramWindow implements PlatformBackend {
     return hwnd;
   }
 
-  void _ensureMarker() {
-    const size = _markerSize;
-    if (_markerWnd == 0) _markerWnd = _overlayWindow(size, size);
-    if (_markerWnd == 0 || _markerDc != 0) return;
-
+  /// The picture of the mark (platform/click_marker.dart), drawn again only
+  /// when its shape, colour or size changed.
+  void _ensureMarker(String shape, int rgb, int size) {
+    final key = '$shape/$rgb/$size';
+    if (_markerDc != 0 && key == _markerKey) return;
+    final side = clickMarkSide(shape, size);
     final screen = _GetDC(0);
-    _markerDc = _CreateCompatibleDC(screen);
+    if (_markerDc == 0) _markerDc = _CreateCompatibleDC(screen);
     final bmi = calloc<Uint8>(64);
     final bitsPtr = calloc<Pointer<Uint8>>();
     try {
       final d = ByteData.sublistView(bmi.asTypedList(64));
       d.setUint32(0, 40, Endian.little);
-      d.setInt32(4, size, Endian.little);
-      d.setInt32(8, -size, Endian.little);
+      d.setInt32(4, side, Endian.little);
+      d.setInt32(8, -side, Endian.little);
       d.setUint16(12, 1, Endian.little);
       d.setUint16(14, 32, Endian.little);
       final bmp = _CreateDIBSection(screen, bmi, 0, bitsPtr, 0, 0);
       if (bmp == 0 || bitsPtr.value == nullptr) return;
-      // A red ring with a soft edge; the centre stays fully transparent.
-      final px = bitsPtr.value.asTypedList(size * size * 4);
-      const c = (size - 1) / 2;
-      for (var y = 0; y < size; y++) {
-        for (var x = 0; x < size; x++) {
-          final dx = x - c, dy = y - c;
-          final dist = math.sqrt(dx * dx + dy * dy);
-          final t = (5.0 - (dist - 27).abs()).clamp(0.0, 1.0);
-          final a = (235 * t).round();
-          final i = (y * size + x) * 4;
-          px[i] = 0x4D * a ~/ 255; // premultiplied B
-          px[i + 1] = 0x48 * a ~/ 255; // G
-          px[i + 2] = 0xF5 * a ~/ 255; // R
-          px[i + 3] = a;
-        }
-      }
+      bitsPtr.value.asTypedList(side * side * 4).setAll(0, drawClickMark(shape, rgb, size));
       _SelectObject(_markerDc, bmp);
+      if (_markerBmp != 0) _DeleteObject(_markerBmp);
+      _markerBmp = bmp;
+      _markerSide = side;
+      _markerKey = key;
     } finally {
       calloc.free(bmi);
       calloc.free(bitsPtr);
@@ -219,22 +209,22 @@ mixin _ProgramWindow implements PlatformBackend {
     }
   }
 
-
-
   @override
-  void showMarker(int x, int y) {
-    _ensureMarker();
-    if (_markerWnd == 0 || _markerDc == 0) return;
-    const size = _markerSize;
+  void showMarker(int x, int y, {String shape = 'dot', int rgb = 0xE5484D, int size = 14}) {
+    _ensureMarker(shape, rgb, size);
+    if (_markerDc == 0 || _markerSide == 0) return;
+    if (_markerWnd == 0) _markerWnd = _overlayWindow(_markerSide, _markerSide);
+    if (_markerWnd == 0) return;
+    final side = _markerSide;
     final dst = calloc<Int32>(2);
     final sz = calloc<Int32>(2);
     final src = calloc<Int32>(2);
     final blend = calloc<Uint8>(4);
     try {
-      dst[0] = x - size ~/ 2;
-      dst[1] = y - size ~/ 2;
-      sz[0] = size;
-      sz[1] = size;
+      dst[0] = x - side ~/ 2;
+      dst[1] = y - side ~/ 2;
+      sz[0] = side;
+      sz[1] = side;
       blend[2] = 255; // SourceConstantAlpha
       blend[3] = 1; // AC_SRC_ALPHA
       _UpdateLayeredWindow(_markerWnd, 0, dst, sz, _markerDc, src, 0, blend, 2);
@@ -246,7 +236,6 @@ mixin _ProgramWindow implements PlatformBackend {
       calloc.free(blend);
     }
   }
-
 
 
   @override

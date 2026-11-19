@@ -349,7 +349,7 @@ class StubBackend implements PlatformBackend {
   @override
   bool restartSelf() => false;
   @override
-  void showMarker(int x, int y) {}
+  void showMarker(int x, int y, {String shape = 'dot', int rgb = 0xE5484D, int size = 14}) {}
   @override
   void hideMarker() {}
   Rect4? panel;

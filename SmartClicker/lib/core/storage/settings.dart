@@ -6,7 +6,7 @@ import 'dart:convert';
 /// 'layout' is the look of the window; "reset all" resets it too. Not
 /// reset at all: keys of single scripts, breakpoints, the OCR engine.
 const settingsGroups = <String, List<String>>{
-  'general': ['recPercent', 'showClicks', 'pickFromWindow', 'pickFreeze', 'markColor', 'markSize'],
+  'general': ['recPercent', 'showClicks', 'clickMarkShape', 'clickMarkColor', 'clickMarkSize', 'pickFromWindow', 'pickFreeze', 'markColor', 'markSize'],
   'editor': ['hintTyping', 'hintHover'],
   'mini': ['miniKey', 'miniOnRun'],
   'tray': ['trayOnMinimize', 'trayOnClose'],
@@ -79,6 +79,12 @@ class Settings {
 
   /// The history of runs keeps the text of the script as it was at the start.
   bool historyKeepSource = true;
+  /// The mark of a click on the screen (showClicks, the ghost of a run):
+  /// 'dot', 'ring' or 'cross', its colour (0xRRGGBB) and size, px.
+  String clickMarkShape = 'dot';
+  int clickMarkColor = 0xE5484D;
+  int clickMarkSize = 14;
+
   int markColor = 0xFF2BD6;
   int markSize = 14;
   String runKey = '';
@@ -254,6 +260,10 @@ class Settings {
     s.autoBackup = get('autoBackup', s.autoBackup);
     s.autoBackupKeep = get('autoBackupKeep', s.autoBackupKeep).clamp(1, 60);
     s.versionsKeep = get('versionsKeep', s.versionsKeep).clamp(0, 200);
+    s.clickMarkShape = get('clickMarkShape', s.clickMarkShape);
+    if (!const {'dot', 'ring', 'cross'}.contains(s.clickMarkShape)) s.clickMarkShape = 'dot';
+    s.clickMarkColor = get('clickMarkColor', s.clickMarkColor);
+    s.clickMarkSize = get('clickMarkSize', s.clickMarkSize).clamp(4, 80);
     s.markColor = get('markColor', s.markColor);
     s.markSize = get('markSize', s.markSize);
     s.runKey = get('runKey', s.runKey);
@@ -355,6 +365,9 @@ class Settings {
         'autoBackup': autoBackup,
         'autoBackupKeep': autoBackupKeep,
         'versionsKeep': versionsKeep,
+        'clickMarkShape': clickMarkShape,
+        'clickMarkColor': clickMarkColor,
+        'clickMarkSize': clickMarkSize,
         'markColor': markColor,
         'markSize': markSize,
         'runKey': runKey,

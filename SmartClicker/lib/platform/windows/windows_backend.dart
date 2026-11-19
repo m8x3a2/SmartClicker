@@ -11,6 +11,7 @@ import 'package:ffi/ffi.dart';
 
 import '../backend.dart';
 import '../../core/vision/image.dart';
+import '../click_marker.dart';
 import '../keys.dart';
 import 'ocr.dart';
 import 'ocr.dart' as winocr show ocrLanguages;

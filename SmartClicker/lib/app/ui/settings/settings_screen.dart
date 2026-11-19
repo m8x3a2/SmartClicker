@@ -1,5 +1,6 @@
 // The "Settings" page: blocks of settings, each with a reset button, and "reset all".
 
+import 'click_mark_control.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -308,7 +309,11 @@ class SettingsPage extends StatelessWidget {
                         hint: 'В каком виде координаты пишутся при записи, вставке точки (F6) и копировании. '
                             'Проценты работают на любом разрешении экрана. Скрипты понимают оба вида: click(50%, 40%) и click(960, 432)'),
                     _row('Показывать место клика на экране', _bool(s.showClicks, (v) => s.showClicks = v),
-                        hint: 'Перед каждым кликом на 0,4 с появляется красное кольцо. Удобно, чтобы понять, куда попадает скрипт; замедляет выполнение'),
+                        hint: 'Перед каждым кликом на 0,4 с появляется отметка. Удобно, чтобы понять, куда попадает скрипт; замедляет выполнение. '
+                            'Та же отметка показывает клики при включённом призраке'),
+                    _row('Вид отметки клика', ClickMarkControl(app),
+                        hint: 'Точка — ровно туда, куда нажмёт скрипт; кольцо заметнее; перекрестие не закрывает саму точку. '
+                            'Цвет и размер — рядом. Значок глаза показывает отметку в центре экрана'),
                   ]),
                   _card(context, 'Редактор', 'editor', [
                     _row('Подсказки команд при наборе', _bool(s.hintTyping, (v) => s.hintTyping = v),
