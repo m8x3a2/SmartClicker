@@ -128,15 +128,19 @@ const _xo = PSpec('x', '$_hx. Без точки — там, где сейчас 
 const _yo = PSpec('y', _hy, kind: PK.coord, def: '50%', optional: true);
 const _w = PSpec('w', _hw, kind: PK.size, def: '20%');
 const _h = PSpec('h', _hh, kind: PK.size, def: '10%');
-const _ax = PSpec('x', 'левый край области: пиксели или проценты. Прицел — выделить область двумя нажатиями Ctrl',
+const _ax = PSpec('x', 'левый край области: пиксели или проценты. Прицел — обвести область мышью',
     kind: PK.coord, def: '0', label: 'в области', optional: true);
 const _ay = PSpec('y', 'верхний край области', kind: PK.coord, def: '0', optional: true);
 const _aw = PSpec('w', _hw, kind: PK.size, def: '100%', optional: true);
 const _ah = PSpec('h', _hh, kind: PK.size, def: '100%', optional: true);
-const _rx = PSpec('x', 'левый край области: пиксели или проценты. Прицел — выделить область двумя нажатиями Ctrl',
+const _rx = PSpec('x', 'левый край области: пиксели или проценты. Прицел — обвести область мышью',
     kind: PK.coord, def: '40%');
 const _ry = PSpec('y', 'верхний край области', kind: PK.coord, def: '40%');
 const _picture = PSpec('name', _hPicture, kind: PK.picture, def: '"кнопка"');
+const _px = PSpec('x', 'где сравнивать — левый край (пиксели или проценты). Без места — там, откуда картинку вырезали',
+    kind: PK.coord, def: '0', optional: true);
+const _py = PSpec('y', 'верхний край', kind: PK.coord, def: '0', optional: true);
+const _snap = PSpec('snap', 'снимок: переменная, в которую записали snapshot(...)', def: 's');
 const _window = PSpec('window', _hWindow, kind: PK.window, def: '"Блокнот"');
 const _process = PSpec('process', 'программа: "game.exe"', kind: PK.process, def: '"notepad.exe"');
 const _color = PSpec('color', _hColor, kind: PK.color, def: '"#FF0000"');
@@ -361,6 +365,18 @@ const functionSpecs = <FSpec>[
   FSpec('find_image', 'screen', 'найти картинку {name}', [_picture, _ax, _ay, _aw, _ah],
       'find_image("кнопка")',
       named: _image, returns: '{x, y} центра картинки или null', saveAs: 'pos', statement: false),
+  FSpec('same', 'screen', 'место {x} {y} выглядит как картинка {name}', [_picture, _px, _py],
+      'same("кнопка", 820, 400)',
+      named: ['tolerance', 'percent'], returns: 'true — как картинка, false — изменилось', saveAs: 'ok', statement: false),
+  FSpec('region_diff', 'screen', 'насколько место {x} {y} отличается от картинки {name}', [_picture, _px, _py],
+      'region_diff("кнопка", 820, 400)',
+      named: ['tolerance'], returns: 'проценты: 0 — одинаковые, 100 — всё другое', saveAs: 'diff', statement: false),
+  FSpec('snapshot', 'screen', 'снимок области {x} {y} {w} {h}', [_ax, _ay, _aw, _ah],
+      'snapshot(40%, 40%, 20%, 10%)',
+      returns: 'снимок — для changed / same / region_diff', saveAs: 's', statement: false),
+  FSpec('changed', 'screen', 'область снимка {snap} изменилась', [_snap],
+      'changed(s)',
+      named: ['tolerance', 'percent'], returns: 'true — изменилась', saveAs: 'diff', statement: false),
   FSpec('find_images', 'screen', 'найти все места картинки {name}', [_picture, _ax, _ay, _aw, _ah],
       'find_images("монета")',
       named: [..._image, 'max'], returns: 'список {x, y} — сверху вниз, слева направо; [] — нет',

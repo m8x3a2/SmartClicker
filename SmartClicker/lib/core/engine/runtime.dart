@@ -20,6 +20,7 @@ import '../vision/paddle_ocr.dart';
 import '../vision/ocr.dart';
 import '../vision/text_match.dart';
 import '../vision/frame_diff.dart';
+import '../vision/picture_origin.dart';
 import '../system/safety.dart';
 
 part 'runtime_args.dart';
@@ -33,6 +34,7 @@ part 'builtins/mouse.dart';
 part 'builtins/keyboard.dart';
 part 'builtins/time.dart';
 part 'builtins/screen.dart';
+part 'builtins/compare.dart';
 part 'builtins/windows.dart';
 part 'builtins/system.dart';
 part 'builtins/files.dart';
@@ -471,6 +473,13 @@ class ScriptRuntime implements Host {
 
   final Map<String, Bitmap> _images = {};
 
+  /// Where the pictures were cut from (same / region_diff without a place).
+  final Map<String, ({int x, int y, int w, int h})?> _imageOrigins = {};
+
+  /// Snapshots of snapshot(): id → the area (screen px) and its picture.
+  final Map<int, ({Rect4 r, Bitmap img})> _snapshots = {};
+  int _snapshotSeq = 0;
+
   static String hex(int rgb) =>
       '#${rgb.toRadixString(16).padLeft(6, '0').toUpperCase()}';
 
@@ -500,6 +509,7 @@ class ScriptRuntime implements Host {
     _registerKeyboard();
     _registerTime();
     _registerScreen();
+    _registerCompare();
     _registerWindows();
     _registerSystem();
     _registerFiles();

@@ -66,8 +66,8 @@ extension AppControllerPictures on AppController {
     return null;
   }
 
-  /// "Replace with a snapshot": mark a region on the screen (two Ctrl
-  /// presses); it is saved over picture [name], the scripts stay as they are.
+  /// "Replace with a snapshot": mark a region on the screen (drawn with the
+  /// mouse over the stop frame); it is saved over picture [name], the scripts stay as they are.
   void replacePicture(String name) {
     if (busy) return;
     _pictureToReplace = name;
@@ -76,12 +76,12 @@ extension AppControllerPictures on AppController {
   }
 
   /// Called with the region marked for [replacePicture]. True if handled.
-  bool _savePictureReplacement(Bitmap shot) {
+  bool _savePictureReplacement(Bitmap shot, int x, int y) {
     final name = _pictureToReplace;
     if (name == null) return false;
     _pictureToReplace = null;
     try {
-      File(imagePath(name)).writeAsBytesSync(pngEncode(shot));
+      File(imagePath(name)).writeAsBytesSync(pngEncode(shot, text: originText(x, y, shot.w, shot.h)));
       notify('Картинка заменена', '«$name»: ${shot.w} × ${shot.h} px. Скрипты менять не нужно', level: 'ok');
     } catch (e) {
       notify('Картинка не заменена', '$e', level: 'warn');

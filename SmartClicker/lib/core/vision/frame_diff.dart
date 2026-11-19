@@ -22,3 +22,25 @@ double changedShare(Uint8List a, Uint8List b, int w, int h, {int tolerance = 30}
   }
   return seen == 0 ? 0 : changed / seen;
 }
+
+/// Share (0..1) of the pixels of [a] and [b] (both [w]×[h] BGRA) whose
+/// colour differs by more than [tolerance] in some channel — the same
+/// tolerance as find_image (same / region_diff / changed).
+double pictureDiff(Uint8List a, Uint8List b, int w, int h, {int tolerance = 20}) {
+  if (w <= 0 || h <= 0 || a.length < w * h * 4 || b.length < w * h * 4) return 1;
+  final step = w * h > 400000 ? 2 : 1;
+  var bad = 0, seen = 0;
+  for (var y = 0; y < h; y += step) {
+    final row = y * w * 4;
+    for (var x = 0; x < w; x += step) {
+      final i = row + x * 4;
+      if ((a[i] - b[i]).abs() > tolerance ||
+          (a[i + 1] - b[i + 1]).abs() > tolerance ||
+          (a[i + 2] - b[i + 2]).abs() > tolerance) {
+        bad++;
+      }
+      seen++;
+    }
+  }
+  return seen == 0 ? 0 : bad / seen;
+}

@@ -6,8 +6,8 @@ import 'lexer.dart';
 
 /// Functions whose first argument is a picture that must exist.
 const pictureReaders = {
-  'click_image', 'find_image', 'find_images', 'wait_image', 'on_image', //
-  'clickImage', 'findImage', 'findImages', 'waitImage', 'onImage',
+  'click_image', 'find_image', 'find_images', 'wait_image', 'on_image', 'same', 'region_diff', //
+  'clickImage', 'findImage', 'findImages', 'waitImage', 'onImage', 'regionDiff',
 };
 
 /// All functions whose first argument is the name of a picture

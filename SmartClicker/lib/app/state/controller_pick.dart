@@ -293,7 +293,7 @@ extension AppControllerPick on AppController {
       _changed();
       return;
     }
-    if (_savePictureReplacement(shot)) {
+    if (_savePictureReplacement(shot, x, y)) {
       if (compact) setCompact(false);
       backend.activateSelf();
       openPage('vision');
@@ -316,6 +316,14 @@ extension AppControllerPick on AppController {
     final s = backend.screenSize();
     String pc(int v, int total) => '${(v * 100 / total).toStringAsFixed(2)}%';
     return '${pc(x, s.w)}, ${pc(y, s.h)}, ${pc(w, s.w)}, ${pc(h, s.h)}';
+  }
+
+  /// "x, y" of a screen point in the format of the settings.
+  String formatXY(int x, int y) {
+    if (!settings.recPercent) return '$x, $y';
+    final s = backend.screenSize();
+    String pc(int v, int total) => '${(v * 100 / total).toStringAsFixed(2)}%';
+    return '${pc(x, s.w)}, ${pc(y, s.h)}';
   }
 
   String formatCoords(CursorInfo c) => settings.recPercent

@@ -128,9 +128,10 @@ extension ScriptRuntimeBuiltinsScreen on ScriptRuntime {
       final name = _s(c, c.arg(0, 'name'), 'screenshot');
       final r = _region(c, 1, 'screenshot');
       final path = _imagePath(name);
-      File(path).writeAsBytesSync(
-          pngEncode(Bitmap(r.w, r.h, backend.capture(r.x, r.y, r.w, r.h))));
+      File(path).writeAsBytesSync(pngEncode(Bitmap(r.w, r.h, backend.capture(r.x, r.y, r.w, r.h)),
+          text: originText(r.x, r.y, r.w, r.h)));
       _images.remove(path);
+      _imageOrigins.remove(path);
       return path;
     });
 

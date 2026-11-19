@@ -13,6 +13,7 @@ import '../../../core/storage/storage.dart';
 import '../../../core/vision/image.dart';
 import '../../../core/vision/paddle_ocr.dart';
 import '../../../core/vision/ocr.dart';
+import '../../../core/vision/picture_origin.dart';
 import '../editor/code_editor.dart';
 import 'picture_actions.dart';
 
@@ -56,6 +57,9 @@ class _VisionState extends State<_Vision> {
   String? _sel; // _fresh, a saved picture name or null
   Bitmap? _bitmap;
   Uint8List? _png;
+
+  /// Where the shown picture was cut from (screen px), if known.
+  ({int x, int y, int w, int h})? _origin;
   final _name = TextEditingController();
   final _nameFocus = FocusNode();
   final _want = TextEditingController();
@@ -131,14 +135,18 @@ class _VisionState extends State<_Vision> {
     _want.text = '';
     _bitmap = null;
     _png = null;
+    _origin = null;
     try {
       if (sel == _fresh) {
-        _bitmap = widget.capture!.image;
-        _png = pngEncode(_bitmap!);
+        final cap = widget.capture!;
+        _bitmap = cap.image;
+        _origin = (x: cap.x, y: cap.y, w: cap.w, h: cap.h);
+        _png = pngEncode(_bitmap!, text: originText(cap.x, cap.y, cap.w, cap.h));
         _name.text = _freeName();
       } else if (sel != null) {
         _png = _file(sel).readAsBytesSync();
         _bitmap = pngDecode(_png!);
+        _origin = pictureOrigin(_png!);
         _name.text = sel;
       }
     } catch (e) {
@@ -452,6 +460,28 @@ class _VisionState extends State<_Vision> {
         ),
       );
 
+  /// same / region_diff for the picture [name] at the place it was cut from,
+  /// and a line for a neural network: the name, the place and the size.
+  List<Widget> _compareCommands(String name) {
+    final o = _origin;
+    if (o == null) {
+      return [
+        _cmd('same("$name", x, y)',
+            'Где была картинка, неизвестно (её вырезали раньше или не здесь) — впишите x, y или нажмите «Заменить снимком»'),
+      ];
+    }
+    final xy = app.formatXY(o.x, o.y);
+    final s = app.backend.screenSize();
+    return [
+      _cmd('same("$name", $xy)', 'true — место выглядит как картинка, false — изменилось'),
+      _cmd('if (!same("$name", $xy)) {  }', 'Если место изменилось — сделать то, что внутри { }'),
+      _cmd('region_diff("$name", $xy)', 'На сколько процентов место отличается от картинки (0 — одинаковые)'),
+      _cmd('Картинка "$name" (${o.w}×${o.h} px) вырезана из области x ${o.x}, y ${o.y}, '
+              'ширина ${o.w}, высота ${o.h} — пиксели экрана ${s.w}×${s.h}',
+          'Для нейросети: скопируйте и вставьте в чат вместе с задачей — она напишет скрипт с same / region_diff'),
+    ];
+  }
+
   Widget _details() {
     final cap = widget.capture;
     final fresh = _isFresh;
@@ -526,7 +556,7 @@ class _VisionState extends State<_Vision> {
                 onPressed: () => showPictureUses(context, app, _sel!),
               ),
               Tooltip(
-                message: 'Выделить на экране новую область (двумя нажатиями Ctrl) и сохранить её '
+                message: 'Обвести на экране новую область мышью и сохранить её '
                     'под этим же именем. Скрипты менять не нужно — удобно, когда в игре изменилась кнопка',
                 child: TextButton.icon(
                   icon: const Icon(Icons.crop_free, size: 18),
@@ -543,6 +573,11 @@ class _VisionState extends State<_Vision> {
               _cmd('find_image("$_sel")', 'Где картинка: {x, y} или null'),
               _cmd('click_image("$_sel", scale: "auto")', 'Найти, даже если картинка стала крупнее или мельче (окно другого размера)'),
             ]),
+            const SizedBox(height: 8),
+            Text('СРАВНИТЬ НА МЕСТЕ — без поиска: то же место экрана выглядит как картинка?',
+                style: TextStyle(color: _muted.withValues(alpha: 0.9), fontSize: 12)),
+            const SizedBox(height: 4),
+            Wrap(spacing: 6, runSpacing: 6, children: _compareCommands(_sel!)),
           ],
           _label('РАСПОЗНАВАНИЕ ТЕКСТА'),
           Wrap(

@@ -13,6 +13,7 @@ import 'package:flutter/widgets.dart';
 
 import '../../core/vision/image.dart';
 import '../../core/vision/loupe.dart';
+import '../../core/vision/picture_origin.dart';
 import '../../core/vision/paddle_ocr.dart' show PaddleOcr;
 import '../../core/engine/runner.dart';
 import '../../core/engine/runtime.dart';

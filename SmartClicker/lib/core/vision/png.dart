@@ -1,5 +1,6 @@
 // PNG files: own encoder and decoder (no packages).
 
+import 'dart:convert' show latin1;
 import 'dart:io';
 import 'dart:typed_data';
 import '../storage/zip.dart' show crc32;
@@ -7,7 +8,9 @@ import 'bitmap.dart';
 
 const _pngMagic = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
 
-Uint8List pngEncode(Bitmap b) {
+/// [text] — tEXt chunks (Latin-1 keys and values), e.g. where a picture
+/// was cut from (see picture_origin.dart).
+Uint8List pngEncode(Bitmap b, {Map<String, String> text = const {}}) {
   final stride = b.w * 3 + 1;
   final raw = Uint8List(stride * b.h);
   for (var y = 0; y < b.h; y++) {
@@ -38,8 +41,37 @@ Uint8List pngEncode(Bitmap b) {
   out.add(_pngMagic);
   chunk('IHDR', ihdr.buffer.asUint8List());
   chunk('IDAT', zlib.encode(raw));
+  for (final e in text.entries) {
+    chunk('tEXt', [...latin1.encode(e.key), 0, ...latin1.encode(e.value)]);
+  }
   chunk('IEND', const []);
   return out.toBytes();
+}
+
+/// The tEXt chunks of a PNG ({} for none or not a PNG).
+Map<String, String> pngText(Uint8List bytes) {
+  final out = <String, String>{};
+  if (bytes.length < 8) return out;
+  for (var i = 0; i < 8; i++) {
+    if (bytes[i] != _pngMagic[i]) return out;
+  }
+  final d = ByteData.sublistView(bytes);
+  var pos = 8;
+  while (pos + 8 <= bytes.length) {
+    final len = d.getUint32(pos);
+    final name = String.fromCharCodes(bytes, pos + 4, pos + 8);
+    final start = pos + 8;
+    if (start + len > bytes.length || name == 'IEND') break;
+    if (name == 'tEXt') {
+      final data = Uint8List.sublistView(bytes, start, start + len);
+      final zero = data.indexOf(0);
+      if (zero > 0) {
+        out[latin1.decode(data.sublist(0, zero))] = latin1.decode(data.sublist(zero + 1));
+      }
+    }
+    pos = start + len + 4;
+  }
+  return out;
 }
 
 /// Decodes a PNG (8/16-bit, any colour type, not interlaced).
