@@ -39,6 +39,11 @@ extension AppControllerPick on AppController {
 
   bool get _isRegionPick => pickMode == 'region' || pickMode == 'image';
 
+  /// What the pipette copies: the colour and the point in pixels and in
+  /// percent — ready for a script or a chat with a neural network.
+  static String colorPickText(CursorInfo c) =>
+      '${c.hex}   ${c.x}, ${c.y} px   ${c.px.toStringAsFixed(2)}%, ${c.py.toStringAsFixed(2)}%';
+
   /// The stop frame is shown now.
   bool get pickFrozen => _frozen != null;
 
@@ -215,8 +220,9 @@ extension AppControllerPick on AppController {
     _restoreAfterPick();
     _changed();
     if (pickMode == 'color') {
-      Clipboard.setData(ClipboardData(text: c.hex));
-      notify('Цвет скопирован', '${c.hex}\nточка ${c.x}, ${c.y} px', level: 'ok');
+      final text = AppControllerPick.colorPickText(c);
+      Clipboard.setData(ClipboardData(text: text));
+      notify('Цвет и точка скопированы', text, level: 'ok');
       return;
     }
     final inWindow = settings.pickFromWindow ? windowPickText(c) : null;

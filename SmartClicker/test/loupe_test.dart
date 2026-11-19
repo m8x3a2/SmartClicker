@@ -54,6 +54,11 @@ void main() {
     expect(_at(img, 1 + 4 * 4 + 2, 1 + 4 * 4 + 2), [2, 2, 200, 255]); // pixel (2, 2)
   });
 
+  test('pipette copies the colour and the point in px and percent', () {
+    expect(AppControllerPick.colorPickText(const CursorInfo(835, 521, 43.4896, 48.2407, 0xE5E6E6)),
+        '#E5E6E6   835, 521 px   43.49%, 48.24%');
+  });
+
   test('Esc is held back while picking, other hotkeys stay', () {
     final s = Settings();
     final idle = AppControllerHotkeys.heldBackHotkeys(s, RunState.idle, hasScript: true);

@@ -112,7 +112,7 @@ class _MiniPanelState extends State<MiniPanel> {
                   color: red)
             else ...[
               _btn(Icons.ads_click, 'Взять координаты кликом — в буфер обмена', app.startPick),
-              _btn(Icons.colorize_outlined, 'Взять цвет кликом — в буфер обмена',
+              _btn(Icons.colorize_outlined, 'Взять цвет кликом — в буфер обмена цвет и точка (пиксели и проценты)',
                   () => app.startPick('color')),
             ],
           ],

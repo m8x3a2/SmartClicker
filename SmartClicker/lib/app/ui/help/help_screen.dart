@@ -253,11 +253,17 @@ class _HelpPageState extends State<HelpPage> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           pageHeader('Справка', actions: [
-            IconButton(
-              tooltip: 'Выгрузить всю справку в ZIP: каждый раздел — файл .md, и промпт для ИИ',
-              icon: const Icon(Icons.download_outlined),
-              onPressed: _exportZip,
+            Tooltip(
+              message: 'Выгрузить всю справку в ZIP: каждый раздел — файл .md, и промпт для ИИ',
+              child: wide
+                  ? OutlinedButton.icon(
+                      icon: const Icon(Icons.download_outlined),
+                      label: const Text('В ZIP'),
+                      onPressed: _exportZip,
+                    )
+                  : IconButton(icon: const Icon(Icons.download_outlined), onPressed: _exportZip),
             ),
+            const SizedBox(width: 8),
             copy,
           ]),
           if (!wide) _picker(),
