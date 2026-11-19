@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../state/app_controller.dart';
 import '../../help/help_texts.dart';
-import '../../help/help_items.dart';
 import '../../../core/storage/storage.dart';
 import '../editor/code_editor.dart';
 import '../notes/notes_pane.dart';
@@ -56,7 +55,6 @@ class _HelpPageState extends State<HelpPage> {
   // editor, search (Ctrl+F) and hints under the mouse. Created on first
   // view.
   final _pages = <int, CodeController>{};
-  final _items = <int, List<HelpItem>>{};
   final _noLine = ValueNotifier<int>(0);
   int _current = 0;
 
@@ -85,9 +83,6 @@ class _HelpPageState extends State<HelpPage> {
         readOnly: true,
         viewer: true,
         hoverHints: app.settings.hintHover,
-        copyItems: _items[i] ??= helpItems(text.trim()),
-        onCopy: (it) => app.notify('Скопировано', it.code ? 'Пример кода — вставьте в скрипт (Ctrl+V)' : (it.text.length > 90 ? '${it.text.substring(0, 87)}…' : it.text),
-            level: 'ok'),
       ),
     );
   }
