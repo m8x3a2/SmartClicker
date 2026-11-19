@@ -104,6 +104,8 @@ class _HelpPageState extends State<HelpPage> {
         errorLine: _noLine,
         readOnly: true,
         viewer: true,
+        wrap: app.settings.codeWrap,
+        onWrap: app.toggleCodeWrap,
         hoverHints: app.settings.hintHover,
       ),
     );

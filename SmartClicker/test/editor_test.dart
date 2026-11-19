@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -97,6 +98,81 @@ void main() {
     await tester.pump();
     expect(c.text, 'pause(1)\nclick(1, 1)\npause(1)');
     expect(find.text('заменено: 2'), findsOneWidget);
+  });
+
+  Future<void> pumpSized(WidgetTester tester, String text, bool wrap,
+      {void Function(int)? onBreak}) async {
+    tester.view.physicalSize = const Size(500, 400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final line = ValueNotifier<int>(0);
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: CodeEditor(
+          controller: CodeController()..text = text,
+          currentLine: line,
+          errorLine: line,
+          wrap: wrap,
+          onBreakpoint: onBreak,
+        ),
+      ),
+    ));
+    await tester.pump(); // rows are measured after the first frame
+  }
+
+  String gutter(WidgetTester tester) => tester
+      .widgetList<Text>(find.byType(Text))
+      .map((t) => t.data ?? '')
+      .firstWhere((d) => d.startsWith('1'));
+
+  final long = 'log("${'очень длинная строка ' * 12}")';
+
+  testWidgets('перенос: длинная строка занимает несколько рядов', (tester) async {
+    final breaks = <int>[];
+    await pumpSized(tester, 'wait(1)\n$long\nclick(1, 1)', true,
+        onBreak: breaks.add);
+    final g = gutter(tester);
+    expect(g, startsWith('1\n2\n$wrapMark'));
+    expect(g, endsWith('\n3'));
+    // No sideways scrolling at all.
+    expect(find.byWidgetPredicate((w) => w is SingleChildScrollView && w.scrollDirection == Axis.horizontal),
+        findsNothing);
+    // A click on a continuation row puts the breakpoint on its line, the
+    // last number is below all the rows of line 2.
+    final rows = g.split('\n');
+    final top = tester.getTopLeft(find.text(g));
+    await tester.tapAt(top + Offset(20, 21.0 * 2 + 10));
+    await tester.tapAt(top + Offset(20, 21.0 * (rows.length - 1) + 10));
+    expect(breaks, [2, 3]);
+  });
+
+  testWidgets('без переноса: ширина по строке и ползунок внизу', (tester) async {
+    await pumpSized(tester, 'wait(1)\n$long', false);
+    expect(gutter(tester), '1\n2');
+    final box = tester.renderObject<RenderBox>(find.byWidgetPredicate(
+        (w) => w is SizedBox && w.child is Stack && (w.width ?? 0) > 500));
+    // As wide as the longest line: it stays in one row.
+    expect(box.size.height, 42);
+    expect(tester.getSize(find.byType(TextField)).height, 42);
+    final bar = tester.widget<RawScrollbar>(find.byWidgetPredicate(
+        (w) => w is RawScrollbar && w.scrollbarOrientation == ScrollbarOrientation.bottom));
+    expect(bar.thumbVisibility, isTrue);
+    // The scrollbar covers the whole editor, so it sits at its bottom edge.
+    expect(tester.getSize(find.byWidget(bar)).height, 400);
+    // Shift + wheel scrolls sideways also below the text.
+    final h = tester
+        .widget<SingleChildScrollView>(find.byWidgetPredicate(
+            (w) => w is SingleChildScrollView && w.scrollDirection == Axis.horizontal))
+        .controller!;
+    for (final at in const [Offset(300, 20), Offset(300, 300)]) {
+      final before = h.offset;
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendEventToBinding(PointerScrollEvent(
+          position: at, kind: PointerDeviceKind.mouse, scrollDelta: const Offset(0, 100)));
+      await tester.pump();
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      expect(h.offset, before + 100, reason: '$at');
+    }
   });
 
   test('имя картинки под мышью и размер PNG', () {

@@ -130,8 +130,11 @@ extension _CodeEditorStateEditorHints on _CodeEditorState {
   void _onHover(PointerHoverEvent e) {
     if (!widget.hoverHints || (_portal.isShowing && _isList)) return;
     final text = widget.controller.text;
-    final lineNo = (e.localPosition.dy / _lineHeight).floor();
-    final col = (e.localPosition.dx / _charW).floor();
+    final at = _charAtPoint(e.position, e.localPosition);
+    final pos = at == null ? null : _lineCol(at);
+    // Outside the text: no line matches below.
+    final lineNo = pos?.line ?? -1;
+    final col = pos?.col ?? -1;
     final lines = text.split('\n');
     Completion? hint;
     String? picture;
@@ -190,8 +193,8 @@ extension _CodeEditorStateEditorHints on _CodeEditorState {
   void _showAssist(List<Completion> items, bool list, int anchorOffset) {
     final box = _stackKey.currentContext?.findRenderObject();
     if (box is! RenderBox || !box.attached) return _hideAssist();
-    final at = _lineCol(anchorOffset);
-    _anchor = box.localToGlobal(Offset(at.col * _charW, at.line * _lineHeight));
+    _anchor = box.localToGlobal(Offset(
+        _xAtOffset(anchorOffset), _rowAtOffset(anchorOffset) * _lineHeight));
     _items = items;
     _isList = list;
     _index = 0;

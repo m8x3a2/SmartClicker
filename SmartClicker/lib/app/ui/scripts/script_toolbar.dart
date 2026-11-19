@@ -233,6 +233,8 @@ class ScriptToolbar extends StatelessWidget {
                   } else {
                     app.findRequest.value++;
                   }
+                case 'wrap':
+                  app.toggleCodeWrap();
                 case 'rename':
                   askName(context, 'Переименовать или перенести («Папка/Имя»)',
                       initial: app.current!, validate: app.rename);
@@ -268,6 +270,10 @@ class ScriptToolbar extends StatelessWidget {
               const PopupMenuItem(
                   value: 'find',
                   child: Text('Найти и заменить (Ctrl+F, Ctrl+H)')),
+              CheckedPopupMenuItem(
+                  value: 'wrap',
+                  checked: app.settings.codeWrap,
+                  child: const Text('Переносить длинные строки (Alt+Z)')),
               const PopupMenuDivider(),
               PopupMenuItem(
                   value: 'rename',

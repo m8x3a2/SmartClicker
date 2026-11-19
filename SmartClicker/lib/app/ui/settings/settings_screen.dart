@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../state/app_controller.dart';
 import '../../../core/storage/storage.dart';
+import '../editor/code_editor.dart' show wrapMark;
 import '../widgets/page_parts.dart';
 import '../widgets/hotkey_dialog.dart';
 import 'quick_settings.dart';
@@ -333,6 +334,10 @@ class SettingsPage extends StatelessWidget {
                     _row('Пояснения при наведении мыши', _bool(s.hintHover, (v) => s.hintHover = v),
                         hint: 'Наведите курсор на команду или параметр (например timeout: или tolerance:) — появится пояснение. '
                             'Выключите, если подсказка загораживает код. Работает и в справке'),
+                    _row('Переносить длинные строки', _bool(s.codeWrap, (v) => s.codeWrap = v),
+                        hint: 'Длинная строка переносится и видна целиком; продолжение отмечено значком $wrapMark у номеров строк. '
+                            'Выключено — строка уходит вправо, внизу редактора появляется ползунок, а колесо с Shift листает вбок. '
+                            'Переключить прямо в редакторе: Alt+Z или меню «⋮»'),
                   ]),
                   _card(context, 'Мини-панель поверх всех окон', 'mini', [
                     _row(

@@ -7,7 +7,7 @@ import 'dart:convert';
 /// reset at all: keys of single scripts, breakpoints, the OCR engine.
 const settingsGroups = <String, List<String>>{
   'general': ['recPercent', 'showClicks', 'clickMarkShape', 'clickMarkColor', 'clickMarkSize', 'pickFromWindow', 'pickFreeze', 'markColor', 'markSize'],
-  'editor': ['hintTyping', 'hintHover'],
+  'editor': ['hintTyping', 'hintHover', 'codeWrap'],
   'mini': ['miniKey', 'miniOnRun'],
   'tray': ['trayOnMinimize', 'trayOnClose'],
   'startup': ['autostartTray', 'autostartDelaySec'],
@@ -192,6 +192,9 @@ class Settings {
   bool hintTyping = true;
   bool hintHover = true;
 
+  /// Long lines of code are wrapped (otherwise they scroll sideways).
+  bool codeWrap = true;
+
   /// Breakpoints: script name -> line numbers.
   Map<String, List<int>> breakpoints = {};
 
@@ -321,6 +324,7 @@ class Settings {
     s.trayOnClose = get('trayOnClose', s.trayOnClose);
     s.hintTyping = get('hintTyping', s.hintTyping);
     s.hintHover = get('hintHover', s.hintHover);
+    s.codeWrap = get('codeWrap', s.codeWrap);
     final bp = json['breakpoints'];
     if (bp is Map) {
       s.breakpoints = {
@@ -421,6 +425,7 @@ class Settings {
         'trayOnClose': trayOnClose,
         'hintTyping': hintTyping,
         'hintHover': hintHover,
+        'codeWrap': codeWrap,
         'breakpoints': breakpoints,
         'pinnedVars': pinnedVars,
         'bottomTab': bottomTab,

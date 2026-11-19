@@ -23,6 +23,8 @@ class EditorArea extends StatelessWidget {
           readOnly: app.isRunning,
           findRequest: app.findRequest,
           suggestions: app.settings.hintTyping,
+          wrap: app.settings.codeWrap,
+          onWrap: app.toggleCodeWrap,
           hoverHints: app.settings.hintHover,
           breakpoints: app.breaks,
           onBreakpoint: app.toggleBreakpoint,

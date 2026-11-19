@@ -293,6 +293,8 @@ class _NotesPaneState extends State<NotesPane> {
                   currentLine: _noLine,
                   errorLine: _noLine,
                   suggestions: false,
+                  wrap: app.settings.codeWrap,
+                  onWrap: app.toggleCodeWrap,
                   hoverHints: app.settings.hintHover,
                 ),
         ),

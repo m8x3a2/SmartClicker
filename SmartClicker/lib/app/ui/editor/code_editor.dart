@@ -6,7 +6,9 @@ import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/lang/completions.dart';
@@ -14,6 +16,7 @@ import '../../../core/lang/picture_refs.dart';
 
 part 'code_controller.dart';
 part 'editor_hints.dart';
+part 'editor_layout.dart';
 part 'editor_search.dart';
 
 const _fontSize = 14.0;
@@ -31,6 +34,10 @@ const codeStyle = TextStyle(
   height: 1.5,
   color: Color(0xFFD7DAE0),
 );
+
+/// The style of the text field: the Material 3 theme adds letter spacing
+/// 0.5 to fields, so it is written here and every measurement uses it.
+final _fieldStyle = codeStyle.copyWith(letterSpacing: 0.5);
 
 const _strut = StrutStyle(
   fontFamily: 'Consolas',
@@ -78,6 +85,11 @@ class CodeEditor extends StatefulWidget {
   /// Own undo / redo (Ctrl+Z, Ctrl+Y, Ctrl+Shift+Z): the history of the
   /// script lives outside the widget. Without them the built-in one works.
   final VoidCallback? onUndo, onRedo;
+
+  /// Long lines are wrapped (otherwise the text scrolls sideways);
+  /// [onWrap] switches it (Alt+Z).
+  final bool wrap;
+  final VoidCallback? onWrap;
   const CodeEditor({
     super.key,
     required this.controller,
@@ -95,6 +107,8 @@ class CodeEditor extends StatefulWidget {
     this.revealLine,
     this.onUndo,
     this.onRedo,
+    this.wrap = true,
+    this.onWrap,
   });
 
   @override
@@ -107,7 +121,16 @@ class _CodeEditorState extends State<CodeEditor> {
   final _lines = ValueNotifier<int>(1);
   final _editorFocus = FocusNode();
   final _stackKey = GlobalKey();
+  final _fieldKey = GlobalKey();
   double? _charWidth;
+
+  // Layout (editor_layout.dart): first screen row of every line when
+  // wrapping; the longest line and its width when not.
+  final _layout = ValueNotifier<List<int>?>(null);
+  bool _measureQueued = false;
+  String _longest = '';
+  double _textWidth = 0;
+  double _wrapWidth = 0;
 
   // Search bar
   bool _findOpen = false;
@@ -150,6 +173,17 @@ class _CodeEditorState extends State<CodeEditor> {
     _v.addListener(_hideAssist);
     _h.addListener(_hideAssist);
     _countLines();
+    _measureWidth();
+    _measureLater();
+  }
+
+  @override
+  void didUpdateWidget(CodeEditor old) {
+    super.didUpdateWidget(old);
+    if (old.wrap != widget.wrap) {
+      if (!widget.wrap) _layout.value = null;
+      _measureLater();
+    }
   }
 
   @override
@@ -171,6 +205,7 @@ class _CodeEditorState extends State<CodeEditor> {
     _replaceCtrl.dispose();
     _v.dispose();
     _h.dispose();
+    _layout.dispose();
     super.dispose();
   }
 
@@ -179,7 +214,7 @@ class _CodeEditorState extends State<CodeEditor> {
 
   double get _charW => _charWidth ??= () {
         final p = TextPainter(
-          text: const TextSpan(text: 'MMMMMMMMMM', style: codeStyle),
+          text: TextSpan(text: 'MMMMMMMMMM', style: _fieldStyle),
           textDirection: TextDirection.ltr,
         )..layout();
         final w = p.width / 10;
@@ -189,6 +224,13 @@ class _CodeEditorState extends State<CodeEditor> {
 
   void _onChanged() {
     _countLines();
+    if (widget.wrap) {
+      _measureLater();
+    } else {
+      final w = _textWidth;
+      _measureWidth();
+      if (w != _textWidth) setState(() {});
+    }
     final text = widget.controller.text;
     final typed = text != _lastText;
     _lastText = text;
@@ -232,7 +274,7 @@ class _CodeEditorState extends State<CodeEditor> {
   void _follow() {
     final line = widget.currentLine.value;
     if (line <= 0 || !_v.hasClients) return;
-    final y = (line - 1) * _lineHeight;
+    final y = _rowOf(line - 1) * _lineHeight;
     final top = _v.offset, bottom = top + _v.position.viewportDimension;
     if (y < top + _lineHeight || y > bottom - 3 * _lineHeight) {
       final target = (y - _v.position.viewportDimension / 3)
@@ -256,8 +298,9 @@ class _CodeEditorState extends State<CodeEditor> {
     final at = _lineCol(offset);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+      _measure(); // the text may have changed in this very frame
       if (_v.hasClients) {
-        final y = _topPad + at.line * _lineHeight;
+        final y = _topPad + _rowAtOffset(offset) * _lineHeight;
         final top = _v.offset, view = _v.position.viewportDimension;
         final max = _v.position.maxScrollExtent;
         if (y < top + (center ? _lineHeight : 0) ||
@@ -268,7 +311,7 @@ class _CodeEditorState extends State<CodeEditor> {
           _v.jumpTo(target.clamp(0.0, max));
         }
       }
-      if (_h.hasClients) {
+      if (!widget.wrap && _h.hasClients) {
         final x = at.col * _charW;
         final left = _h.offset, view = _h.position.viewportDimension;
         if (x < left + 20 || x > left + view - 60) {
@@ -361,17 +404,20 @@ class _CodeEditorState extends State<CodeEditor> {
 
   Widget _marker(ValueListenable<int> line, Color color) => Positioned.fill(
         child: IgnorePointer(
-          child: ValueListenableBuilder<int>(
-            valueListenable: line,
-            builder: (_, l, _) => l <= 0
-                ? const SizedBox.shrink()
-                : Align(
-                    alignment: Alignment.topLeft,
-                    child: Padding(
-                      padding: EdgeInsets.only(top: (l - 1) * _lineHeight),
-                      child: Container(height: _lineHeight, color: color),
-                    ),
-                  ),
+          child: ListenableBuilder(
+            listenable: Listenable.merge([line, _layout]),
+            builder: (_, _) {
+              final l = line.value;
+              if (l <= 0) return const SizedBox.shrink();
+              return Align(
+                alignment: Alignment.topLeft,
+                child: Padding(
+                  padding: EdgeInsets.only(top: _rowOf(l - 1) * _lineHeight),
+                  child: Container(
+                      height: _rowsIn(l - 1) * _lineHeight, color: color),
+                ),
+              );
+            },
           ),
         ),
       );
@@ -386,6 +432,9 @@ class _CodeEditorState extends State<CodeEditor> {
         const SingleActivator(LogicalKeyboardKey.f3): () => _stepFind(1),
         const SingleActivator(LogicalKeyboardKey.f3, shift: true): () =>
             _stepFind(-1),
+        if (widget.onWrap != null)
+          const SingleActivator(LogicalKeyboardKey.keyZ, alt: true):
+              widget.onWrap!,
       },
       child: OverlayPortal(
         controller: _portal,
@@ -421,17 +470,19 @@ class _CodeEditorState extends State<CodeEditor> {
     final click = widget.onBreakpoint;
     return SizedBox(
       width: 48,
-      child: ValueListenableBuilder<int>(
-        valueListenable: _lines,
-        builder: (_, n, _) => ValueListenableBuilder<Set<int>>(
-          valueListenable: widget.breakpoints ?? _noBreaks,
-          builder: (_, br, _) {
+      child: ListenableBuilder(
+        listenable: Listenable.merge(
+            [_lines, _layout, widget.breakpoints ?? _noBreaks]),
+        builder: (_, _) {
+            final n = _lines.value;
+            final br = (widget.breakpoints ?? _noBreaks).value;
             final numbers = Stack(children: [
               SizedBox(
                 width: 48,
                 child: Text(
-                  List.generate(n, (i) => '${i + 1}').join('\n'),
+                  _gutterText(n),
                   textAlign: TextAlign.right,
+                  softWrap: false,
                   style: codeStyle.copyWith(color: const Color(0xFF555B69)),
                   strutStyle: _strut,
                 ),
@@ -440,7 +491,7 @@ class _CodeEditorState extends State<CodeEditor> {
                 if (l <= n)
                   Positioned(
                     left: 2,
-                    top: (l - 1) * _lineHeight + (_lineHeight - 11) / 2,
+                    top: _rowOf(l - 1) * _lineHeight + (_lineHeight - 11) / 2,
                     child: Container(
                       width: 11,
                       height: 11,
@@ -459,37 +510,90 @@ class _CodeEditorState extends State<CodeEditor> {
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   onTapUp: (d) {
-                    final line = (d.localPosition.dy / _lineHeight).floor() + 1;
-                    if (line >= 1 && line <= n) click(line);
+                    final row = (d.localPosition.dy / _lineHeight).floor();
+                    final line = _lineAtRow(row) + 1;
+                    if (row >= 0 && row < (_rows?.last ?? n) && line <= n) {
+                      click(line);
+                    }
                   },
                   child: numbers,
                 ),
               ),
             );
-          },
-        ),
+        },
       ),
     );
   }
 
   Widget _scrollArea() {
-    return Scrollbar(
+    final wrap = widget.wrap;
+    final area = Scrollbar(
       controller: _v,
       child: SingleChildScrollView(
         controller: _v,
-        padding: const EdgeInsets.symmetric(vertical: _topPad),
+        // Without wrapping the sideways scrollbar lies over the last row.
+        padding: EdgeInsets.only(top: _topPad, bottom: wrap ? _topPad : _topPad + 12),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (!widget.viewer) _gutter(),
             const SizedBox(width: 14),
             Expanded(
-              child: SingleChildScrollView(
-                controller: _h,
-                scrollDirection: Axis.horizontal,
-                child: SizedBox(
-                  width: 3000,
-                  child: Stack(
+              child: LayoutBuilder(builder: (_, box) {
+                if (wrap) {
+                  if (box.maxWidth != _wrapWidth) {
+                    _wrapWidth = box.maxWidth;
+                    _measureLater();
+                  }
+                  return _textArea();
+                }
+                return SingleChildScrollView(
+                  controller: _h,
+                  scrollDirection: Axis.horizontal,
+                  child: SizedBox(
+                    width: math.max(box.maxWidth, _textWidth + 4 * _charW),
+                    child: _textArea(),
+                  ),
+                );
+              }),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (wrap) return area;
+    // Sideways scrollbar at the bottom of the editor, not of the text.
+    final bar = RawScrollbar(
+      controller: _h,
+      thumbVisibility: true,
+      thickness: 8,
+      radius: const Radius.circular(4),
+      thumbColor: const Color(0x668B92A1),
+      padding: EdgeInsets.only(left: widget.viewer ? 14 : 62, right: 12, bottom: 2),
+      scrollbarOrientation: ScrollbarOrientation.bottom,
+      notificationPredicate: (n) => n.metrics.axis == Axis.horizontal,
+      child: area,
+    );
+    return Listener(onPointerSignal: _sidewaysWheel, child: bar);
+  }
+
+  /// Shift + wheel (or a sideways wheel) anywhere in the editor, also below
+  /// a short text, where the sideways scroll view does not reach.
+  void _sidewaysWheel(PointerSignalEvent e) {
+    if (e is! PointerScrollEvent || !_h.hasClients) return;
+    final shift = HardwareKeyboard.instance.isShiftPressed;
+    final d = e.scrollDelta.dx != 0 ? e.scrollDelta.dx : (shift ? e.scrollDelta.dy : 0.0);
+    if (d == 0) return;
+    // Over the text the scroll view itself has registered first and wins.
+    GestureBinding.instance.pointerSignalResolver.register(e, (_) {
+      final p = _h.position;
+      p.jumpTo((p.pixels + d).clamp(0.0, p.maxScrollExtent));
+    });
+  }
+
+  /// The text with the current / error line markers under it.
+  Widget _textArea() {
+    return Stack(
                     key: _stackKey,
                     children: [
                       _marker(widget.errorLine, const Color(0x55E5484D)),
@@ -529,11 +633,12 @@ class _CodeEditorState extends State<CodeEditor> {
                                 UndoTextIntent(SelectionChangedCause.keyboard),
                           },
                           child: TextField(
+                            key: _fieldKey,
                             controller: widget.controller,
                             focusNode: _editorFocus,
                             readOnly: widget.readOnly,
                             maxLines: null,
-                            style: codeStyle,
+                            style: _fieldStyle,
                             strutStyle: _strut,
                             autocorrect: false,
                             enableSuggestions: false,
@@ -546,14 +651,7 @@ class _CodeEditorState extends State<CodeEditor> {
                       ),
                       ),
                     ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+                  );
   }
 
   /// setState for the parts of the editor (extensions may not call it).

@@ -10,6 +10,13 @@ extension AppControllerSettings on AppController {
     _changed();
   }
 
+  /// Wraps long lines of code or lets them scroll sideways (Alt+Z).
+  void toggleCodeWrap() {
+    settings.codeWrap = !settings.codeWrap;
+    saveSettingsQuiet();
+    _changed();
+  }
+
   void setBlocksCode(bool code) {
     settings.blocksCode = code;
     saveSettingsQuiet();

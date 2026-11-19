@@ -251,6 +251,7 @@ class _NewScriptDialogState extends State<_NewScriptDialog> {
                 errorLine: _noLine,
                 readOnly: true,
                 suggestions: false,
+                wrap: widget.app.settings.codeWrap,
                 hoverHints: false,
                 imagePath: widget.app.imagePath,
               ),
