@@ -92,6 +92,9 @@ extension AppControllerPick on AppController {
     _loupeAt = null;
     _pickMouse = backend.isVkDown(0x01);
     _pickRight = backend.isVkDown(0x02);
+    backend.watchMouseButtons(true);
+    _pressesLeft = backend.mousePresses(0x01);
+    _pressesRight = backend.mousePresses(0x02);
     _changed();
   }
 
@@ -99,6 +102,7 @@ extension AppControllerPick on AppController {
     if (_frozen != null) {
       backend.hideFreeze();
       backend.hideLoupe();
+      backend.watchMouseButtons(false);
     }
     _frozen = null;
     _loupeAt = null;
@@ -158,6 +162,19 @@ extension AppControllerPick on AppController {
 
   // ---- polling (every 25 ms while picking) ----
 
+  /// The left / right button went down since the last poll over the stop
+  /// frame — also a click shorter than one poll (counted by the hook).
+  bool _freshPress(int vk, bool down, bool wasDown) {
+    final now = backend.mousePresses(vk);
+    final counted = vk == 0x02 ? _pressesRight : _pressesLeft;
+    if (vk == 0x02) {
+      _pressesRight = now;
+    } else {
+      _pressesLeft = now;
+    }
+    return (down && !wasDown) || now != counted;
+  }
+
   void _pollPick() {
     if (backend.isVkDown(0x1B)) return cancelPick();
     if (_freezeDelay > 0) {
@@ -167,14 +184,15 @@ extension AppControllerPick on AppController {
     final p = backend.cursorPos();
     if (pickFrozen) {
       final right = backend.isVkDown(0x02);
-      final rightPressed = right && !_pickRight;
+      final rightPressed = _freshPress(0x02, right, _pickRight);
       _pickRight = right;
       if (rightPressed && backend.freezeAt(p.x, p.y)) return cancelPick();
+      if (_tick % 4 == 0) backend.raisePickOverlays();
       _showLoupe(p);
     }
     if (_isRegionPick) return _pollRegion(p);
     final down = backend.isVkDown(0x01);
-    final pressed = down && !_pickBtnDown;
+    final pressed = pickFrozen ? _freshPress(0x01, down, _pickBtnDown) : down && !_pickBtnDown;
     _pickBtnDown = down;
     if (!pressed) return;
     // A click in our own window (the mini panel) is not a pick.
@@ -225,8 +243,10 @@ extension AppControllerPick on AppController {
     var mousePressed = false, mouseReleased = false;
     if (pickFrozen) {
       final m = backend.isVkDown(0x01);
-      mousePressed = m && !_pickMouse && backend.freezeAt(p.x, p.y);
-      mouseReleased = !m && _pickMouse;
+      final fresh = _freshPress(0x01, m, _pickMouse);
+      mousePressed = fresh && backend.freezeAt(p.x, p.y);
+      // a click shorter than a poll: pressed and already released
+      mouseReleased = !m && (_pickMouse || fresh);
       _pickMouse = m;
     }
     final first = pickCorner;

@@ -11,8 +11,11 @@ extension AppControllerHotkeys on AppController {
   }
 
   bool _pressed(String combo) {
-    final hit = combo.isNotEmpty &&
-        AppControllerHotkeys.freshPress(_hotkeyState, combo, _comboDown(combo));
+    if (combo.isEmpty) return false;
+    final down = _comboDown(combo);
+    final hit = AppControllerHotkeys.freshPress(_hotkeyState, combo, down) ||
+        AppControllerHotkeys.quickPress(
+            _hotkeyFired, combo, backend.comboPresses(AppController.comboVks(combo)), down);
     // Caps Lock of a hotkey ("capslock+q") also switched capital letters on
     // or off; it is switched back once released (see _onPoll) — only when
     // the hotkey does something now (otherwise the keys go on as usual).
@@ -39,6 +42,20 @@ extension AppControllerHotkeys on AppController {
       backend.keyEvent('f24', false);
     }
     return hit;
+  }
+
+  /// A held-back combo was pressed and let go between two polls (the hook
+  /// counted it, [down] is false already). The first count of a combo, or
+  /// one from a new table of combos, is only remembered.
+  static bool quickPress(
+      Map<String, ({int gen, int count})> last, String combo, ({int gen, int count})? now, bool down) {
+    if (now == null) {
+      last.remove(combo);
+      return false;
+    }
+    final was = last[combo];
+    last[combo] = now;
+    return !down && was != null && was.gen == now.gen && was.count != now.count;
   }
 
   /// The combo went down since the last poll. A combo seen for the first
@@ -110,6 +127,7 @@ extension AppControllerHotkeys on AppController {
     for (final k in _allHotkeys) {
       _hotkeyState[k] = _comboDown(k);
     }
+    _hotkeyFired.clear(); // presses while suspended are not hotkeys
     _hotkeysSuspended = false;
   }
 

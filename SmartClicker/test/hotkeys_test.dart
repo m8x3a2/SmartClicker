@@ -72,6 +72,21 @@ void main() {
     expect(held(RunState.running), isEmpty);
   });
 
+  test('нажатие короче опроса (программа, нейросеть) засчитывается по счётчику хука', () {
+    final last = <String, ({int gen, int count})>{};
+    bool q(({int gen, int count})? now, {bool down = false}) =>
+        AppControllerHotkeys.quickPress(last, 'q', now, down);
+    expect(q((gen: 1, count: 3)), isFalse); // first sight: only remembered
+    expect(q((gen: 1, count: 3)), isFalse); // nothing new
+    expect(q((gen: 1, count: 4)), isTrue); // pressed and let go between polls
+    expect(q((gen: 1, count: 5), down: true), isFalse); // still held: freshPress sees it
+    expect(q((gen: 1, count: 5)), isFalse);
+    expect(q((gen: 2, count: 0)), isFalse); // a new table counts from 0
+    expect(q((gen: 2, count: 1)), isTrue);
+    expect(q(null), isFalse); // not held back any more
+    expect(last, isEmpty);
+  });
+
   test('только что назначенная клавиша не срабатывает, пока её не отпустят', () {
     final last = <String, bool>{};
     // Assigned in the dialog: the first poll sees it already held.

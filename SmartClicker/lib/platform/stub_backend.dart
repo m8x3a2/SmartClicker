@@ -153,6 +153,17 @@ class StubBackend implements PlatformBackend {
   void showLoupe(int x, int y, int w, int h, Uint8List bgra) => loupe = (x: x, y: y, w: w, h: h);
   @override
   void hideLoupe() => loupe = null;
+  @override
+  void raisePickOverlays() {}
+  Map<String, ({int gen, int count})> combos = {};
+  @override
+  ({int gen, int count})? comboPresses(List<int> vks) => combos[vks.join('+')];
+  bool buttonsWatched = false;
+  Map<int, int> presses = {};
+  @override
+  bool watchMouseButtons(bool on) => buttonsWatched = on;
+  @override
+  int mousePresses(int vk) => presses[vk] ?? 0;
   List<({int x, int y})> landmarks = const [];
   @override
   void showLandmarks(List<({int x, int y})> points, int rgb, int size) => landmarks = List.of(points);

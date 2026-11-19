@@ -223,6 +223,10 @@ abstract class PlatformBackend {
   void showLoupe(int x, int y, int w, int h, Uint8List bgra);
   void hideLoupe();
 
+  /// The mini panel, the magnifier and the region frame back above the
+  /// stop frame (a click on it may bring it to the top).
+  void raisePickOverlays();
+
   /// Landmarks: click-through dots of [rgb] and [size] px over every window
   /// at [points] (screen px), for the eyes only. Replaces the ones shown.
   void showLandmarks(List<({int x, int y})> points, int rgb, int size);
@@ -293,6 +297,19 @@ abstract class PlatformBackend {
   /// Where the user last moved the mouse and how long ago, or null when no
   /// move of the user was seen since [watchUserMouse] was turned on.
   ({int x, int y, int ageMs})? lastUserMouse();
+
+  /// How many times the held-back combo [vks] was pressed (modulo 256) and
+  /// the generation of the table of combos (a new table counts from 0);
+  /// null when [vks] is not held back now. A press shorter than polling is
+  /// still counted.
+  ({int gen, int count})? comboPresses(List<int> vks);
+
+  /// Counting presses of the mouse buttons on/off (see [mousePresses]).
+  bool watchMouseButtons(bool on);
+
+  /// How many times the left (vk 1) / right (vk 2) button went down while
+  /// counting, modulo 256: a click too short for polling is still seen.
+  int mousePresses(int vk);
 
   /// The "ghost" mode of a recording: the user's clicks and keys reach no
   /// program, but [isVkDown] still sees them (so they are recorded). Clicks

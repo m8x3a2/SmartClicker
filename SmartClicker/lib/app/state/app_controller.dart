@@ -359,6 +359,9 @@ class AppController extends ChangeNotifier {
   Timer? _poll;
   int _tick = 0;
   final Map<String, bool> _hotkeyState = {};
+
+  /// Presses of held-back combos counted by the hook (see quickPress).
+  final Map<String, ({int gen, int count})> _hotkeyFired = {};
   bool _hotkeysSuspended = false;
   bool _holdBackWarned = false;
 
@@ -661,6 +664,9 @@ class AppController extends ChangeNotifier {
   /// Mouse buttons at the last poll of a pick; a region is being drawn
   /// with the mouse.
   bool _pickMouse = false, _pickRight = false, _pickDragging = false;
+
+  /// Button presses counted by the hook when the stop frame appeared.
+  int _pressesLeft = 0, _pressesRight = 0;
 
   /// Stop frame of a pick: the screen as it was when the pick started
   /// ([_frozenAt] — its top left corner on the screen); null — none.

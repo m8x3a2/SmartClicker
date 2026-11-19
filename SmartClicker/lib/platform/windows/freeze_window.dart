@@ -23,6 +23,7 @@ mixin _FreezeWindow implements PlatformBackend {
   bool _freezeClassReady = false;
 
   int _findMainWindow(); // from _ProgramWindow
+  int get _frameWnd; // from _ProgramWindow
   ({int style, int ex, Rect4 rect, bool max})? get _panelSaved; // from _ProgramWindow
 
   @override
@@ -108,6 +109,19 @@ mixin _FreezeWindow implements PlatformBackend {
   void hideLoupe() {
     if (_loupeWnd != 0) _DestroyWindow(_loupeWnd);
     _loupeWnd = 0;
+  }
+
+  @override
+  void raisePickOverlays() {
+    if (_freezeWnd == 0) return;
+    void raise(int hwnd) {
+      // HWND_TOPMOST, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE
+      if (hwnd != 0) _SetWindowPos(hwnd, -1, 0, 0, 0, 0, 0x1 | 0x2 | 0x10);
+    }
+
+    if (_panelSaved != null) raise(_findMainWindow());
+    raise(_frameWnd);
+    raise(_loupeWnd);
   }
 
   /// Puts a premultiplied BGRA picture into a layered window at (x, y).

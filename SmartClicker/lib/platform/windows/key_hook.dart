@@ -27,6 +27,10 @@ const _khMouseY = 428; // Int32
 const _khMouseTick = 432; // Uint32: GetTickCount of that move
 const _khGhost = 436; // byte: 1 = ghost mode — the user's clicks and keys are eaten
 const _khPid = 440; // Uint32: our process (clicks on our own windows pass)
+const _khPresses = 444; // 2 bytes: presses of the left / right button (wrap at 256)
+const _khPressWanted = 446; // byte: 1 = count the presses (a pick over the stop frame)
+const _khFired = 448; // _khMaxCombos bytes: presses of each combo (wrap at 256)
+const _khGen = 480; // byte: changes when the combo table is rewritten
 
 /// Thread message to the hook isolate: re-read [_khMouseWanted].
 const _khMouseMsg = 0x8007; // WM_APP + 7
@@ -83,7 +87,7 @@ NativeCallable<_HookProc>? _mouseHookProc;
 /// Puts the mouse hook on or off as [_khMouseWanted] and the ghost mode
 /// say (hook isolate).
 void _syncMouseHook() {
-  final want = _kh[_khMouseWanted] != 0 || _kh[_khGhost] != 0;
+  final want = _kh[_khMouseWanted] != 0 || _kh[_khGhost] != 0 || _kh[_khPressWanted] != 0;
   if (want && _mouseHookHandle == 0) {
     final proc = NativeCallable<_HookProc>.isolateLocal(_userMouseHook, exceptionalReturn: 0);
     _mouseHookHandle = _SetWindowsHookExW(14, proc.nativeFunction, _GetModuleHandleW(nullptr), 0);
@@ -115,6 +119,10 @@ int _userMouseHook(int code, int wParam, int lParam) {
   // MSLLHOOKSTRUCT: pt.x, pt.y, mouseData, flags, time, dwExtraInfo at 24.
   final extra = Pointer<IntPtr>.fromAddress(lParam + 24).value;
   final button = _ghostButtons[wParam];
+  // Presses are counted: a click shorter than one poll (25 ms — programs
+  // and neural networks click so) would not be seen as "held".
+  if (wParam == 0x0201) _kh[_khPresses] = (_kh[_khPresses] + 1) & 0xFF;
+  if (wParam == 0x0204) _kh[_khPresses + 1] = (_kh[_khPresses + 1] + 1) & 0xFF;
   if (button != null && extra != _ownInputTag) {
     final (vk, down) = button;
     if (!down) {
@@ -175,7 +183,12 @@ bool _khCompletes(int vk) {
       for (var j = 0; j < 4; j++)
         if (_kh[_khCombos + i * 4 + j] != 0) _kh[_khCombos + i * 4 + j],
     ];
-    if (completesCombo(vk, combo, _khIsDown)) return true;
+    if (completesCombo(vk, combo, _khIsDown)) {
+      // Counted: a press shorter than one poll (25 ms — programs and
+      // neural networks press keys so) is still seen by the program.
+      _kh[_khFired + i] = (_kh[_khFired + i] + 1) & 0xFF;
+      return true;
+    }
   }
   return false;
 }
@@ -266,6 +279,10 @@ mixin _KeyHook implements PlatformBackend {
     if (key != _khLast) {
       _khLast = key;
       b[_khCount] = 0; // the hook skips the table while it is being written
+      for (var i = 0; i < _khMaxCombos; i++) {
+        b[_khFired + i] = 0;
+      }
+      b[_khGen] = (b[_khGen] + 1) & 0xFF;
       for (var i = 0; i < list.length; i++) {
         for (var j = 0; j < 4; j++) {
           b[_khCombos + i * 4 + j] = j < list[i].length ? list[i][j] : 0;
@@ -288,6 +305,43 @@ mixin _KeyHook implements PlatformBackend {
       if (thread != 0) _PostThreadMessageW(thread, _khMouseMsg, 0, 0);
     }
     return Pointer<Int32>.fromAddress(b.address + _khStatus).value != -1;
+  }
+
+  @override
+  ({int gen, int count})? comboPresses(List<int> vks) {
+    final b = _khBuf;
+    if (b == nullptr) return null;
+    final n = b[_khCount];
+    for (var i = 0; i < n && i < _khMaxCombos; i++) {
+      final combo = <int>[
+        for (var j = 0; j < 4; j++)
+          if (b[_khCombos + i * 4 + j] != 0) b[_khCombos + i * 4 + j],
+      ];
+      if (combo.length == vks.length && combo.every(vks.contains)) {
+        return (gen: b[_khGen], count: b[_khFired + i]);
+      }
+    }
+    return null;
+  }
+
+  @override
+  bool watchMouseButtons(bool on) {
+    if (_khBuf == nullptr) holdBackKeys(const []); // starts the hook isolate
+    final b = _khBuf;
+    final want = on ? 1 : 0;
+    if (b[_khPressWanted] != want) {
+      b[_khPressWanted] = want;
+      final thread = Pointer<Uint32>.fromAddress(b.address + _khThread).value;
+      if (thread != 0) _PostThreadMessageW(thread, _khMouseMsg, 0, 0); // mouse hook on/off
+    }
+    return Pointer<Int32>.fromAddress(b.address + _khStatus).value != -1;
+  }
+
+  @override
+  int mousePresses(int vk) {
+    final b = _khBuf;
+    if (b == nullptr) return 0;
+    return vk == 0x02 ? b[_khPresses + 1] : b[_khPresses];
   }
 
   @override
