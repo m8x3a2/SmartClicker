@@ -109,9 +109,37 @@ extension AppControllerRecord on AppController {
   /// works. Its clicks and keys reach no program, the marker shows where
   /// they would go and the log says «призрак: не нажато» — to check a run
   /// up to the important click without pressing it.
+  /// The ghost for ONE action: the next click or key of the running script
+  /// is only shown, then it is real again (Shift + the ghost key, Shift +
+  /// click on 👻) — to skip exactly the important click.
+  void setRunGhostOnce() {
+    if (!isRunning || runGhost || runGhostOnce) return;
+    runGhostOnce = true;
+    _runner.ghostOnce();
+    try {
+      backend.beep('warn');
+    } catch (_) {}
+    final s = backend.screenSize();
+    backend.showFrame(3, 3, s.w - 6, s.h - 6);
+    _log('system', '👻 Призрак на одно действие: следующий клик или клавиша скрипта не нажмётся');
+    notify('👻 Призрак на одно действие', 'Следующий клик или клавиша скрипта только покажется, дальше — по-настоящему',
+        level: 'warn');
+    _changed();
+  }
+
+  /// The engine skipped the one action of [setRunGhostOnce].
+  void _ghostOnceDone() {
+    if (!runGhostOnce) return;
+    runGhostOnce = false;
+    if (!runGhost) backend.hideFrame();
+    notify('Призрак выключен', 'Одно действие пропущено, дальше клики настоящие', level: 'ok');
+    _changed();
+  }
+
   void setRunGhost(bool on) {
     if (on == runGhost) return;
     if (on && !isRunning) return;
+    runGhostOnce = false;
     runGhost = on;
     _runner.setGhost(on);
     try {

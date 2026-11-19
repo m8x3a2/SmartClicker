@@ -52,7 +52,7 @@ class RunStatusBar extends StatelessWidget {
     };
     final recording = app.state == RunState.recording;
     final canGhost = recording || app.isRunning;
-    final ghostOn = recording ? app.ghost : app.runGhost;
+    final ghostOn = recording ? app.ghost : app.runGhost || app.runGhostOnce;
     final key = s.ghostKey.isEmpty ? '' : ' (${s.ghostKey.toUpperCase()})';
     return Container(
       width: double.infinity,
@@ -62,6 +62,17 @@ class RunStatusBar extends StatelessWidget {
           style: TextStyle(color: color, fontWeight: FontWeight.w600),
           child: Row(children: [
             Expanded(child: child),
+            if (canGhost)
+              if (!recording && !ghostOn)
+                Tooltip(
+                  message: 'Пропустить только одно следующее действие скрипта (клик или клавишу), '
+                      'дальше — по-настоящему${s.ghostKey.isEmpty ? '' : '. Клавиша: Shift+${s.ghostKey.toUpperCase()}'}',
+                  child: TextButton(
+                    style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
+                    onPressed: app.setRunGhostOnce,
+                    child: const Text('👻 одно действие'),
+                  ),
+                ),
             if (canGhost)
               Tooltip(
                 message: recording
@@ -75,7 +86,11 @@ class RunStatusBar extends StatelessWidget {
                   ),
                   onPressed: () => recording ? app.setGhost(!app.ghost) : app.setRunGhost(!app.runGhost),
                   icon: Text('👻', style: TextStyle(fontSize: 15, color: ghostOn ? null : const Color(0x99FFFFFF))),
-                  label: Text(ghostOn ? 'Призрак включён$key' : 'Призрак$key'),
+                  label: Text(app.runGhostOnce && !recording
+                      ? 'Ждёт одно действие'
+                      : ghostOn
+                          ? 'Призрак включён$key'
+                          : 'Призрак$key'),
                 ),
               ),
           ])),

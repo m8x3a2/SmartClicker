@@ -1,6 +1,7 @@
 // Mini panel over all windows: coordinates, colour, run/pause/stop, record.
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../state/app_controller.dart';
 import '../../../core/storage/storage.dart';
@@ -60,15 +61,19 @@ class _MiniPanelState extends State<MiniPanel> {
 
   /// The ghost of a run: the script's clicks are only shown.
   Widget _ghostBtn() {
-    final on = app.runGhost;
-    final key = app.settings.ghostKey.isEmpty ? '' : ' (${app.settings.ghostKey.toUpperCase()})';
+    final on = app.runGhost || app.runGhostOnce;
+    final k = app.settings.ghostKey.toUpperCase();
+    final key = k.isEmpty ? '' : ' ($k)';
     return Tooltip(
-      message: on
-          ? 'Призрак включён: клики скрипта не нажимаются. Выключить$key'
-          : 'Призрак$key: клики и клавиши скрипта только показываются, не нажимаются',
+      message: app.runGhostOnce
+          ? 'Призрак на одно действие: следующий клик скрипта не нажмётся'
+          : on
+              ? 'Призрак включён: клики скрипта не нажимаются. Выключить$key'
+              : 'Призрак$key: клики и клавиши скрипта только показываются, не нажимаются.\n'
+                  'Shift + щелчок${k.isEmpty ? '' : ' (Shift+$k)'} — только на одно следующее действие',
       child: InkWell(
         borderRadius: BorderRadius.circular(17),
-        onTap: () => app.setRunGhost(!on),
+        onTap: () => HardwareKeyboard.instance.isShiftPressed ? app.setRunGhostOnce() : app.setRunGhost(!app.runGhost),
         child: Container(
           width: 34,
           height: 34,
@@ -144,7 +149,8 @@ class _MiniPanelState extends State<MiniPanel> {
     final s = app.settings;
     final pause = s.pauseKey.toUpperCase(), stop = s.stopKey.toUpperCase();
     final at = line > 0 ? ' · строка $line' : '';
-    final outside = '${app.runFromOutside ? '⤴ извне · ' : ''}${app.runGhost ? '👻 призрак · ' : ''}';
+    final outside = '${app.runFromOutside ? '⤴ извне · ' : ''}'
+        '${app.runGhost ? '👻 призрак · ' : app.runGhostOnce ? '👻 одно действие · ' : ''}';
     if (app.picking) {
       return (levelColor('info'), '${app.pickHint} · ${app.pickCancelHint}');
     }

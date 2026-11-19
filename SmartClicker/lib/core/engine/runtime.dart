@@ -82,6 +82,10 @@ class ScriptRuntime implements Host {
   /// they would go. Everything else (waits, pictures, files) goes on.
   bool ghost = false;
 
+  /// The ghost for one action only: the next click or key of the script is
+  /// skipped, then everything is real again (the UI gets 'ghost' off).
+  bool ghostOnce = false;
+
   // Options (changeable from the script through set_option).
   late bool dryRun = cfg['dryRun'] == true;
   late bool humanMode = cfg['human'] == true;

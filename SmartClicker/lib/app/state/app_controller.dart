@@ -631,6 +631,9 @@ class AppController extends ChangeNotifier {
   /// The ghost of a running script: its clicks and keys reach no program
   /// (see [AppControllerRecord.setRunGhost]).
   bool runGhost = false;
+
+  /// The ghost waits for one action of the script (see setRunGhostOnce).
+  bool runGhostOnce = false;
   bool _autoCompact = false;
 
   /// VK codes of a hotkey such as "f12" or "ctrl+alt+s" (empty if invalid).

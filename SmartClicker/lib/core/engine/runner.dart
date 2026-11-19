@@ -34,6 +34,10 @@ Future<void> _workerMain(List<Object?> init) async {
         ..clear()
         ..addAll(names.map((e) => '$e'));
     }
+    if (m == 'ghostOnce') {
+      rt.releaseAll(); // a skipped release would leave a key held
+      rt.ghostOnce = true;
+    }
     if (m case ['ghost', bool on]) {
       // Keys and buttons held by the script are let go: their release would
       // not reach the system while the ghost is on.
@@ -107,6 +111,9 @@ class ScriptRunner {
 
   /// The ghost of a run on/off: the script's clicks and keys are only shown.
   void setGhost(bool on) => _toWorker?.send(['ghost', on]);
+
+  /// The ghost for the next action only.
+  void ghostOnce() => _toWorker?.send('ghostOnce');
 
   /// Turns sending the values of variables on and off.
   void setWatch(bool on) => _toWorker?.send(['watch', on]);

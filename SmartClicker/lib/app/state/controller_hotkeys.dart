@@ -234,7 +234,12 @@ extension AppControllerHotkeys on AppController {
       if (_pressed(settings.pickKey)) pickPoint();
       if (_pressed(settings.ghostKey)) {
         if (state == RunState.recording) setGhost(!ghost);
-        if (isRunning) setRunGhost(!runGhost);
+        // Shift + the ghost key: only the next action of the script
+        if (isRunning && !settings.ghostKey.contains('shift') && _comboDown('shift') && !runGhost) {
+          setRunGhostOnce();
+        } else if (isRunning) {
+          setRunGhost(!runGhost);
+        }
       }
       if (_pressed(settings.markKey)) toggleLandmark();
       if (_pressed(settings.miniKey)) toggleCompact();

@@ -216,6 +216,8 @@ extension AppControllerFiles on AppController {
         shown.value = v == null ? ({...shown.value}..remove(k)) : {...shown.value, k: '$v'};
       case 'act':
         _onMapAction(e);
+      case 'ghost':
+        _ghostOnceDone();
       case 'mark':
         backend.showMarker((e['x'] as num).toInt(), (e['y'] as num).toInt(),
             shape: settings.clickMarkShape, rgb: settings.clickMarkColor, size: settings.clickMarkSize);

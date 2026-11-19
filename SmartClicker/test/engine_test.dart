@@ -229,6 +229,14 @@ console.log(await f())
       ]);
     });
 
+    test('призрак на одно действие: пропускает только следующий клик', () async {
+      final r = await run('click(1, 2)\nclick(3, 4)\nclick(5, 6)', setup: (rt) => rt.ghostOnce = true);
+      expect(r.status, 'ok');
+      // the first click is skipped, the others are real
+      expect(r.backend.calls.where((c) => c.startsWith('move')), ['move 3,4', 'move 5,6']);
+      expect(r.events.where((e) => e['t'] == 'ghost').map((e) => e['on']), [false]);
+    });
+
     test('key нажимает и отпускает сочетание в правильном порядке', () async {
       final r = await run('key("ctrl+shift+a")');
       expect(r.backend.calls, [
