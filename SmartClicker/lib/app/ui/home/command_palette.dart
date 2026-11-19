@@ -97,7 +97,9 @@ List<PaletteCommand> paletteCommands(BuildContext context, AppController app, vo
     // Tools
     PaletteCommand('Взять координаты кликом', Icons.ads_click, () => app.startPick('point'),
         keywords: 'точка координаты f6'),
-    PaletteCommand('Выделить область (два Ctrl)', Icons.crop, () => app.startPick('region'),
+    PaletteCommand('Взять цвет кликом', Icons.colorize_outlined, () => app.startPick('color'),
+        keywords: 'цвет пипетка пиксель'),
+    PaletteCommand('Выделить область', Icons.crop, () => app.startPick('region'),
         keywords: 'область картинка вырезать'),
     PaletteCommand('Убрать все точки-ориентиры', Icons.location_off_outlined, app.clearLandmarks,
         keywords: 'f4 метки'),

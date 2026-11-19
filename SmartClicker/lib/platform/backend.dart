@@ -205,6 +205,24 @@ abstract class PlatformBackend {
   void showFrame(int x, int y, int w, int h);
   void hideFrame();
 
+  /// The whole desktop over all monitors, screen px.
+  Rect4 virtualScreen();
+
+  /// Stop frame: the still picture [bgra] ([w]×[h], opaque) over all
+  /// windows at screen px [x], [y]. Clicks land on it and reach no program,
+  /// and nothing under the cursor lights up (taking a point). The mini
+  /// panel stays above it. false — it could not be shown.
+  bool showFreeze(int x, int y, int w, int h, Uint8List bgra);
+  void hideFreeze();
+
+  /// The stop frame is the window under screen point ([x], [y]).
+  bool freezeAt(int x, int y);
+
+  /// A click-through picture [bgra] ([w]×[h], premultiplied) at screen px
+  /// [x], [y] above everything: the magnifier while taking a point.
+  void showLoupe(int x, int y, int w, int h, Uint8List bgra);
+  void hideLoupe();
+
   /// Landmarks: click-through dots of [rgb] and [size] px over every window
   /// at [points] (screen px), for the eyes only. Replaces the ones shown.
   void showLandmarks(List<({int x, int y})> points, int rgb, int size);

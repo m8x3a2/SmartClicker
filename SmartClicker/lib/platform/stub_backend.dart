@@ -135,6 +135,24 @@ class StubBackend implements PlatformBackend {
   List<String> lastMenu = const [];
 
   String trayMark = '';
+  Rect4 screen = (x: 0, y: 0, w: 1920, h: 1080);
+  @override
+  Rect4 virtualScreen() => screen;
+  Rect4? freeze;
+  @override
+  bool showFreeze(int x, int y, int w, int h, Uint8List bgra) {
+    freeze = (x: x, y: y, w: w, h: h);
+    return true;
+  }
+  @override
+  void hideFreeze() => freeze = null;
+  @override
+  bool freezeAt(int x, int y) => freeze != null;
+  Rect4? loupe;
+  @override
+  void showLoupe(int x, int y, int w, int h, Uint8List bgra) => loupe = (x: x, y: y, w: w, h: h);
+  @override
+  void hideLoupe() => loupe = null;
   List<({int x, int y})> landmarks = const [];
   @override
   void showLandmarks(List<({int x, int y})> points, int rgb, int size) => landmarks = List.of(points);

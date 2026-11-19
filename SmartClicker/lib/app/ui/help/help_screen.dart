@@ -1,11 +1,15 @@
 // The "Help" page: list of guides, the text viewer and the prompt for an AI chat.
 // The texts themselves are in app/help/.
 
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../state/app_controller.dart';
 import '../../help/help_texts.dart';
 import '../../../core/storage/storage.dart';
+import '../../../core/storage/zip.dart';
 import '../editor/code_editor.dart';
 import '../notes/notes_pane.dart';
 import '../widgets/page_parts.dart';
@@ -22,6 +26,7 @@ class HelpSection {
 /// Sections of the help, in the order they are listed. New guides go here.
 const helpSections = [
   HelpSection('Возможности', 'Что умеет программа — коротко', Icons.auto_awesome_outlined, featuresGuide),
+  HelpSection('Программа: где что', 'Где какая кнопка — план для нейросети', Icons.map_outlined, appGuide),
   HelpSection('Для новичков', 'Первые 5 минут, запись, клавиши', Icons.school_outlined, beginnerGuide),
   HelpSection('Конструктор блоков', 'Собрать скрипт мышью', Icons.extension_outlined, blocksGuide),
   HelpSection('Картинки и текст', 'Найти кнопку, прочитать надпись', Icons.image_search, imageGuide),
@@ -37,9 +42,21 @@ const helpSections = [
 /// pictures and text, and the user's notes.
 String aiPrompt(AppPaths paths) {
   final notes = notesAsText(paths);
-  return '$aiPromptHeader\n$languageReference\n$commonMistakes\n$imageGuide\n$usageGuide\n'
+  return '$aiPromptHeader\n$languageReference\n$commonMistakes\n$imageGuide\n$usageGuide\n$appGuide\n'
       '${notes.isEmpty ? '' : '\nЗАМЕТКИ ПОЛЬЗОВАТЕЛЯ (его скрипты, функции, координаты)\n$notes'}'
       '\nЗАДАЧА: ';
+}
+
+/// Every guide as its own .md file and the whole prompt for an AI chat —
+/// for «Выгрузить всю справку в ZIP».
+Map<String, List<int>> helpArchive(AppPaths paths) {
+  String two(int n) => n.toString().padLeft(2, '0');
+  var n = 0;
+  return {
+    for (final s in helpSections)
+      if (s.text != null) '${two(++n)} ${s.title.replaceAll(':', ' -')}.md': utf8.encode(s.text!.trim()),
+    'Промпт для ИИ.md': utf8.encode(aiPrompt(paths)),
+  };
 }
 
 class HelpPage extends StatefulWidget {
@@ -95,6 +112,23 @@ class _HelpPageState extends State<HelpPage> {
         'Вставьте его в чат с нейросетью и допишите в конце, что должен делать скрипт'
             '${notes.isEmpty ? '' : '. Ваши заметки тоже добавлены'}',
         level: 'ok');
+  }
+
+  void _exportZip() {
+    final d = DateTime.now();
+    String two(int n) => n.toString().padLeft(2, '0');
+    final path = app.backend.pickFile(
+        save: true,
+        title: 'Выгрузить справку',
+        defaultName: 'SmartClicker-справка-${d.year}-${two(d.month)}-${two(d.day)}.zip');
+    if (path == null) return;
+    try {
+      final files = helpArchive(app.paths);
+      File(path).writeAsBytesSync(zipEncode(files));
+      app.notify('Справка выгружена', 'Файлов: ${files.length}\n$path', level: 'ok');
+    } catch (e) {
+      app.notify('Не удалось выгрузить справку', '$e', level: 'error');
+    }
   }
 
   void _toggleList() {
@@ -218,7 +252,14 @@ class _HelpPageState extends State<HelpPage> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          pageHeader('Справка', actions: [copy]),
+          pageHeader('Справка', actions: [
+            IconButton(
+              tooltip: 'Выгрузить всю справку в ZIP: каждый раздел — файл .md, и промпт для ИИ',
+              icon: const Icon(Icons.download_outlined),
+              onPressed: _exportZip,
+            ),
+            copy,
+          ]),
           if (!wide) _picker(),
           Expanded(
             child: wide

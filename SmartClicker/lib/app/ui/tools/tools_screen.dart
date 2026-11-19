@@ -116,6 +116,24 @@ class _ToolsPageState extends State<ToolsPage> {
                 label: const Text('Взять координаты кликом'),
               ),
               const SizedBox(width: 8),
+              IconButton.filledTonal(
+                tooltip: 'Взять цвет кликом — в буфер обмена (#RRGGBB)',
+                onPressed: app.busy ? null : () => app.startPick('color'),
+                icon: const Icon(Icons.colorize_outlined),
+              ),
+              const SizedBox(width: 8),
+              FilterChip(
+                label: const Text('Стоп-кадр'),
+                tooltip: 'Выбор по замороженному снимку экрана: клик никуда не попадёт,\n'
+                    'кнопки под мышью не подсвечиваются, рядом с курсором — лупа.\n'
+                    'Окно программы на это время становится мини-панелью',
+                selected: app.settings.pickFreeze,
+                onSelected: (v) {
+                  app.settings.pickFreeze = v;
+                  app.saveSettings();
+                },
+              ),
+              const SizedBox(width: 8),
               SegmentedButton<bool>(
                 showSelectedIcon: false,
                 style: const ButtonStyle(visualDensity: VisualDensity.compact),
@@ -140,10 +158,10 @@ class _ToolsPageState extends State<ToolsPage> {
                   app.settings.pickFromWindow
                       ? 'Нажмите кнопку и кликните в нужное место программы — в буфер обмена попадёт строка '
                           'with_window("окно") { click(…) }: координаты от окна, клик только в него. '
-                          'Над рабочим столом — координаты экрана. Клик дойдёт и до самой программы.'
+                          'Над рабочим столом — координаты экрана. ${_clickNote(app)}'
                       : 'Нажмите кнопку и кликните в нужное место любой программы — координаты скопируются в буфер обмена '
                           '(${app.settings.recPercent ? 'в процентах' : 'в пикселях'}; формат меняется в настройках). '
-                          'Клик при этом дойдёт и до самой программы.',
+                          '${_clickNote(app)}',
                   style: const TextStyle(color: mutedText, fontSize: 12.5),
                 ),
               ),
@@ -168,7 +186,7 @@ class _ToolsPageState extends State<ToolsPage> {
               const SizedBox(width: 12),
               const Expanded(
                 child: Text(
-                  'Выделить область: наведите курсор на левый верхний угол и нажмите Ctrl, затем на правый нижний — и снова Ctrl. '
+                  'Выделить область: обведите её мышью (или отметьте два угла клавишей Ctrl). '
                   'Откроется раздел «Картинки»: что вырезано, какой текст там читается и готовые команды. '
                   'Там же сохранённые картинки-образцы и выбор способа распознавания.',
                   style: TextStyle(color: mutedText, fontSize: 12.5),
@@ -219,3 +237,8 @@ class _ToolsPageState extends State<ToolsPage> {
 }
 
 // ------------------------------------------------------------------ schedule
+
+/// Whether the pick click reaches the program under the cursor.
+String _clickNote(AppController app) => app.settings.pickFreeze
+    ? 'Экран на время выбора замораживается: клик никуда не попадёт. Отмена — Esc или правая кнопка.'
+    : 'Клик при этом дойдёт и до самой программы.';

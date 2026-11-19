@@ -6,7 +6,7 @@ import 'dart:convert';
 /// 'layout' is the look of the window; "reset all" resets it too. Not
 /// reset at all: keys of single scripts, breakpoints, the OCR engine.
 const settingsGroups = <String, List<String>>{
-  'general': ['recPercent', 'showClicks', 'pickFromWindow', 'markColor', 'markSize'],
+  'general': ['recPercent', 'showClicks', 'pickFromWindow', 'pickFreeze', 'markColor', 'markSize'],
   'editor': ['hintTyping', 'hintHover'],
   'mini': ['miniKey', 'miniOnRun'],
   'tray': ['trayOnMinimize', 'trayOnClose'],
@@ -140,6 +140,10 @@ class Settings {
   /// «Взять координаты кликом» counts from the window under the cursor and
   /// copies `with_window("…") { click(…) }` instead of screen coordinates.
   bool pickFromWindow = false;
+
+  /// Taking a point, a colour or a region freezes the screen: the click
+  /// lands on the still picture, reaches no program and lights up nothing.
+  bool pickFreeze = true;
 
   /// Recording bound to windows also writes require_window("…").
   bool recRequireWindow = true;
@@ -283,6 +287,7 @@ class Settings {
     s.recWindow = get('recWindow', s.recWindow);
     s.recSystemKeys = get('recSystemKeys', s.recSystemKeys);
     s.pickFromWindow = get('pickFromWindow', s.pickFromWindow);
+    s.pickFreeze = get('pickFreeze', s.pickFreeze);
     s.recRequireWindow = get('recRequireWindow', s.recRequireWindow);
     s.showClicks = get('showClicks', s.showClicks);
     s.allowPower = get('allowPower', s.allowPower);
@@ -379,6 +384,7 @@ class Settings {
         'recWindow': recWindow,
         'recSystemKeys': recSystemKeys,
         'pickFromWindow': pickFromWindow,
+        'pickFreeze': pickFreeze,
         'recRequireWindow': recRequireWindow,
         'showClicks': showClicks,
         'allowPower': allowPower,

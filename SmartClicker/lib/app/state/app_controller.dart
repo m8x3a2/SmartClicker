@@ -12,6 +12,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
 import '../../core/vision/image.dart';
+import '../../core/vision/loupe.dart';
 import '../../core/vision/paddle_ocr.dart' show PaddleOcr;
 import '../../core/engine/runner.dart';
 import '../../core/engine/runtime.dart';
@@ -55,6 +56,7 @@ part 'controller_files.dart';
 part 'controller_reports.dart';
 part 'controller_record.dart';
 part 'controller_hotkeys.dart';
+part 'controller_pick.dart';
 part 'controller_landmarks.dart';
 part 'controller_startup.dart';
 part 'controller_corner.dart';
@@ -641,8 +643,8 @@ class AppController extends ChangeNotifier {
   bool picking = false;
   bool _pickBtnDown = false;
 
-  /// 'point' — one click; 'region' / 'image' — two corners marked with Ctrl
-  /// (a click would press whatever is under the cursor).
+  /// 'point' — one click; 'color' — one click for the colour; 'region' /
+  /// 'image' — a rectangle (see controller_pick.dart).
   String pickMode = 'point';
   Pt? pickCorner;
 
@@ -651,6 +653,21 @@ class AppController extends ChangeNotifier {
   /// block: a `use_window` above it makes the coordinates window-relative.
   void Function(List<String> values, String color)? _pickDone;
   int _pickLine = 0;
+
+  /// Mouse buttons at the last poll of a pick; a region is being drawn
+  /// with the mouse.
+  bool _pickMouse = false, _pickRight = false, _pickDragging = false;
+
+  /// Stop frame of a pick: the screen as it was when the pick started
+  /// ([_frozenAt] — its top left corner on the screen); null — none.
+  Bitmap? _frozen;
+  Pt _frozenAt = (x: 0, y: 0);
+
+  /// Polls (25 ms) left before the screen freezes: the main window first
+  /// turns into the mini panel ([_pickCompacted]).
+  int _freezeDelay = 0;
+  bool _pickCompacted = false;
+  Pt? _loupeAt;
 
   /// The region the user selected last; shown on the "Pictures and text"
   /// page.

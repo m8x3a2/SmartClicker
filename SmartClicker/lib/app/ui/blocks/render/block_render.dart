@@ -626,7 +626,7 @@ class _R {
           out.add(
             _tool(
               Icons.highlight_alt,
-              'Выделить область на экране: два угла клавишей Ctrl',
+              'Выделить область на экране: обвести мышью',
               () => ed._pick(path, n.line, 'region', idx, null),
             ),
           );

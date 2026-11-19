@@ -117,7 +117,7 @@ void main() {
     expect(helpSections.map((s) => s.title).toSet().length, helpSections.length);
     expect(helpSections.where((s) => s.text == null).length, 1); // notes
     const keywords = {'if', 'while', 'for', 'function', 'switch', 'catch'};
-    for (final guide in [imageGuide, ocrGuide, beginnerGuide, blocksGuide, usageGuide, aiMessageGuide]) {
+    for (final guide in [imageGuide, ocrGuide, beginnerGuide, blocksGuide, usageGuide, aiMessageGuide, appGuide]) {
       for (final line in guide.split('\n')) {
         if (!line.startsWith('    ')) continue; // code lines are indented
         // methods (answers.push(…), text.trim()) are not commands

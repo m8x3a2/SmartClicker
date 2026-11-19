@@ -74,11 +74,14 @@ class _MiniPanelState extends State<MiniPanel> {
             _btn(Icons.fiber_manual_record, 'Запись действий ($rec)',
                 app.current == null ? null : app.toggleRecording,
                 color: red),
-            app.picking
-                ? _btn(Icons.close, 'Отменить выбор координат (Esc)',
-                    app.cancelPick)
-                : _btn(Icons.ads_click,
-                    'Взять координаты кликом — в буфер обмена', app.startPick),
+            if (app.picking)
+              _btn(Icons.close, 'Отменить выбор (Esc или правая кнопка мыши)', app.cancelPick,
+                  color: red)
+            else ...[
+              _btn(Icons.ads_click, 'Взять координаты кликом — в буфер обмена', app.startPick),
+              _btn(Icons.colorize_outlined, 'Взять цвет кликом — в буфер обмена',
+                  () => app.startPick('color')),
+            ],
           ],
         RunState.countdown => [
             _btn(Icons.close, 'Отменить запуск ($stop)', app.stop),
@@ -112,7 +115,7 @@ class _MiniPanelState extends State<MiniPanel> {
     final pause = s.pauseKey.toUpperCase(), stop = s.stopKey.toUpperCase();
     final at = line > 0 ? ' · строка $line' : '';
     if (app.picking) {
-      return (levelColor('info'), '${app.pickHint} (Esc — отмена)');
+      return (levelColor('info'), '${app.pickHint} · ${app.pickCancelHint}');
     }
     if (app.toasts.isNotEmpty) {
       final n = app.toasts.last;
