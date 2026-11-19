@@ -12,6 +12,15 @@ void main() {
     }
   });
 
+  test('старый settings.json получает запуск извне включённым один раз', () {
+    final old = Settings.fromJson({'allowExternalRun': false, 'stopKey': 'f2'});
+    expect(old.allowExternalRun, isTrue);
+    expect(old.stopKey, 'f2');
+    final off = Settings()..allowExternalRun = false;
+    expect(Settings.fromJson(off.toJson()).allowExternalRun, isFalse); // rev 2: kept
+    expect(Settings().allowExternalRun, isTrue);
+  });
+
   test('сброс блока и всех настроек', () {
     final s = Settings()
       ..stopKey = 'f2'

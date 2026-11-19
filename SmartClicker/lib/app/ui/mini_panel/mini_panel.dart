@@ -114,6 +114,7 @@ class _MiniPanelState extends State<MiniPanel> {
     final s = app.settings;
     final pause = s.pauseKey.toUpperCase(), stop = s.stopKey.toUpperCase();
     final at = line > 0 ? ' · строка $line' : '';
+    final outside = app.runFromOutside ? '⤴ извне · ' : '';
     if (app.picking) {
       return (levelColor('info'), '${app.pickHint} · ${app.pickCancelHint}');
     }
@@ -137,11 +138,11 @@ class _MiniPanelState extends State<MiniPanel> {
         ),
       RunState.paused => (
           const Color(0xFFE3A008),
-          '⏸ Пауза$at · продолжить: $pause · стоп: $stop'
+          '$outside⏸ Пауза$at · продолжить: $pause · стоп: $stop'
         ),
       RunState.running => (
           const Color(0xFF3FB950),
-          '▶ Выполняется${s.dryRun ? ' (тест)' : ''}$at · пауза: $pause · стоп: $stop'
+          '$outside▶ Выполняется${s.dryRun ? ' (тест)' : ''}$at · пауза: $pause · стоп: $stop'
         ),
       RunState.idle => (
           _muted,

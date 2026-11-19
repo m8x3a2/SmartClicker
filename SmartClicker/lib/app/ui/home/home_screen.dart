@@ -20,6 +20,7 @@ import '../scripts/scripts_screen.dart';
 import 'external_change_banner.dart';
 import '../clipboard/clipboard_screen.dart';
 import 'file_ask_banner.dart';
+import 'external_run_banner.dart';
 import 'command_palette.dart';
 import '../scripts/search_dialog.dart';
 import 'safety_banner.dart';
@@ -140,11 +141,12 @@ class _HomePageState extends State<HomePage> {
   }
 
   /// How many strips are shown above the pages (see SafetyBanner,
-  /// ExternalChangeBanner, FileAskBanner).
+  /// ExternalChangeBanner, FileAskBanner, ExternalRunBanner).
   static int _strips(AppController app) => [
         app.safeMode || app.automationOff || app.automationWaitSec > 0,
         app.externalText != null && app.current != null,
         app.fileAsk != null,
+        app.runFromOutside,
       ].where((v) => v).length;
 
   void _palette(AppController app) {
@@ -217,6 +219,7 @@ class _HomePageState extends State<HomePage> {
                     SafetyBanner(app: app),
                     ExternalChangeBanner(app: app),
                     FileAskBanner(app: app),
+                    ExternalRunBanner(app: app),
                     Expanded(
                       child: IndexedStack(
                         index: _page,

@@ -29,6 +29,10 @@ void sendRequest(AppPaths paths, Map<String, Object?> request) {
 }
 
 extension AppControllerRequests on AppController {
+  /// The running script was started by another program (--run): the strip
+  /// above the pages and the mini panel say so.
+  bool get runFromOutside => busy && _runVia == 'external';
+
   /// A request that came with the start of this very copy.
   void queueRequest(Map<String, Object?> request) =>
       _requests.add((request, DateTime.now()));

@@ -121,9 +121,9 @@ log(load_data("ход"))
     expect(File(files.single).readAsStringSync(), contains('"run":"Бой"'));
   });
 
-  test('настройки: запуск извне и файл состояния выключены', () {
+  test('настройки: запуск извне включён, файл состояния выключен', () {
     final s = Settings();
-    expect(s.allowExternalRun, isFalse);
+    expect(s.allowExternalRun, isTrue); // on by default (the user decided, 2026-11-19)
     expect(s.stateFile, isFalse);
     final back = Settings.fromJson({...s.toJson(), 'allowExternalRun': true, 'stateFile': true});
     expect(back.allowExternalRun, isTrue);

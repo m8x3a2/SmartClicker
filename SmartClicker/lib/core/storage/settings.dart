@@ -172,8 +172,10 @@ class Settings {
   /// loops, a script cannot end the program or Windows itself.
   bool selfProtect = true;
 
-  /// Other programs may run and stop scripts: `smart_clicker.exe --run "…"`.
-  bool allowExternalRun = false;
+  /// Other programs may run and stop scripts: `smart_clicker.exe --run "…"`
+  /// (a neural network that writes and starts scripts itself). A script
+  /// started so shows the strip «Запущен извне» while it works.
+  bool allowExternalRun = true;
 
   /// While a script works its state is written to files\state.json.
   bool stateFile = false;
@@ -232,6 +234,9 @@ class Settings {
     final s = Settings();
     if (json is! Map) return s;
     T get<T>(String k, T def) => json[k] is T ? json[k] as T : def;
+    // Revision of settings.json: older files get the new defaults that
+    // replaced old ones (2: running scripts from outside is on).
+    final rev = get('rev', 1);
     s.stopKey = get('stopKey', s.stopKey);
     s.stopKey2 = get('stopKey2', s.stopKey2);
     s.cornerStop = get('cornerStop', s.cornerStop);
@@ -299,7 +304,7 @@ class Settings {
     s.autostartTray = get('autostartTray', s.autostartTray);
     s.autostartDelaySec = get('autostartDelaySec', s.autostartDelaySec).clamp(0, 3600);
     s.selfProtect = get('selfProtect', s.selfProtect);
-    s.allowExternalRun = get('allowExternalRun', s.allowExternalRun);
+    s.allowExternalRun = rev < 2 || get('allowExternalRun', s.allowExternalRun);
     s.stateFile = get('stateFile', s.stateFile);
     final w = get('resetWord', s.resetWord).trim();
     s.resetWord = w.isEmpty || w.length > 30 ? 'reset' : w;
@@ -332,6 +337,7 @@ class Settings {
   }
 
   Map<String, Object?> toJson() => {
+        'rev': 2,
         'stopKey': stopKey,
         'stopKey2': stopKey2,
         'cornerStop': cornerStop,
