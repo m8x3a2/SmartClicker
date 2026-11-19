@@ -6,6 +6,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
+import 'app/services/script_check.dart';
 import 'app/state/app_controller.dart';
 import 'core/reports/report.dart';
 import 'core/storage/storage.dart';
@@ -16,6 +17,11 @@ import 'app/ui/editor/code_editor.dart';
 import 'app/ui/home/home_screen.dart';
 
 void main(List<String> args) {
+  // `--check "Скрипт"`: only check the script (console + files\check.json),
+  // with no window and no matter whether the program is open.
+  final check = checkTarget(args);
+  if (check != null) exit(runCheckCommand(AppPaths.detect(), check));
+
   // One copy at a time: a second one shows the window of the first and
   // quits before its own window appears (it is shown after the first
   // frame). `--multi` skips the check (flutter run next to an open copy),

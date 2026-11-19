@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import '../../state/app_controller.dart';
 import '../../help/help_texts.dart';
 import '../../../core/storage/storage.dart';
+import '../../../core/storage/settings_patch.dart';
 import '../../../core/storage/zip.dart';
 import '../editor/code_editor.dart';
 import '../notes/notes_pane.dart';
@@ -40,22 +41,26 @@ const helpSections = [
 
 /// Text for the AI chat: the language, typical mistakes, the guide on
 /// pictures and text, and the user's notes.
-String aiPrompt(AppPaths paths) {
+String aiPrompt(AppPaths paths, {Settings? settings}) {
   final notes = notesAsText(paths);
+  final keys = settings == null
+      ? ''
+      : '\nНАСТРОЙКИ ПРОГРАММЫ — ключи для «Настройки → От ИИ…» (пользователь вставляет JSON вида '
+          '{"ключ": значение}, видит изменения и подтверждает):\n${settingsKeysText(settings)}\n';
   return '$aiPromptHeader\n$languageReference\n$commonMistakes\n$imageGuide\n$usageGuide\n$appGuide\n'
-      '${notes.isEmpty ? '' : '\nЗАМЕТКИ ПОЛЬЗОВАТЕЛЯ (его скрипты, функции, координаты)\n$notes'}'
+      '$keys${notes.isEmpty ? '' : '\nЗАМЕТКИ ПОЛЬЗОВАТЕЛЯ (его скрипты, функции, координаты)\n$notes'}'
       '\nЗАДАЧА: ';
 }
 
 /// Every guide as its own .md file and the whole prompt for an AI chat —
 /// for «Выгрузить всю справку в ZIP».
-Map<String, List<int>> helpArchive(AppPaths paths) {
+Map<String, List<int>> helpArchive(AppPaths paths, {Settings? settings}) {
   String two(int n) => n.toString().padLeft(2, '0');
   var n = 0;
   return {
     for (final s in helpSections)
       if (s.text != null) '${two(++n)} ${s.title.replaceAll(':', ' -')}.md': utf8.encode(s.text!.trim()),
-    'Промпт для ИИ.md': utf8.encode(aiPrompt(paths)),
+    'Промпт для ИИ.md': utf8.encode(aiPrompt(paths, settings: settings)),
   };
 }
 
@@ -105,7 +110,7 @@ class _HelpPageState extends State<HelpPage> {
   }
 
   void _copyPrompt() {
-    Clipboard.setData(ClipboardData(text: aiPrompt(app.paths)));
+    Clipboard.setData(ClipboardData(text: aiPrompt(app.paths, settings: app.settings)));
     final notes = notesAsText(app.paths);
     app.notify(
         'Промпт скопирован',
@@ -123,7 +128,7 @@ class _HelpPageState extends State<HelpPage> {
         defaultName: 'SmartClicker-справка-${d.year}-${two(d.month)}-${two(d.day)}.zip');
     if (path == null) return;
     try {
-      final files = helpArchive(app.paths);
+      final files = helpArchive(app.paths, settings: app.settings);
       File(path).writeAsBytesSync(zipEncode(files));
       app.notify('Справка выгружена', 'Файлов: ${files.length}\n$path', level: 'ok');
     } catch (e) {

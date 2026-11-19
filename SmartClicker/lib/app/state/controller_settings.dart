@@ -30,6 +30,14 @@ extension AppControllerSettings on AppController {
     _changed();
   }
 
+  /// Settings confirmed in «Настройки от ИИ» (core/storage/settings_patch.dart).
+  void applySettingsFromAi(Settings s, int changed) {
+    settings = s;
+    settingsEpoch++;
+    saveSettings();
+    notify('Настройки применены', 'Изменено: $changed', level: 'ok');
+  }
+
   /// Puts the settings of [keys] (see `settingsGroups`) back to defaults.
   void resetSettings(Iterable<String> keys) {
     settings = settings.withDefaults(keys);

@@ -1,5 +1,6 @@
 // The "Settings" page: blocks of settings, each with a reset button, and "reset all".
 
+import 'ai_settings_dialog.dart';
 import 'click_mark_control.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -291,6 +292,16 @@ class SettingsPage extends StatelessWidget {
         return Column(
           children: [
             pageHeader('Настройки', actions: [
+              Tooltip(
+                message: 'Вставить настройки, которые написала нейросеть (JSON): сначала покажет, '
+                    'что изменится, применит только после подтверждения',
+                child: OutlinedButton.icon(
+                  icon: const Icon(Icons.smart_toy_outlined),
+                  label: const Text('От ИИ…'),
+                  onPressed: () => showAiSettingsDialog(context, app),
+                ),
+              ),
+              const SizedBox(width: 8),
               OutlinedButton.icon(
                 icon: const Icon(Icons.folder_open),
                 label: const Text('Папка с данными'),
