@@ -174,6 +174,14 @@ extension AppControllerWindow on AppController {
     }
     compact = on;
     _changed();
+    // The window changes its size asynchronously; once (2026-11-19) the
+    // panel kept showing the old big frame squeezed into it. One more frame
+    // after the resize has surely arrived.
+    Future.delayed(const Duration(milliseconds: 250), () {
+      if (compact != on) return;
+      _changed();
+      WidgetsBinding.instance.scheduleForcedFrame();
+    });
   }
 
   void toggleCompact() => setCompact(!compact);
